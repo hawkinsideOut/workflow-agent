@@ -22,16 +22,26 @@ function isGlobalInstall(): boolean {
 }
 
 function findProjectRoot(): string | null {
-  // Walk up from node_modules to find the project root
+  // When installed as a dependency, npm/pnpm runs postinstall from the package directory
+  // which is inside node_modules/@hawkinside_out/workflow-agent
+  // We need to find the project root (the directory containing node_modules)
+  
   let currentDir = process.cwd();
   
-  // If we're in node_modules/@hawkinside_out/workflow-agent, go up 3 levels
+  // Check if we're inside node_modules
   if (currentDir.includes('node_modules')) {
+    // Split on 'node_modules' and take everything before it
+    // This handles both node_modules/@scope/package and node_modules/package
     const parts = currentDir.split('node_modules');
-    return parts[0];
+    if (parts.length > 0 && parts[0]) {
+      // Remove trailing slash
+      return parts[0].replace(/\/$/, '');
+    }
   }
   
-  return currentDir;
+  // If not in node_modules, we're probably in a monorepo workspace during development
+  // Don't modify package.json in this case
+  return null;
 }
 
 function addScriptsToPackageJson(): void {
