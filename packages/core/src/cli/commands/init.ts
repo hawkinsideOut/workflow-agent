@@ -123,8 +123,9 @@ export async function initCommand(options: { migrate?: boolean; workspace?: bool
     spinner.start('Generating guidelines...');
 
     try {
-      // Find templates directory (relative to this file: ../../../../templates)
-      const templatesDir = join(__dirname, '../../../../templates');
+      // Find templates directory
+      // When built: dist/cli/commands/init.js -> templates is at package root
+      const templatesDir = join(__dirname, '../../../templates');
       
       // Validate templates exist
       await validateTemplateDirectory(templatesDir);

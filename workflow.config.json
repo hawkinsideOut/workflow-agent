@@ -21,7 +21,7 @@
   "language": "en",
   "scopeCreationWorkflow": {
     "enabled": true,
-    "promptTemplate": "templates/SCOPE_CREATION_WORKFLOW.md",
+    "promptTemplate": "packages/core/templates/SCOPE_CREATION_WORKFLOW.md",
     "requireAllPrompts": true,
     "includeTests": true,
     "validationRules": {
