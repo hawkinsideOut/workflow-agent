@@ -23,7 +23,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "pnpm --filter workflow-agent run build && pnpm -r run build",
+    "build": "pnpm --filter @workflow-agent/core run build && pnpm -r run build",
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
@@ -38,7 +38,11 @@
     "publish:tracker": "cd packages/improvement-tracker && npm publish --access public",
     "publish:presets": "pnpm -r --filter \"./packages/scopes-*\" exec npm publish --access public",
     "publish:all": "pnpm prepublish && pnpm publish:core && pnpm publish:tracker && pnpm publish:presets",
-    "pack:vscode": "cd packages/vscode-extension && vsce package"
+    "pack:vscode": "cd packages/vscode-extension && vsce package",
+    "workflow:init": "workflow-agent init",
+    "workflow:validate": "workflow-agent validate",
+    "workflow:suggest": "workflow-agent suggest",
+    "workflow:doctor": "workflow-agent doctor"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",

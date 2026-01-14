@@ -100,63 +100,63 @@ importers:
 
   packages/scopes-api:
     devDependencies:
+      '@workflow-agent/core':
+        specifier: ^1.0.0
+        version: link:../core
       tsup:
         specifier: ^8.0.1
         version: 8.5.1(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
-      workflow-agent:
-        specifier: ^1.0.0
-        version: link:../core
 
   packages/scopes-cms:
     devDependencies:
+      '@workflow-agent/core':
+        specifier: ^1.0.0
+        version: link:../core
       tsup:
         specifier: ^8.0.1
         version: 8.5.1(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
-      workflow-agent:
-        specifier: ^1.0.0
-        version: link:../core
 
   packages/scopes-ecommerce:
     devDependencies:
+      '@workflow-agent/core':
+        specifier: ^1.0.0
+        version: link:../core
       tsup:
         specifier: ^8.0.1
         version: 8.5.1(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
-      workflow-agent:
-        specifier: ^1.0.0
-        version: link:../core
 
   packages/scopes-library:
     devDependencies:
+      '@workflow-agent/core':
+        specifier: ^1.0.0
+        version: link:../core
       tsup:
         specifier: ^8.0.1
         version: 8.5.1(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
-      workflow-agent:
-        specifier: ^1.0.0
-        version: link:../core
 
   packages/scopes-saas:
     devDependencies:
+      '@workflow-agent/core':
+        specifier: ^1.0.0
+        version: link:../core
       tsup:
         specifier: ^8.0.1
         version: 8.5.1(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
-      workflow-agent:
-        specifier: ^1.0.0
-        version: link:../core
 
   packages/vscode-extension:
     dependencies:
