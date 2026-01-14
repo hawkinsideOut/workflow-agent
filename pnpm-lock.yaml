@@ -76,6 +76,54 @@ importers:
         specifier: ^1.6.1
         version: 1.6.1(@types/node@20.19.29)
 
+  packages/scopes-api:
+    devDependencies:
+      '@workflow/agent':
+        specifier: workspace:*
+        version: link:../core
+      tsup:
+        specifier: ^8.0.1
+        version: 8.5.1(typescript@5.9.3)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
+  packages/scopes-cms:
+    devDependencies:
+      '@workflow/agent':
+        specifier: workspace:*
+        version: link:../core
+      tsup:
+        specifier: ^8.0.1
+        version: 8.5.1(typescript@5.9.3)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
+  packages/scopes-ecommerce:
+    devDependencies:
+      '@workflow/agent':
+        specifier: workspace:*
+        version: link:../core
+      tsup:
+        specifier: ^8.0.1
+        version: 8.5.1(typescript@5.9.3)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
+  packages/scopes-library:
+    devDependencies:
+      '@workflow/agent':
+        specifier: workspace:*
+        version: link:../core
+      tsup:
+        specifier: ^8.0.1
+        version: 8.5.1(typescript@5.9.3)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
   packages/scopes-saas:
     devDependencies:
       '@workflow/agent':
