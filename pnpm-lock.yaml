@@ -100,69 +100,69 @@ importers:
 
   packages/scopes-api:
     devDependencies:
-      '@hawkinside_out/workflow-agent':
-        specifier: ^1.0.0
-        version: link:../core
       tsup:
         specifier: ^8.0.1
         version: 8.5.1(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+      workflow-agent:
+        specifier: ^1.0.0
+        version: link:../core
 
   packages/scopes-cms:
     devDependencies:
-      '@hawkinside_out/workflow-agent':
-        specifier: ^1.0.0
-        version: link:../core
       tsup:
         specifier: ^8.0.1
         version: 8.5.1(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+      workflow-agent:
+        specifier: ^1.0.0
+        version: link:../core
 
   packages/scopes-ecommerce:
     devDependencies:
-      '@hawkinside_out/workflow-agent':
-        specifier: ^1.0.0
-        version: link:../core
       tsup:
         specifier: ^8.0.1
         version: 8.5.1(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+      workflow-agent:
+        specifier: ^1.0.0
+        version: link:../core
 
   packages/scopes-library:
     devDependencies:
-      '@hawkinside_out/workflow-agent':
-        specifier: ^1.0.0
-        version: link:../core
       tsup:
         specifier: ^8.0.1
         version: 8.5.1(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+      workflow-agent:
+        specifier: ^1.0.0
+        version: link:../core
 
   packages/scopes-saas:
     devDependencies:
-      '@hawkinside_out/workflow-agent':
-        specifier: ^1.0.0
-        version: link:../core
       tsup:
         specifier: ^8.0.1
         version: 8.5.1(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+      workflow-agent:
+        specifier: ^1.0.0
+        version: link:../core
 
   packages/vscode-extension:
     dependencies:
       '@hawkinside_out/workflow-agent':
         specifier: ^1.0.0
-        version: link:../core
+        version: 1.0.4(typescript@5.9.3)
     devDependencies:
       '@types/node':
         specifier: ^20.11.5
@@ -991,6 +991,33 @@ packages:
     resolution: {integrity: sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
+
+  /@hawkinside_out/workflow-agent@1.0.4(typescript@5.9.3):
+    resolution: {integrity: sha512-r545d0unbFk6IVgL/R785JKObwVBHSbMXnCVsEHIM/AZygf61cD+xIbUX5rjbQx3KVVeoh6Xbj0A2u9OlSbLrg==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+    requiresBuild: true
+    dependencies:
+      '@clack/prompts': 0.7.0
+      '@hawkinside_out/workflow-improvement-tracker': 1.0.1
+      chalk: 5.6.2
+      commander: 11.1.0
+      cosmiconfig: 9.0.0(typescript@5.9.3)
+      didyoumean2: 6.0.1
+      execa: 8.0.1
+      fast-glob: 3.3.3
+      mustache: 4.2.0
+      picocolors: 1.1.1
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - typescript
+    dev: false
+
+  /@hawkinside_out/workflow-improvement-tracker@1.0.1:
+    resolution: {integrity: sha512-RtMAhrNi8xa0Vkxqg7xfgsdDir+L8toHjUX4q0UmgxbyHlL02DBvIt8HCUMB7x2aoED66SnVigtvqKgMZokC/Q==}
+    dependencies:
+      zod: 3.25.76
+    dev: false
 
   /@humanwhocodes/config-array@0.13.0:
     resolution: {integrity: sha512-DZLEEqFWQFiyK6h5YIeynKx7JlvCYWL0cImfSRXZ9l4Sg2efkFGTuFf6vzXjK1cq6IYkU+Eg/JizXw+TD2vRNw==}
