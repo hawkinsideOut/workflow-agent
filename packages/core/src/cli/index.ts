@@ -6,6 +6,7 @@ import { validateCommand } from './commands/validate.js';
 import { configCommand } from './commands/config.js';
 import { suggestCommand } from './commands/suggest.js';
 import { doctorCommand } from './commands/doctor.js';
+import { setupCommand } from './commands/setup.js';
 
 const program = new Command();
 
@@ -47,6 +48,11 @@ program
   .option('--author <author>', 'Your name or username')
   .option('--category <category>', 'Category: feature, bug, documentation, performance, other')
   .action(suggestCommand);
+
+program
+  .command('setup')
+  .description('Add workflow scripts to package.json')
+  .action(setupCommand);
 
 program
   .command('doctor')

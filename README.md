@@ -86,7 +86,15 @@ npm install -D @hawkinside_out/workflow-agent
 pnpm add -D @hawkinside_out/workflow-agent
 ```
 
-The postinstall script will automatically add these scripts to your `package.json`:
+**pnpm users:** pnpm blocks postinstall scripts by default. Run the setup command after installation:
+
+```bash
+pnpm workflow-agent setup
+# or
+npx workflow-agent setup
+```
+
+This will add workflow scripts to your `package.json`:
 
 When installed locally, run commands via:
 

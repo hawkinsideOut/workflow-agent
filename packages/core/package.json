@@ -1,6 +1,6 @@
 {
   "name": "@hawkinside_out/workflow-agent",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A self-evolving workflow management system for AI agent development",
   "keywords": [
     "workflow",
