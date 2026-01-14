@@ -30,7 +30,7 @@ importers:
         specifier: ^0.7.0
         version: 0.7.0
       '@hawkinside_out/workflow-improvement-tracker':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../improvement-tracker
       chalk:
         specifier: ^5.3.0
@@ -101,7 +101,7 @@ importers:
   packages/scopes-api:
     devDependencies:
       '@hawkinside_out/workflow-agent':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../core
       tsup:
         specifier: ^8.0.1
@@ -113,7 +113,7 @@ importers:
   packages/scopes-cms:
     devDependencies:
       '@hawkinside_out/workflow-agent':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../core
       tsup:
         specifier: ^8.0.1
@@ -125,7 +125,7 @@ importers:
   packages/scopes-ecommerce:
     devDependencies:
       '@hawkinside_out/workflow-agent':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../core
       tsup:
         specifier: ^8.0.1
@@ -137,7 +137,7 @@ importers:
   packages/scopes-library:
     devDependencies:
       '@hawkinside_out/workflow-agent':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../core
       tsup:
         specifier: ^8.0.1
@@ -149,7 +149,7 @@ importers:
   packages/scopes-saas:
     devDependencies:
       '@hawkinside_out/workflow-agent':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../core
       tsup:
         specifier: ^8.0.1
@@ -161,7 +161,7 @@ importers:
   packages/vscode-extension:
     dependencies:
       '@hawkinside_out/workflow-agent':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../core
     devDependencies:
       '@types/node':
