@@ -1,103 +1,404 @@
-# @workflow/agent
+# Workflow Agent 🚀
 
-> A self-evolving workflow management system for AI agent development
+> A self-evolving workflow management system for AI-friendly development
 
-[![npm version](https://badge.fury.io/js/@workflow%2Fagent.svg)](https://www.npmjs.com/package/@workflow/agent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![VS Code Extension](https://img.shields.io/visual-studio-marketplace/v/workflow-agent.workflow-agent)](https://marketplace.visualstudio.com/items?itemName=workflow-agent.workflow-agent)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue.svg)](https://www.typescriptlang.org/)
+[![Node](https://img.shields.io/badge/Node-%3E%3D18-green.svg)](https://nodejs.org/)
 
-**@workflow/agent** is a standalone, framework-agnostic tool that brings structure, consistency, and AI-powered automation to your development workflow. Install it in ANY project (Next.js, React, Vue, Rails, Django, Go, etc.) to enforce branch naming conventions, scope-based commits, and automated improvement suggestions.
+**Workflow Agent** is a portable, framework-agnostic tool that brings structure and consistency to your development workflow. Born from real-world needs at [ProjectHub](https://github.com/hawkinsideOut/projecthub), it enforces branch naming conventions, validates commit messages, and includes a self-improvement system that learns from community feedback.
+
+**🎯 Perfect for:**
+- AI agent development with strict workflow requirements
+- Teams maintaining multiple repositories
+- Open source projects enforcing contribution guidelines
+- Any project needing consistent branch/commit patterns
+
+---
 
 ## ✨ Features
 
-- 🎯 **Scope-based workflow** - Organize commits, branches, and PRs with customizable scopes
-- 🤖 **AI-powered suggestions** - Proactive recommendations to improve your workflow
-- 🔄 **Self-improving** - Learn from usage patterns and automatically suggest optimizations
-- 🌐 **Framework agnostic** - Works with any tech stack or project structure
-- 🛠️ **IDE integrations** - VS Code, JetBrains IDEs, and Vim/Neovim support
-- 👥 **Team sync** - Keep workflow configurations synchronized across teams
-- 📊 **Analytics** - Track adoption and improvement metrics (opt-in)
-- 🌍 **Multilingual** - Full support for ES, FR, DE, JP, ZH-CN
-- 📦 **Preset libraries** - Ready-to-use scope configurations for SaaS, APIs, libraries, e-commerce, CMS
+### Core Functionality
+- 🎯 **Scope-based workflow** - Organize work with preset or custom scopes
+- ✅ **Branch validation** - `<type>/<scope>/<description>` format enforcement
+- 📝 **Commit validation** - Conventional commits: `type(scope): description`
+- 🔍 **Smart suggestions** - Did-you-mean corrections for typos
+- 🎨 **Framework detection** - Auto-detects Next.js, Vite, Remix, Astro, SvelteKit
+- 📦 **5 preset libraries** - SaaS (17), Library (10), API (13), E-commerce (12), CMS (13)
 
-## 🚀 Quick Start
+### Self-Improvement System
+- 💡 **Community suggestions** - Submit improvement ideas via CLI
+- 🛡️ **Content moderation** - Spam filtering, rate limiting, trust scores
+- 👥 **Trust scoring** - Earn reputation through quality contributions
+- 📊 **Voting system** - Community upvote/downvote suggestions
+- 🔄 **Automatic integration** - Approved suggestions go into future releases
 
-Install workflow-agent in any project in 3 commands:
+### Developer Experience
+- 🚀 **Interactive CLI** - Beautiful prompts with @clack/prompts
+- 🤖 **Non-interactive mode** - CI/CD friendly with `--preset --name --yes`
+- 📋 **Template system** - Generate customized project guidelines
+- 🔧 **Health checks** - `workflow doctor` for optimization suggestions
+
+---
+
+## 🚀 Installation
+
+### From Source (Current)
 
 ```bash
-# 1. Install the CLI
-npm install -D @workflow/agent
+# Clone the repository
+git clone https://github.com/workflow-agent/workflow-agent.git
+cd workflow-agent
 
-# 2. Initialize workflow in your project (auto-detects patterns)
-npx @workflow/agent init --migrate
+# Install dependencies
+pnpm install
 
-# 3. Start using validated branches and commits
-npx @workflow/agent validate branch
+# Build all packages
+pnpm build
+
+# Use the CLI
+node packages/core/dist/cli/index.js --help
 ```
 
-## 📦 Tech Stack Agnostic
-
-Works with **any** framework or language:
-
-| Framework/Language | Adapter | Status |
-|--------------------|---------|--------|
-| Next.js (App Router) | `nextjs-app-router` | ✅ |
-| Next.js (Pages) | `nextjs-pages` | ✅ |
-| Vite + React | `vite-react` | ✅ |
-| Remix | `remix` | ✅ |
-| Astro | `astro` | ✅ |
-| SvelteKit | `sveltekit` | ✅ |
-| Nuxt | `nuxt` | ✅ |
-| Ruby on Rails | `rails` | ✅ |
-| Django | `django` | ✅ |
-| Laravel | `laravel` | ✅ |
-| Go (std layout) | `go-standard` | ✅ |
-| Generic | `generic` | ✅ |
-
-## 🎨 IDE Support
-
-| IDE | Extension | Status |
-|-----|-----------|--------|
-| VS Code | [Workflow Agent](https://marketplace.visualstudio.com/items?itemName=workflow-agent.workflow-agent) | ✅ |
-| JetBrains IDEs | [Workflow Agent](https://plugins.jetbrains.com/plugin/workflow-agent) | ✅ |
-| Vim/Neovim | [workflow-agent.nvim](https://github.com/workflow-agent/workflow-agent.nvim) | ✅ |
-
-## 🔄 Self-Improvement System
-
-Workflow Agent learns from your usage and **automatically suggests improvements**:
+### Coming Soon: npm Package
 
 ```bash
-# Submit improvement suggestions
-workflow suggest "Add alias for commonly mistyped scope"
+# Install globally
+npm install -g @workflow/agent
 
-# View pending suggestions
-workflow suggestions list
+# Or as dev dependency
+npm install -D @workflow/agent
+```
 
-# Apply suggested improvements
-workflow suggestions apply <id>
+---
 
-# Run health check with optimization suggestions
+## 📖 Usage
+
+### Initialize a Project
+
+#### Interactive Mode
+```bash
+workflow init
+```
+
+Prompts you to:
+1. Enter project name
+2. Choose a preset (SaaS, Library, API, E-commerce, CMS, Custom)
+3. Generate guidelines (optional)
+
+#### Non-Interactive Mode
+```bash
+# Perfect for CI/CD or automation
+workflow init --preset library --name my-project --yes
+```
+
+### Validate Your Work
+
+```bash
+# Validate current branch name
+workflow validate branch
+
+# Validate specific branch
+workflow validate branch "feature/auth/add-login"
+
+# Validate commit message
+workflow validate commit "feat(auth): add OAuth support"
+
+# Validate PR title
+workflow validate pr "fix(api): handle rate limiting"
+```
+
+**Expected formats:**
+- **Branch:** `<type>/<scope>/<description>`
+  - Types: `feature`, `bugfix`, `hotfix`, `chore`, `refactor`, `docs`, `test`
+  - Example: `feature/auth/implement-2fa`
+
+- **Commit:** `<type>(<scope>): <description>`
+  - Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `perf`, `style`, `ci`, `build`
+  - Example: `feat(auth): implement 2FA with TOTP`
+
+### Submit Improvements
+
+```bash
+# Submit a suggestion
+workflow suggest "Add support for GitLab repositories" \
+  --category feature \
+  --author "your-username"
+
+# Suggestions are moderated and stored in .workflow/improvements/
+```
+
+**Moderation Rules:**
+- 5 suggestions per day per user
+- 10-1000 characters
+- Spam filtered
+- Trust score affects approval speed
+
+### Check Project Health
+
+```bash
 workflow doctor
 ```
 
-Every improvement is tracked, prioritized by community voting, and automatically integrated in future releases.
+Analyzes your project for:
+- Configuration issues
+- Optimization opportunities
+- Best practice violations
 
-## 📚 Documentation
+---
 
-Visit [workflow.dev](https://workflow.dev) for comprehensive documentation:
+## 📦 Preset Libraries
 
-- [Getting Started Guide](https://workflow.dev/docs/quick-start)
-- [Concepts & Best Practices](https://workflow.dev/docs/concepts)
-- [Preset Selection Guide](https://workflow.dev/docs/presets)
-- [IDE Setup Instructions](https://workflow.dev/docs/ide-setup)
-- [Team Workflows](https://workflow.dev/docs/team-workflows)
-- [API Reference](https://workflow.dev/docs/api)
+Choose a preset during `workflow init` or create custom scopes:
 
-## 🤝 Community
+### @workflow/scopes-saas (17 scopes)
+Perfect for SaaS applications:
+```
+auth, tasks, boards, sprints, epics, comments, notifications, 
+settings, admin, ui, api, db, deps, docs, test, perf, infra
+```
 
-- [Discord](https://discord.gg/workflow-agent)
-- [GitHub Discussions](https://github.com/workflow-agent/workflow-agent/discussions)
-- [Marketplace](https://marketplace.workflow.dev) - Share presets, guidelines, and improvements
+### @workflow/scopes-library (10 scopes)
+For npm packages and libraries:
+```
+types, ui, core, build, docs, test, examples, deps, perf, api
+```
+
+### @workflow/scopes-api (13 scopes)
+Backend services and APIs:
+```
+auth, api, endpoints, middleware, validators, db, migrations, 
+models, services, docs, test, infra, deps
+```
+
+### @workflow/scopes-ecommerce (12 scopes)
+E-commerce platforms:
+```
+cart, checkout, products, orders, payments, inventory, auth, 
+admin, analytics, ui, db, deps
+```
+
+### @workflow/scopes-cms (13 scopes)
+Content management systems:
+```
+content, media, pages, editor, templates, collections, auth, 
+workflows, publishing, ui, db, test, deps
+```
+
+---
+
+## 🎨 Framework Adapters
+
+Workflow Agent automatically detects your framework and adapts path structures:
+
+| Framework | Detection | Status |
+|-----------|-----------|--------|
+| Next.js (App Router) | `next.config.ts/js` + `app/` | ✅ |
+| Next.js (Pages) | `next.config.ts/js` + `pages/` | ✅ |
+| Vite + React | `vite.config.ts/js` | ✅ |
+| Remix | `remix.config.js` | ✅ |
+| Astro | `astro.config.mjs` | ✅ |
+| SvelteKit | `svelte.config.js` | ✅ |
+| Generic | (fallback) | ✅ |
+
+**Path structures are customized per framework:**
+```typescript
+// Next.js App Router
+{
+  components: 'app/',
+  lib: 'lib/',
+  hooks: 'hooks/',
+  types: 'types/'
+}
+
+// Vite + React
+{
+  components: 'src/components/',
+  lib: 'src/lib/',
+  hooks: 'src/hooks/',
+  types: 'src/types/'
+}
+```
+
+---
+
+## 🔧 Configuration
+
+Create `workflow.config.json` in your project root:
+
+```json
+{
+  "projectName": "my-awesome-project",
+  "scopes": [
+    { "name": "auth", "description": "Authentication", "emoji": "🔐" },
+    { "name": "ui", "description": "User interface", "emoji": "🎨" },
+    { "name": "api", "description": "API endpoints", "emoji": "🔌" }
+  ],
+  "enforcement": "strict",
+  "language": "en"
+}
+```
+
+**Configuration options:**
+- `projectName` - Your project name
+- `scopes` - Array of scope definitions
+- `enforcement` - `strict` | `advisory` | `learning`
+- `language` - `en` (more coming soon)
+- `adapter` - Override auto-detection
+- `syncRemote` - Team sync endpoint (optional)
+
+---
+
+## 💡 Self-Improvement System
+
+Workflow Agent includes a complete improvement tracking system with moderation:
+
+### Architecture
+
+```
+.workflow/improvements/
+  └── {uuid}.json        # Each suggestion stored as JSON
+```
+
+### Trust Score System
+
+Contributors earn trust through quality contributions:
+
+| Action | Points |
+|--------|--------|
+| Merged PR | +10 |
+| Helpful review | +5 |
+| Quality bug report | +3 |
+| Approved suggestion | +5 |
+| Spam | -50 |
+
+**Trust score affects:**
+- **80+**: Auto-approved suggestions
+- **50-79**: Reviewed within 24h
+- **20-49**: Reviewed within 1 week
+- **<20**: Manual review required
+
+### Moderation Rules
+
+1. **Rate limiting**: 5 suggestions per day
+2. **Length**: 10-1000 characters
+3. **Spam filter**: Banned word list
+4. **Trust threshold**: Low scores require review
+
+---
+
+## 📚 Template System
+
+Generate customized project guidelines:
+
+```bash
+workflow init --preset saas --name my-app
+# Generates guidelines in guidelines/ directory
+```
+
+**Templates include:**
+- `AGENT_EDITING_INSTRUCTIONS.md` - Core agent rules
+- `BRANCHING_STRATEGY.md` - Branch naming conventions
+- `TESTING_STRATEGY.md` - Testing requirements
+- `COMPONENT_LIBRARY.md` - UI patterns
+- `DEPLOYMENT_STRATEGY.md` - Deployment workflows
+- `LIBRARY_INVENTORY.md` - Dependency catalog
+- `SINGLE_SOURCE_OF_TRUTH.md` - Canonical code locations
+- `SELF_IMPROVEMENT_MANDATE.md` - Improvement tracking rules
+
+**Variable substitution:**
+- `{{projectName}}` - Your project name
+- `{{framework}}` - Detected framework
+- `{{scopes}}` - Comma-separated scopes
+- `{{scopeList}}` - Markdown scope list
+- `{{pathStructure}}` - Path structure code block
+- `{{enforcement}}` - Enforcement level
+- `{{year}}` - Current year
+
+---
+
+## 🧪 Testing
+
+Run tests with Vitest:
+
+```bash
+# Run all tests
+pnpm test
+
+# Watch mode
+pnpm test:watch
+
+# Coverage
+pnpm test:coverage
+```
+
+**Current test coverage:**
+- improvement-tracker: 14 tests, 71% pass rate
+- validators: Coming soon
+- adapters: Coming soon
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+**Ways to contribute:**
+1. 🐛 Report bugs
+2. 💡 Submit improvement suggestions via `workflow suggest`
+3. 🔧 Fix issues and submit PRs
+4. 📦 Create preset packages for new project types
+5. 🌍 Add translations
+6. 📚 Improve documentation
+
+**Workflow Agent dogfoods itself!** Follow the same workflow patterns:
+- Branch: `feature/<scope>/<description>`
+- Commit: `type(scope): description`
+- Run tests before pushing
+
+---
+
+## 📄 License
+
+MIT © Workflow Agent Team
+
+See [LICENSE](LICENSE) for details.
+
+---
+
+## 🗺️ Roadmap
+
+### Phase 2 (In Progress)
+- [x] Improvement tracking system
+- [x] Non-interactive mode
+- [x] Unit tests
+- [ ] VS Code extension
+- [ ] Documentation site
+
+### Phase 3 (Planned)
+- [ ] npm publication
+- [ ] GitHub App for PR validation
+- [ ] Migration detection (`--migrate`)
+- [ ] JetBrains plugin
+- [ ] Multilingual i18n
+
+### Phase 4 (Future)
+- [ ] Team sync server
+- [ ] Analytics dashboard
+- [ ] Preset marketplace
+- [ ] AI-powered suggestion prioritization
+
+---
+
+## 🙏 Acknowledgments
+
+- Inspired by [Conventional Commits](https://www.conventionalcommits.org/)
+- Built with [Commander.js](https://github.com/tj/commander.js), [@clack/prompts](https://github.com/natemoo-re/clack), and [Zod](https://github.com/colinhacks/zod)
+- Originally extracted from [ProjectHub](https://github.com/hawkinsideOut/projecthub)
+
+---
+
+**Made with ❤️ by developers, for developers**
 
 ## 📄 License
 
