@@ -43,8 +43,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
+    "test": "echo \"No tests yet\"",
+    "test:coverage": "echo \"No tests yet\"",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"

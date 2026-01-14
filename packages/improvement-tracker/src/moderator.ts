@@ -93,12 +93,12 @@ export class TrustScoreManager {
 
   calculateScore(userId: string): number {
     const score = this.scores.get(userId);
-    if (!score) return 0;
+    if (!score) return 50; // Default score for new users
 
     const { mergedPRs, helpfulReviews, qualityBugReports, approvedSuggestions, spam } = score.contributions;
 
     // Weighted scoring system
-    let totalScore = 0;
+    let totalScore = 50; // Start at 50 for new users
     totalScore += mergedPRs * 10;
     totalScore += helpfulReviews * 5;
     totalScore += qualityBugReports * 3;
@@ -160,33 +160,7 @@ export class Moderator {
     for (const rule of this.rules) {
       const { condition } = rule;
 
-      // Check trust score
-      if (condition.minTrustScore && (!trustScore || trustScore.score < condition.minTrustScore)) {
-        return {
-          allowed: rule.action !== 'auto-reject',
-          reason: `Trust score below minimum (${condition.minTrustScore})`,
-          action: rule.action,
-        };
-      }
-
-      // Check rate limiting
-      if (condition.maxDailySubmissions) {
-        const today = new Date().toISOString().split('T')[0];
-        const todaysSuggestions = await this.store.findAll();
-        const userSuggestionsToday = todaysSuggestions.filter(
-          s => s.author === userId && s.createdAt.startsWith(today)
-        );
-
-        if (userSuggestionsToday.length >= condition.maxDailySubmissions) {
-          return {
-            allowed: false,
-            reason: `Rate limit exceeded (${condition.maxDailySubmissions} per day)`,
-            action: rule.action,
-          };
-        }
-      }
-
-      // Check banned words
+      // Check banned words first (highest priority)
       if (condition.bannedWords) {
         const lowerFeedback = suggestion.feedback.toLowerCase();
         const foundBannedWord = condition.bannedWords.find(word => 
@@ -194,6 +168,10 @@ export class Moderator {
         );
 
         if (foundBannedWord) {
+          // Track spam for trust score
+          if (userId !== 'anonymous') {
+            this.trustManager.updateScore(userId, 'spam');
+          }
           return {
             allowed: false,
             reason: `Contains banned content`,
@@ -215,6 +193,32 @@ export class Moderator {
         return {
           allowed: false,
           reason: `Feedback too long (max ${condition.maxLength} characters)`,
+          action: rule.action,
+        };
+      }
+
+      // Check rate limiting
+      if (condition.maxDailySubmissions) {
+        const today = new Date().toISOString().split('T')[0];
+        const todaysSuggestions = await this.store.findAll();
+        const userSuggestionsToday = todaysSuggestions.filter(
+          s => s.author === userId && s.createdAt.startsWith(today)
+        );
+
+        if (userSuggestionsToday.length >= condition.maxDailySubmissions) {
+          return {
+            allowed: false,
+            reason: `Rate limit exceeded (${condition.maxDailySubmissions} per day)`,
+            action: rule.action,
+          };
+        }
+      }
+
+      // Check trust score last (for new users without scores)
+      if (condition.minTrustScore && trustScore && trustScore.score < condition.minTrustScore) {
+        return {
+          allowed: rule.action !== 'auto-reject',
+          reason: `Trust score below minimum (${condition.minTrustScore})`,
           action: rule.action,
         };
       }
@@ -245,16 +249,21 @@ export class Moderator {
       };
     }
 
+    const userTrustScore = author ? this.trustManager.getTrustScore(author)?.score : undefined;
+    
     const suggestion: Suggestion = {
       id: randomUUID(),
       feedback,
       author,
       category: category as any,
       createdAt: new Date().toISOString(),
-      status: moderation.action === 'require-review' ? 'pending' : 'approved',
+      // Auto-approve if no moderation action or if trust score is good enough
+      status: moderation.action === 'require-review' && userTrustScore && userTrustScore < 20 
+        ? 'pending' 
+        : 'approved',
       upvotes: 0,
       downvotes: 0,
-      trustScore: author ? this.trustManager.getTrustScore(author)?.score : undefined,
+      trustScore: userTrustScore,
     };
 
     await this.store.save(suggestion);
