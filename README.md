@@ -129,7 +129,15 @@ npm run workflow:init
 
 #### Interactive Mode
 ```bash
+# If installed globally:
 workflow-agent init
+
+# If installed locally:
+pnpm workflow-agent init
+# or
+npx workflow-agent init
+# or (after running setup):
+pnpm run workflow:init
 ```
 
 Prompts you to:
@@ -140,23 +148,26 @@ Prompts you to:
 #### Non-Interactive Mode
 ```bash
 # Perfect for CI/CD or automation
+
+# Global:
 workflow-agent init --preset library --name my-project --yes
+
+# Local:
+pnpm workflow-agent init --preset library --name my-project --yes
 ```
 
 ### Validate Your Work
 
 ```bash
-# Validate current branch name
+# Global installation:
 workflow-agent validate branch
-
-# Validate specific branch
 workflow-agent validate branch "feature/auth/add-login"
-
-# Validate commit message
 workflow-agent validate commit "feat(auth): add OAuth support"
 
-# Validate PR title
-workflow-agent validate pr "fix(api): handle rate limiting"
+# Local installation:
+pnpm workflow-agent validate branch
+pnpm run workflow:validate branch
+npx workflow-agent validate commit "feat(auth): add OAuth support"
 ```
 
 **Expected formats:**
@@ -171,10 +182,17 @@ workflow-agent validate pr "fix(api): handle rate limiting"
 ### Submit Improvements
 
 ```bash
-# Submit a suggestion
+# Global:
 workflow-agent suggest "Add support for GitLab repositories" \
   --category feature \
   --author "your-username"
+
+# Local:
+pnpm workflow-agent suggest "Add support for GitLab repositories" \
+  --category feature \
+  --author "your-username"
+# or
+pnpm run workflow:suggest "Add support for GitLab repositories"
 
 # Suggestions are moderated and stored in .workflow/improvements/
 ```
