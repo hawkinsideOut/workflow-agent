@@ -80,11 +80,13 @@ pnpm add -g @hawkinside_out/workflow-agent --ignore-scripts
 
 ```bash
 # npm
-npm install -D @hawkinside_out/workflow-agent --ignore-scripts
+npm install -D @hawkinside_out/workflow-agent
 
 # pnpm
-pnpm add -D @hawkinside_out/workflow-agent --ignore-scripts
+pnpm add -D @hawkinside_out/workflow-agent
 ```
+
+The postinstall script will automatically add these scripts to your `package.json`:
 
 When installed locally, run commands via:
 
