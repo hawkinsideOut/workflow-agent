@@ -1,52 +1,49 @@
 import chalk from 'chalk';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import * as p from '@clack/prompts';
+import { createTracker } from '@workflow/improvement-tracker';
 
-export async function suggestCommand(feedback: string) {
+export async function suggestCommand(feedback: string, options: { author?: string; category?: string } = {}) {
   console.log(chalk.cyan('💡 Submitting improvement suggestion...\n'));
 
-  const cwd = process.cwd();
-  const improvementsDir = join(cwd, '.workflow', 'improvements');
+  const tracker = createTracker();
 
-  // Create improvements directory if it doesn't exist
-  if (!existsSync(improvementsDir)) {
-    await mkdir(improvementsDir, { recursive: true });
+  // Optionally get category if not provided
+  let category = options.category;
+  if (!category) {
+    const categoryChoice = await p.select({
+      message: 'What type of improvement is this?',
+      options: [
+        { value: 'feature', label: '✨ Feature Request' },
+        { value: 'bug', label: '🐛 Bug Report' },
+        { value: 'documentation', label: '📚 Documentation' },
+        { value: 'performance', label: '⚡ Performance' },
+        { value: 'other', label: '💡 Other' },
+      ],
+    });
+
+    if (p.isCancel(categoryChoice)) {
+      p.cancel('Suggestion cancelled');
+      process.exit(0);
+    }
+
+    category = categoryChoice as string;
   }
 
-  // Generate suggestion file
-  const timestamp = new Date().toISOString().split('T')[0];
-  const id = Date.now().toString(36);
-  const filename = `${timestamp}-${id}.md`;
-  const filepath = join(improvementsDir, filename);
+  // Submit suggestion
+  const result = await tracker.submit(feedback, options.author, category);
 
-  const content = `# Improvement Suggestion
-
-**ID**: ${id}
-**Date**: ${new Date().toISOString()}
-**Status**: proposed
-**Category**: _To be categorized_
-**Priority**: _To be prioritized_
-
-## Feedback
-
-${feedback}
-
-## Implementation Plan
-
-_To be filled by maintainers_
-
----
-
-*This suggestion will be reviewed and may be incorporated into future workflow-agent releases.*
-`;
-
-  await writeFile(filepath, content);
+  if (!result.success) {
+    console.log(chalk.red('✗ Suggestion rejected'));
+    console.log(chalk.dim(`  Reason: ${result.error}`));
+    process.exit(1);
+  }
 
   console.log(chalk.green('✓ Suggestion submitted successfully!'));
-  console.log(chalk.dim(`  Saved to: .workflow/improvements/${filename}`));
+  console.log(chalk.dim(`  ID: ${result.suggestion?.id}`));
+  console.log(chalk.dim(`  Status: ${result.suggestion?.status}`));
+  console.log(chalk.dim(`  Category: ${result.suggestion?.category}`));
   console.log(chalk.dim('\nYour suggestion will be:'));
   console.log(chalk.dim('  1. Reviewed by the community'));
   console.log(chalk.dim('  2. Prioritized based on impact'));
-  console.log(chalk.dim('  3. Integrated into future releases'));
+  console.log(chalk.dim('  3. Incorporated into future releases if approved\n'));
 }

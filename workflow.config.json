@@ -1,57 +1,26 @@
 {
-  "projectName": "workflow-agent",
+  "projectName": "test-project",
   "scopes": [
     {
-      "name": "cli",
-      "description": "Command-line interface",
-      "emoji": "🔧"
+      "name": "feat",
+      "description": "New features",
+      "emoji": "✨"
     },
     {
-      "name": "validators",
-      "description": "Validation logic",
-      "emoji": "✅"
-    },
-    {
-      "name": "presets",
-      "description": "Scope preset packages",
-      "emoji": "📦"
-    },
-    {
-      "name": "templates",
-      "description": "Guideline templates",
-      "emoji": "📝"
-    },
-    {
-      "name": "adapters",
-      "description": "Framework adapters",
-      "emoji": "🔌"
-    },
-    {
-      "name": "core",
-      "description": "Core functionality",
-      "emoji": "⚙️"
+      "name": "fix",
+      "description": "Bug fixes",
+      "emoji": "🐛"
     },
     {
       "name": "docs",
       "description": "Documentation",
       "emoji": "📚"
-    },
-    {
-      "name": "test",
-      "description": "Testing",
-      "emoji": "🧪"
-    },
-    {
-      "name": "build",
-      "description": "Build configuration",
-      "emoji": "🏗️"
-    },
-    {
-      "name": "deps",
-      "description": "Dependencies",
-      "emoji": "📦"
     }
   ],
-  "enforcement": "strict",
+  "enforcement": {
+    "level": "strict",
+    "preCommit": true,
+    "prePush": true
+  },
   "language": "en"
 }

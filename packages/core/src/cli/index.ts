@@ -19,6 +19,9 @@ program
   .description('Initialize workflow in current project')
   .option('--migrate', 'Auto-detect existing patterns and migrate')
   .option('--workspace', 'Initialize for multiple repositories')
+  .option('--preset <preset>', 'Preset to use (saas, library, api, ecommerce, cms, custom)')
+  .option('--name <name>', 'Project name')
+  .option('-y, --yes', 'Skip confirmation prompts')
   .action(initCommand);
 
 program
@@ -38,9 +41,11 @@ program
   .action(configCommand);
 
 program
-  .command('suggest <feedback>')
+  .command('suggest')
   .description('Submit an improvement suggestion')
   .argument('<feedback>', 'Your improvement suggestion')
+  .option('--author <author>', 'Your name or username')
+  .option('--category <category>', 'Category: feature, bug, documentation, performance, other')
   .action(suggestCommand);
 
 program

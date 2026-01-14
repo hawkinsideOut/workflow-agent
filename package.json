@@ -2,6 +2,7 @@
   "name": "@workflow/agent-monorepo",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "A self-evolving workflow management system for AI agent development",
   "keywords": [
     "workflow",

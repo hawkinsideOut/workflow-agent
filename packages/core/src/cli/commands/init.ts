@@ -10,13 +10,14 @@ import { buildTemplateContext, renderTemplateDirectory, validateTemplateDirector
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export async function initCommand(options: { migrate?: boolean; workspace?: boolean }) {
+export async function initCommand(options: { migrate?: boolean; workspace?: boolean; preset?: string; name?: string; yes?: boolean }) {
   console.log(chalk.bold.cyan('\n🚀 Workflow Agent Initialization\n'));
 
   const cwd = process.cwd();
+  const isNonInteractive = !!(options.preset && options.name);
 
   // Check if already initialized
-  if (hasConfig(cwd)) {
+  if (hasConfig(cwd) && !options.yes && !isNonInteractive) {
     const shouldContinue = await p.confirm({
       message: 'Workflow Agent is already configured. Continue and overwrite?',
       initialValue: false,
@@ -29,19 +30,19 @@ export async function initCommand(options: { migrate?: boolean; workspace?: bool
   }
 
   // Get project name
-  const projectName = await p.text({
+  const projectName = isNonInteractive ? options.name : await p.text({
     message: 'What is your project name?',
     placeholder: 'my-awesome-project',
     defaultValue: process.cwd().split('/').pop() || 'my-project',
   });
 
-  if (p.isCancel(projectName)) {
+  if (!isNonInteractive && p.isCancel(projectName)) {
     p.cancel('Initialization cancelled');
     process.exit(0);
   }
 
   // Select preset
-  const preset = await p.select({
+  const preset = isNonInteractive ? options.preset : await p.select({
     message: 'Choose a scope preset for your project:',
     options: [
       { value: 'saas', label: '📦 SaaS Application - 17 scopes (auth, tasks, boards, sprints, etc.)' },
@@ -53,7 +54,7 @@ export async function initCommand(options: { migrate?: boolean; workspace?: bool
     ],
   });
 
-  if (p.isCancel(preset)) {
+  if (!isNonInteractive && p.isCancel(preset)) {
     p.cancel('Initialization cancelled');
     process.exit(0);
   }
