@@ -24,10 +24,10 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "@hawkinside_out/workflow-agent": "^1.0.0"
+    "workflow-agent": "^1.0.0"
   },
   "devDependencies": {
-    "@hawkinside_out/workflow-agent": "^1.0.0",
+    "workflow-agent": "^1.0.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3"
   },
