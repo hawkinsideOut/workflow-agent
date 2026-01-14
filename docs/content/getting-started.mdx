@@ -11,12 +11,46 @@ Workflow Agent is a self-evolving workflow management system that helps teams ma
 
 ### CLI
 
-Install the CLI globally using npm or pnpm:
+#### Global Installation
+
+Install the CLI globally to use `workflow-agent` from anywhere:
 
 ```bash
+# npm
 npm install -g @hawkinside_out/workflow-agent --ignore-scripts
-# or
-pnpm add -g @hawkinside_out/workflow-agent
+
+# pnpm
+pnpm add -g @hawkinside_out/workflow-agent --ignore-scripts
+```
+
+#### Local Installation (Per-Project)
+
+Install as a dev dependency in your project:
+
+```bash
+# npm
+npm install -D @hawkinside_out/workflow-agent --ignore-scripts
+
+# pnpm
+pnpm add -D @hawkinside_out/workflow-agent --ignore-scripts
+```
+
+When installed locally, use it via:
+
+```bash
+# Run directly with pnpm
+pnpm workflow-agent init
+
+# Or via npx
+npx workflow-agent init
+
+# Or add to package.json scripts:
+# "scripts": {
+#   "workflow:init": "workflow-agent init",
+#   "workflow:validate": "workflow-agent validate",
+#   "workflow:doctor": "workflow-agent doctor"
+# }
+pnpm run workflow:init
 ```
 
 ### VS Code Extension
@@ -33,7 +67,13 @@ pnpm add -g @hawkinside_out/workflow-agent
 Navigate to your project directory and run:
 
 ```bash
-workflow init
+# If installed globally:
+workflow-agent init
+
+# If installed locally:
+pnpm workflow-agent init
+# or
+npx workflow-agent init
 ```
 
 This will:

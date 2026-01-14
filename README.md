@@ -64,14 +64,45 @@ pnpm build
 node packages/core/dist/cli/index.js --help
 ```
 
-### Coming Soon: npm Package
+### From npm
+
+#### Global Installation
 
 ```bash
-# Install globally
-npm install -g @workflow/agent
+# npm
+npm install -g @hawkinside_out/workflow-agent --ignore-scripts
 
-# Or as dev dependency
-npm install -D @workflow/agent
+# pnpm
+pnpm add -g @hawkinside_out/workflow-agent --ignore-scripts
+```
+
+#### Local Installation (Per-Project)
+
+```bash
+# npm
+npm install -D @hawkinside_out/workflow-agent --ignore-scripts
+
+# pnpm
+pnpm add -D @hawkinside_out/workflow-agent --ignore-scripts
+```
+
+When installed locally, run commands via:
+
+```bash
+# pnpm
+pnpm workflow-agent init
+
+# npx
+npx workflow-agent init
+
+# package.json scripts
+{
+  "scripts": {
+    "workflow:init": "workflow-agent init",
+    "workflow:validate": "workflow-agent validate branch feature/add-auth",
+    "workflow:doctor": "workflow-agent doctor"
+  }
+}
 ```
 
 ---
