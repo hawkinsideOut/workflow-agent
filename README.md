@@ -2,9 +2,13 @@
 
 > A self-evolving workflow management system for AI-friendly development
 
+[![npm version](https://img.shields.io/npm/v/@workflow/agent.svg)](https://www.npmjs.com/package/@workflow/agent)
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/workflow-agent.workflow-agent.svg)](https://marketplace.visualstudio.com/items?itemName=workflow-agent.workflow-agent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue.svg)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-%3E%3D18-green.svg)](https://nodejs.org/)
+[![CI](https://github.com/workflow-agent/workflow-agent/workflows/CI/badge.svg)](https://github.com/workflow-agent/workflow-agent/actions)
+[![pnpm](https://img.shields.io/badge/maintained%20with-pnpm-cc00ff.svg)](https://pnpm.io/)
 
 **Workflow Agent** is a portable, framework-agnostic tool that brings structure and consistency to your development workflow. Born from real-world needs at [ProjectHub](https://github.com/hawkinsideOut/projecthub), it enforces branch naming conventions, validates commit messages, and includes a self-improvement system that learns from community feedback.
 

@@ -32,7 +32,13 @@
     "dev": "pnpm -r --parallel run dev",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "pnpm build && changeset publish"
+    "release": "pnpm build && changeset publish",
+    "prepublish": "pnpm build && pnpm test",
+    "publish:core": "cd packages/core && npm publish --access public",
+    "publish:tracker": "cd packages/improvement-tracker && npm publish --access public",
+    "publish:presets": "pnpm -r --filter \"./packages/scopes-*\" exec npm publish --access public",
+    "publish:all": "pnpm prepublish && pnpm publish:core && pnpm publish:tracker && pnpm publish:presets",
+    "pack:vscode": "cd packages/vscode-extension && vsce package"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",

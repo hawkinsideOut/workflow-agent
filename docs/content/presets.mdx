@@ -1,0 +1,154 @@
+---
+title: Presets
+description: Pre-configured workflow presets for different project types
+---
+
+# Presets
+
+Workflow Agent includes 5 pre-configured presets optimized for different project types.
+
+## SaaS Application
+
+Perfect for full-stack web applications with frontend and backend components.
+
+### Scopes
+
+- `auth` - Authentication and authorization
+- `api` - API endpoints and middleware
+- `ui` - User interface components
+- `db` - Database and migrations
+- `deploy` - Deployment and infrastructure
+- `billing` - Payment and subscription
+- `admin` - Admin panel features
+- `dashboard` - User dashboard
+- `settings` - User and app settings
+- `notifications` - Email, push, and in-app notifications
+
+### Use Cases
+
+- Web applications
+- SaaS products
+- Multi-tenant platforms
+
+```bash
+workflow init --preset saas
+```
+
+## Library
+
+Optimized for npm packages, SDKs, and reusable libraries.
+
+### Scopes
+
+- `core` - Core functionality
+- `types` - TypeScript definitions
+- `utils` - Utility functions
+- `docs` - Documentation
+- `build` - Build configuration
+- `test` - Test utilities
+- `examples` - Usage examples
+- `exports` - Package exports
+
+### Use Cases
+
+- npm packages
+- SDKs
+- Component libraries
+- Utility libraries
+
+```bash
+workflow init --preset library
+```
+
+## API Service
+
+Designed for REST APIs, GraphQL servers, and backend services.
+
+### Scopes
+
+- `routes` - API routes and endpoints
+- `middleware` - Request/response middleware
+- `validation` - Input validation
+- `auth` - Authentication
+- `db` - Database layer
+- `models` - Data models
+- `services` - Business logic
+- `errors` - Error handling
+- `cache` - Caching layer
+- `queues` - Background jobs
+
+### Use Cases
+
+- REST APIs
+- GraphQL servers
+- Microservices
+- Backend services
+
+```bash
+workflow init --preset api
+```
+
+## E-commerce
+
+Tailored for online stores and e-commerce platforms.
+
+### Scopes
+
+- `products` - Product catalog
+- `cart` - Shopping cart
+- `checkout` - Checkout process
+- `payments` - Payment processing
+- `orders` - Order management
+- `shipping` - Shipping and fulfillment
+- `inventory` - Stock management
+- `customers` - Customer accounts
+- `reviews` - Product reviews
+- `analytics` - Sales analytics
+
+### Use Cases
+
+- Online stores
+- Marketplaces
+- Subscription e-commerce
+
+```bash
+workflow init --preset ecommerce
+```
+
+## CMS
+
+Optimized for content management systems and publishing platforms.
+
+### Scopes
+
+- `content` - Content types and entries
+- `editor` - Content editor
+- `media` - Media library
+- `seo` - SEO optimization
+- `publishing` - Publishing workflow
+- `collections` - Content collections
+- `fields` - Custom fields
+- `preview` - Content preview
+- `search` - Content search
+- `workflows` - Editorial workflows
+
+### Use Cases
+
+- Content management systems
+- Blogging platforms
+- Documentation sites
+
+```bash
+workflow init --preset cms
+```
+
+## Custom Configuration
+
+Don't see a preset that fits? Create a custom configuration:
+
+```bash
+workflow init
+# Select "Custom" when prompted
+```
+
+Then define your own scopes in `workflow.config.json`.

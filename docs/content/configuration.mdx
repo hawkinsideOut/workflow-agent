@@ -1,0 +1,167 @@
+---
+title: Configuration
+description: Configure Workflow Agent for your project
+---
+
+# Configuration
+
+Workflow Agent is configured through `workflow.config.json` in your project root.
+
+## Basic Configuration
+
+```json
+{
+  "name": "my-project",
+  "type": "saas",
+  "scopes": ["auth", "api", "ui"],
+  "enforcement": "strict"
+}
+```
+
+## Configuration Options
+
+### `name` (required)
+
+Project name used in generated documentation.
+
+```json
+{
+  "name": "my-awesome-project"
+}
+```
+
+### `type` (required)
+
+Project type. Determines which guidelines are generated.
+
+Options: `saas`, `library`, `api`, `ecommerce`, `cms`, `custom`
+
+```json
+{
+  "type": "library"
+}
+```
+
+### `scopes` (required)
+
+Array of valid scopes for commit messages and branches.
+
+```json
+{
+  "scopes": ["core", "utils", "types", "docs"]
+}
+```
+
+### `enforcement` (optional)
+
+How strictly rules are enforced.
+
+Options: `strict`, `warning`, `off`
+
+```json
+{
+  "enforcement": "strict"
+}
+```
+
+**Modes:**
+- `strict` - Blocks commits/pushes that violate rules
+- `warning` - Shows warnings but allows commits
+- `off` - Disables enforcement (validation only)
+
+### `framework` (optional)
+
+Framework adapter to use. Auto-detected if not specified.
+
+Options: `nextjs`, `vite`, `remix`, `astro`, `sveltekit`
+
+```json
+{
+  "framework": "nextjs"
+}
+```
+
+## Example Configurations
+
+### SaaS Application
+
+```json
+{
+  "name": "acme-saas",
+  "type": "saas",
+  "framework": "nextjs",
+  "scopes": [
+    "auth",
+    "api",
+    "ui",
+    "db",
+    "billing",
+    "admin"
+  ],
+  "enforcement": "strict"
+}
+```
+
+### Library
+
+```json
+{
+  "name": "awesome-lib",
+  "type": "library",
+  "scopes": [
+    "core",
+    "types",
+    "utils",
+    "docs"
+  ],
+  "enforcement": "warning"
+}
+```
+
+### API Service
+
+```json
+{
+  "name": "api-service",
+  "type": "api",
+  "framework": "remix",
+  "scopes": [
+    "routes",
+    "middleware",
+    "auth",
+    "db",
+    "services"
+  ],
+  "enforcement": "strict"
+}
+```
+
+## VS Code Settings
+
+Configure the VS Code extension:
+
+```json
+{
+  "workflowAgent.enabled": true,
+  "workflowAgent.validateOnType": true,
+  "workflowAgent.showStatusBar": true,
+  "workflowAgent.autoSuggest": false,
+  "workflowAgent.strictMode": false
+}
+```
+
+## Git Hooks
+
+Add Workflow Agent to your git hooks:
+
+```bash
+# .husky/commit-msg
+#!/bin/sh
+workflow validate-commit "$1"
+```
+
+```bash
+# .husky/pre-push
+#!/bin/sh
+workflow validate-branch
+```

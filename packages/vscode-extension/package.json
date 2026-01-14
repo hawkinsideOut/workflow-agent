@@ -1,0 +1,130 @@
+{
+  "name": "workflow-agent",
+  "displayName": "Workflow Agent",
+  "description": "Self-evolving workflow management with real-time validation",
+  "version": "0.1.0",
+  "publisher": "workflow-agent",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Linters"
+  ],
+  "keywords": [
+    "workflow",
+    "git",
+    "conventional-commits",
+    "branch-validation",
+    "scopes"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "workflow-agent.init",
+        "title": "Workflow: Initialize Project"
+      },
+      {
+        "command": "workflow-agent.validate",
+        "title": "Workflow: Validate Current Branch"
+      },
+      {
+        "command": "workflow-agent.suggest",
+        "title": "Workflow: Submit Improvement Suggestion"
+      },
+      {
+        "command": "workflow-agent.doctor",
+        "title": "Workflow: Run Health Check"
+      },
+      {
+        "command": "workflow-agent.showConfig",
+        "title": "Workflow: Show Configuration"
+      }
+    ],
+    "configuration": {
+      "title": "Workflow Agent",
+      "properties": {
+        "workflow-agent.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable Workflow Agent"
+        },
+        "workflow-agent.validateOnType": {
+          "type": "boolean",
+          "default": true,
+          "description": "Validate branch name and commit messages as you type"
+        },
+        "workflow-agent.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show workflow status in status bar"
+        },
+        "workflow-agent.autoSuggest": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show IntelliSense suggestions for scopes"
+        },
+        "workflow-agent.strictMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Block commits that don't follow workflow patterns"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "workflow-agent.validate",
+        "key": "ctrl+shift+w",
+        "mac": "cmd+shift+w",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "workflow-agent.init",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "workflow-agent.validate",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "workflow-agent.suggest",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "workflow-agent.doctor",
+          "when": "workspaceFolderCount > 0"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm build",
+    "compile": "tsup --watch",
+    "build": "tsup",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "dependencies": {
+    "@workflow/agent": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/workflow-agent/workflow-agent.git",
+    "directory": "packages/vscode-extension"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,148 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build packages
+        run: pnpm build
+      
+      - name: Run tests
+        run: pnpm test
+
+  publish-npm:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build packages
+        run: pnpm build
+      
+      - name: Publish to npm
+        run: pnpm publish:all
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-vscode:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build extension
+        run: |
+          cd packages/vscode-extension
+          pnpm build
+      
+      - name: Package extension
+        run: pnpm pack:vscode
+      
+      - name: Publish to VS Code Marketplace
+        run: |
+          cd packages/vscode-extension
+          npx vsce publish -p ${{ secrets.VSCE_TOKEN }}
+
+  create-release:
+    needs: [publish-npm, publish-vscode]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build extension
+        run: pnpm pack:vscode
+      
+      - name: Extract changelog
+        id: changelog
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          CHANGELOG=$(sed -n "/## \[${VERSION}\]/,/## \[/p" CHANGELOG.md | sed '$d')
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Workflow Agent v${{ steps.get_version.outputs.VERSION }}
+          body: ${{ steps.changelog.outputs.CHANGELOG }}
+          draft: false
+          prerelease: false
+          files: |
+            packages/vscode-extension/*.vsix
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

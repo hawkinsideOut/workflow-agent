@@ -1,0 +1,78 @@
+---
+title: Getting Started
+description: Get started with Workflow Agent in minutes
+---
+
+# Getting Started
+
+Workflow Agent is a self-evolving workflow management system that helps teams maintain consistent development practices.
+
+## Installation
+
+### CLI
+
+Install the CLI globally using npm or pnpm:
+
+```bash
+npm install -g @workflow/agent
+# or
+pnpm add -g @workflow/agent
+```
+
+### VS Code Extension
+
+1. Open VS Code
+2. Go to Extensions (Ctrl+Shift+X)
+3. Search for "Workflow Agent"
+4. Click Install
+
+## Quick Start
+
+### 1. Initialize Your Project
+
+Navigate to your project directory and run:
+
+```bash
+workflow init
+```
+
+This will:
+- Detect your project type (SaaS, Library, API, etc.)
+- Generate appropriate scopes
+- Create `workflow.config.json`
+- Set up guidelines in `.github/`
+
+### 2. Choose a Preset
+
+Select from pre-configured presets:
+
+- **SaaS Application** - For web applications with frontend and backend
+- **Library** - For npm packages and libraries
+- **API Service** - For REST/GraphQL APIs
+- **E-commerce** - For online stores
+- **CMS** - For content management systems
+
+Or create a custom configuration.
+
+### 3. Start Using
+
+Workflow Agent will now:
+- ✅ Validate commit messages
+- ✅ Enforce branch naming conventions
+- ✅ Suggest scope improvements
+- ✅ Generate development guidelines
+
+## Non-Interactive Mode
+
+For CI/CD or scripting, use flags:
+
+```bash
+workflow init --preset library --name my-package --yes
+```
+
+## Next Steps
+
+- [Configure Your Workflow](/configuration)
+- [Learn About Presets](/presets)
+- [Explore Framework Adapters](/adapters)
+- [Understand the Improvement System](/improvements)

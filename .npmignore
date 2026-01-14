@@ -1,0 +1,56 @@
+# Development files
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+__tests__/
+test/
+tests/
+coverage/
+.nyc_output/
+
+# Source files (we publish dist/)
+src/
+*.ts
+!*.d.ts
+
+# Configuration
+tsconfig.json
+tsconfig.*.json
+tsup.config.ts
+vitest.config.ts
+.prettierrc
+.prettierignore
+.editorconfig
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+circle.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.*.local
+node_modules/
