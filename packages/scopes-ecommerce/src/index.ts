@@ -1,4 +1,4 @@
-import type { Scope } from '@workflow/agent/config';
+import type { Scope } from '@hawkinside_out/workflow-agent/config';
 
 export const scopes: Scope[] = [
   {

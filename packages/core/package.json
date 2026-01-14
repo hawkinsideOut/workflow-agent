@@ -1,5 +1,5 @@
 {
-  "name": "@workflow/agent",
+  "name": "@hawkinside_out/workflow-agent",
   "version": "1.0.0",
   "description": "A self-evolving workflow management system for AI agent development",
   "keywords": [
@@ -34,7 +34,7 @@
     }
   },
   "bin": {
-    "workflow": "./dist/cli/index.js"
+    "workflow-agent": "./dist/cli/index.js"
   },
   "files": [
     "dist",
@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
-    "@workflow/improvement-tracker": "workspace:*",
+    "@hawkinside_out/workflow-improvement-tracker": "workspace:*",
     "chalk": "^5.3.0",
     "commander": "^11.1.0",
     "cosmiconfig": "^9.0.0",

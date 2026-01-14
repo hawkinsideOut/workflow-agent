@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import * as p from '@clack/prompts';
-import { createTracker } from '@workflow/improvement-tracker';
+import { createTracker } from '@hawkinside_out/workflow-improvement-tracker';
 
 export async function suggestCommand(feedback: string, options: { author?: string; category?: string } = {}) {
   console.log(chalk.cyan('💡 Submitting improvement suggestion...\n'));

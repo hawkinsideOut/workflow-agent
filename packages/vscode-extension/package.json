@@ -112,7 +112,7 @@
     "publish": "vsce publish"
   },
   "dependencies": {
-    "@workflow/agent": "workspace:*"
+    "@hawkinside_out/workflow-agent": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.11.5",

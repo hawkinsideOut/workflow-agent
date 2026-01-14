@@ -29,7 +29,7 @@ importers:
       '@clack/prompts':
         specifier: ^0.7.0
         version: 0.7.0
-      '@workflow/improvement-tracker':
+      '@hawkinside_out/workflow-improvement-tracker':
         specifier: workspace:*
         version: link:../improvement-tracker
       chalk:
@@ -100,7 +100,7 @@ importers:
 
   packages/scopes-api:
     devDependencies:
-      '@workflow/agent':
+      '@hawkinside_out/workflow-agent':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -112,7 +112,7 @@ importers:
 
   packages/scopes-cms:
     devDependencies:
-      '@workflow/agent':
+      '@hawkinside_out/workflow-agent':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -124,7 +124,7 @@ importers:
 
   packages/scopes-ecommerce:
     devDependencies:
-      '@workflow/agent':
+      '@hawkinside_out/workflow-agent':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -136,7 +136,7 @@ importers:
 
   packages/scopes-library:
     devDependencies:
-      '@workflow/agent':
+      '@hawkinside_out/workflow-agent':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -148,7 +148,7 @@ importers:
 
   packages/scopes-saas:
     devDependencies:
-      '@workflow/agent':
+      '@hawkinside_out/workflow-agent':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -160,7 +160,7 @@ importers:
 
   packages/vscode-extension:
     dependencies:
-      '@workflow/agent':
+      '@hawkinside_out/workflow-agent':
         specifier: workspace:*
         version: link:../core
     devDependencies:

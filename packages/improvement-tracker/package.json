@@ -1,5 +1,5 @@
 {
-  "name": "@workflow/improvement-tracker",
+  "name": "@hawkinside_out/workflow-improvement-tracker",
   "version": "1.0.0",
   "description": "Improvement suggestion tracking and moderation system",
   "type": "module",
