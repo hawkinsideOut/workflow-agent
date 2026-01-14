@@ -1,5 +1,5 @@
 {
-  "name": "workflow-agent",
+  "name": "workflow-agent-vscode",
   "displayName": "Workflow Agent",
   "description": "Self-evolving workflow management with real-time validation",
   "version": "0.1.0",
