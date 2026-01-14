@@ -1,6 +1,6 @@
 {
   "name": "@hawkinside_out/workflow-scopes-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Preset scope configuration for API and backend services",
   "keywords": ["workflow", "scopes", "api", "backend", "preset"],
   "repository": {
@@ -27,7 +27,7 @@
     "@hawkinside_out/workflow-agent": "^1.0.0"
   },
   "devDependencies": {
-    "@hawkinside_out/workflow-agent": "workspace:*",
+    "@hawkinside_out/workflow-agent": "^1.0.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3"
   },
