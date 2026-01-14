@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-#### Core Package (@workflow/agent)
+#### Core Package (@hawkinside_out/workflow-agent)
 - **CLI Commands**: `init`, `validate`, `suggest`, `doctor`
 - **Non-Interactive Mode**: Support for `--preset`, `--name`, `--yes` flags
 - **Validation Engine**: Branch names and commit messages validation

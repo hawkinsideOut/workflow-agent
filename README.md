@@ -2,7 +2,7 @@
 
 > A self-evolving workflow management system for AI-friendly development
 
-[![npm version](https://img.shields.io/npm/v/@workflow/agent.svg)](https://www.npmjs.com/package/@workflow/agent)
+[![npm version](https://img.shields.io/npm/v/@hawkinside_out/workflow-agent.svg)](https://www.npmjs.com/package/@hawkinside_out/workflow-agent)
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/workflow-agent.workflow-agent.svg)](https://marketplace.visualstudio.com/items?itemName=workflow-agent.workflow-agent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue.svg)](https://www.typescriptlang.org/)
@@ -410,4 +410,4 @@ MIT License - see [LICENSE](./LICENSE) for details.
 
 ## 🌟 Reference Implementation
 
-This tool was extracted from [ProjectHub](https://github.com/hawkinsideOut/projecthub) - a comprehensive SaaS project management application that uses @workflow/agent for its own development.
+This tool was extracted from [ProjectHub](https://github.com/hawkinsideOut/projecthub) - a comprehensive SaaS project management application that uses @hawkinside_out/workflow-agent for its own development.

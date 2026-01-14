@@ -13,7 +13,7 @@
 
 | Package | Version | Status | npm | VS Code |
 |---------|---------|--------|-----|---------|
-| `@workflow/agent` | 1.0.0 | ✅ Ready | Unpublished | - |
+| `@hawkinside_out/workflow-agent` | 1.0.1 | ✅ Published | https://www.npmjs.com/package/@hawkinside_out/workflow-agent | npm install -g @hawkinside_out/workflow-agent |
 | `@workflow/improvement-tracker` | 1.0.0 | ✅ Ready | Unpublished | - |
 | `workflow-agent` (VS Code) | 0.1.0 | ✅ Ready | - | Unpublished |
 
@@ -31,7 +31,7 @@
 
 ## ✅ Completed Features
 
-### Core CLI (@workflow/agent)
+### Core CLI (@hawkinside_out/workflow-agent)
 
 - [x] **init command** - Initialize workflow with presets
 - [x] **validate command** - Validate branches, commits, PRs
@@ -222,14 +222,14 @@ git push origin v1.0.0
 
 1. Verify packages on npm:
    ```bash
-   npm view @workflow/agent
+   npm view @hawkinside_out/workflow-agent
    npm view @workflow/improvement-tracker
    npm view @workflow/scopes-saas
    ```
 
 2. Test global installation:
    ```bash
-   npm install -g @workflow/agent
+   npm install -g @hawkinside_out/workflow-agent
    workflow --version
    workflow init --help
    ```

@@ -36,7 +36,7 @@ Workflow Agent is a self-evolving, AI-friendly workflow management system extrac
 - `GOVERNANCE.md` - Governance model with trust score system
 - `LICENSE` - MIT license
 
-### 2. Core Package (@workflow/agent) ✓
+### 2. Core Package (@hawkinside_out/workflow-agent) ✓
 Fully functional CLI and validation engine with 5 commands.
 
 **Commands implemented:**
@@ -119,7 +119,7 @@ Automatic detection for 7 frameworks/patterns:
 
 **Usage:**
 ```typescript
-import { detectAdapter, getAdapter } from '@workflow/agent';
+import { detectAdapter, getAdapter } from '@hawkinside_out/workflow-agent';
 
 const framework = await detectAdapter();
 const adapter = getAdapter(framework);

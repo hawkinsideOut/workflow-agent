@@ -159,10 +159,10 @@ If you need to unpublish or rollback:
 
 ```bash
 # Unpublish specific version (within 72 hours)
-npm unpublish @workflow/agent@1.0.0
+npm unpublish @hawkinside_out/workflow-agent@1.0.0
 
 # Deprecate version (preferred over unpublish)
-npm deprecate @workflow/agent@1.0.0 "Please upgrade to 1.0.1"
+npm deprecate @hawkinside_out/workflow-agent@1.0.0 "Please upgrade to 1.0.1"
 ```
 
 ## Troubleshooting
