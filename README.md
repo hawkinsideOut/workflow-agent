@@ -41,7 +41,7 @@
 - 🚀 **Interactive CLI** - Beautiful prompts with @clack/prompts
 - 🤖 **Non-interactive mode** - CI/CD friendly with `--preset --name --yes`
 - 📋 **Template system** - Generate customized project guidelines
-- 🔧 **Health checks** - `workflow doctor` for optimization suggestions
+- 🔧 **Health checks** - `workflow-agent doctor` for optimization suggestions
 
 ---
 
@@ -82,7 +82,7 @@ npm install -D @workflow/agent
 
 #### Interactive Mode
 ```bash
-workflow init
+workflow-agent init
 ```
 
 Prompts you to:
@@ -93,23 +93,23 @@ Prompts you to:
 #### Non-Interactive Mode
 ```bash
 # Perfect for CI/CD or automation
-workflow init --preset library --name my-project --yes
+workflow-agent init --preset library --name my-project --yes
 ```
 
 ### Validate Your Work
 
 ```bash
 # Validate current branch name
-workflow validate branch
+workflow-agent validate branch
 
 # Validate specific branch
-workflow validate branch "feature/auth/add-login"
+workflow-agent validate branch "feature/auth/add-login"
 
 # Validate commit message
-workflow validate commit "feat(auth): add OAuth support"
+workflow-agent validate commit "feat(auth): add OAuth support"
 
 # Validate PR title
-workflow validate pr "fix(api): handle rate limiting"
+workflow-agent validate pr "fix(api): handle rate limiting"
 ```
 
 **Expected formats:**
@@ -125,7 +125,7 @@ workflow validate pr "fix(api): handle rate limiting"
 
 ```bash
 # Submit a suggestion
-workflow suggest "Add support for GitLab repositories" \
+workflow-agent suggest "Add support for GitLab repositories" \
   --category feature \
   --author "your-username"
 
@@ -141,7 +141,7 @@ workflow suggest "Add support for GitLab repositories" \
 ### Check Project Health
 
 ```bash
-workflow doctor
+workflow-agent doctor
 ```
 
 Analyzes your project for:
@@ -153,7 +153,7 @@ Analyzes your project for:
 
 ## 📦 Preset Libraries
 
-Choose a preset during `workflow init` or create custom scopes:
+Choose a preset during `workflow-agent init` or create custom scopes:
 
 ### @workflow/scopes-saas (17 scopes)
 Perfect for SaaS applications:
@@ -296,7 +296,7 @@ Contributors earn trust through quality contributions:
 Generate customized project guidelines:
 
 ```bash
-workflow init --preset saas --name my-app
+workflow-agent init --preset saas --name my-app
 # Generates guidelines in guidelines/ directory
 ```
 
@@ -349,7 +349,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **Ways to contribute:**
 1. 🐛 Report bugs
-2. 💡 Submit improvement suggestions via `workflow suggest`
+2. 💡 Submit improvement suggestions via `workflow-agent suggest`
 3. 🔧 Fix issues and submit PRs
 4. 📦 Create preset packages for new project types
 5. 🌍 Add translations
