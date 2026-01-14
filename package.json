@@ -1,0 +1,48 @@
+{
+  "name": "@workflow/agent-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A self-evolving workflow management system for AI agent development",
+  "keywords": [
+    "workflow",
+    "agent",
+    "validation",
+    "git",
+    "conventional-commits",
+    "scopes",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/workflow-agent/workflow-agent.git"
+  },
+  "license": "MIT",
+  "author": "Workflow Agent Team",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "pnpm -r run typecheck",
+    "clean": "pnpm -r run clean && rm -rf node_modules",
+    "dev": "pnpm -r --parallel run dev",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "@types/node": "^20.11.5",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3",
+    "vitest": "^1.6.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
