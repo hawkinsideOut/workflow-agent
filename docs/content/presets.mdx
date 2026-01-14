@@ -142,13 +142,59 @@ Optimized for content management systems and publishing platforms.
 workflow init --preset cms
 ```
 
-## Custom Configuration
+## Need Something Different?
 
-Don't see a preset that fits? Create a custom configuration:
+Don't see a preset that fits your project? You have two options:
+
+### Option 1: Custom Inline Configuration
+
+Define scopes directly in `workflow.config.json`:
 
 ```bash
 workflow init
 # Select "Custom" when prompted
 ```
 
-Then define your own scopes in `workflow.config.json`.
+Then edit your scopes in `workflow.config.json`:
+
+```json
+{
+  "projectName": "my-project",
+  "scopes": [
+    { "name": "custom-scope", "description": "Your custom scope" }
+  ]
+}
+```
+
+### Option 2: Create a Custom Scope Package (Recommended)
+
+Build a reusable scope package for your domain:
+
+```bash
+workflow scope:create
+```
+
+**Benefits:**
+- ✅ Reuse across multiple projects
+- ✅ Share with your team/organization
+- ✅ Version control and publishing to npm
+- ✅ Automatic validation and testing
+- ✅ Domain-specific naming (fintech, healthcare, gaming, etc.)
+
+**Example domains:**
+- **FinTech:** accounts, transactions, payments, compliance, kyc
+- **Healthcare:** patients, appointments, prescriptions, lab-results
+- **Gaming:** players, matches, inventory, leaderboards, guilds
+- **Education:** courses, students, assignments, grading, enrollment
+
+[Learn more about creating custom scopes →](/docs/custom-scopes)
+
+### Migrating Existing Scopes
+
+Already have inline scopes? Convert them to a reusable package:
+
+```bash
+workflow scope:migrate
+```
+
+This extracts your scopes from `workflow.config.json` into a standalone package.

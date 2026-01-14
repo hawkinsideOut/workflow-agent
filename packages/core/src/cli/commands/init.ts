@@ -93,11 +93,7 @@ export async function initCommand(options: { migrate?: boolean; workspace?: bool
   const config = {
     projectName: projectName as string,
     scopes: scopes,
-    enforcement: {
-      level: 'strict' as const,
-      preCommit: true,
-      prePush: true,
-    },
+    enforcement: 'strict' as const,
     language: 'en',
   };
 

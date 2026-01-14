@@ -6,7 +6,7 @@ import { validateBranchName, validateCommitMessage, validatePRTitle } from '../.
 export async function validateCommand(
   type: string,
   value?: string,
-  options: { suggestOnError?: boolean } = {}
+  _options: { suggestOnError?: boolean } = {}
 ) {
   const config = await loadConfig();
 
@@ -16,16 +16,16 @@ export async function validateCommand(
   }
 
   let targetValue = value;
-  let result;
 
   try {
+    let result;
     switch (type) {
       case 'branch': {
         if (!targetValue) {
           const { stdout } = await execa('git', ['branch', '--show-current']);
           targetValue = stdout.trim();
         }
-        result = validateBranchName(targetValue, config);
+        result = await validateBranchName(targetValue, config);
         break;
       }
 
@@ -34,7 +34,7 @@ export async function validateCommand(
           const { stdout } = await execa('git', ['log', '-1', '--pretty=%s']);
           targetValue = stdout.trim();
         }
-        result = validateCommitMessage(targetValue, config);
+        result = await validateCommitMessage(targetValue, config);
         break;
       }
 
@@ -44,7 +44,7 @@ export async function validateCommand(
           console.error(chalk.red('✗ PR title must be provided as argument'));
           process.exit(1);
         }
-        result = validatePRTitle(targetValue, config);
+        result = await validatePRTitle(targetValue, config);
         break;
       }
 
@@ -64,7 +64,8 @@ export async function validateCommand(
         console.error(chalk.cyan(`  💡 ${result.suggestion}`));
       }
       
-      if (config.enforcement === 'strict') {
+      const enforcementLevel = config.enforcement;
+      if (enforcementLevel === 'strict') {
         process.exit(1);
       } else {
         console.log(chalk.yellow(`\n⚠️  Advisory mode: validation failed but not blocking`));

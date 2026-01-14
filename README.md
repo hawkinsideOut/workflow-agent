@@ -29,6 +29,8 @@
 - 🔍 **Smart suggestions** - Did-you-mean corrections for typos
 - 🎨 **Framework detection** - Auto-detects Next.js, Vite, Remix, Astro, SvelteKit
 - 📦 **5 preset libraries** - SaaS (17), Library (10), API (13), E-commerce (12), CMS (13)
+- 🎨 **Custom scope builder** - Create domain-specific scope packages with `scope:create`
+- 🔄 **Scope migration** - Convert inline scopes to reusable packages with `scope:migrate`
 
 ### Self-Improvement System
 - 💡 **Community suggestions** - Submit improvement ideas via CLI
@@ -197,6 +199,36 @@ pnpm run workflow:suggest "Add support for GitLab repositories"
 # Suggestions are moderated and stored in .workflow/improvements/
 ```
 
+### Build Custom Scope Packages
+
+#### Create a new custom scope package:
+```bash
+workflow-agent scope:create
+```
+
+Follow the interactive prompts to:
+- Name your package (e.g., "fintech", "healthcare", "gaming")
+- Define 8-15 scopes with names, descriptions, emojis, and categories
+- Automatically generate package structure with tests
+- Get publishing instructions for npm
+
+#### Migrate existing scopes to a package:
+```bash
+workflow-agent scope:migrate
+```
+
+Converts your inline scopes from `workflow.config.json` into a standalone, reusable package.
+
+**Non-interactive mode:**
+```bash
+workflow-agent scope:create \
+  --name fintech \
+  --preset-name "FinTech Platform" \
+  --scopes "accounts:Account management:👤:features,payments:Payment processing:💳:features"
+```
+
+**Learn more:** See the [Custom Scopes Guide](docs/content/custom-scopes.mdx)
+
 **Moderation Rules:**
 - 5 suggestions per day per user
 - 10-1000 characters
@@ -253,6 +285,37 @@ Content management systems:
 content, media, pages, editor, templates, collections, auth, 
 workflows, publishing, ui, db, test, deps
 ```
+
+### Custom Scopes
+
+**Don't see a preset that fits your domain?** Create a custom scope package!
+
+#### Create from scratch:
+```bash
+workflow-agent scope:create
+```
+
+This interactive CLI will:
+1. Guide you through defining 8-15 scopes
+2. Generate a complete package structure
+3. Include automatic test suite
+4. Support monorepo detection
+5. Provide publishing instructions
+
+#### Migrate existing scopes:
+```bash
+workflow-agent scope:migrate
+```
+
+Converts inline scopes from `workflow.config.json` into a reusable package for sharing across projects.
+
+**Example custom domains:**
+- **FinTech:** accounts, transactions, payments, compliance, kyc
+- **Healthcare:** patients, appointments, prescriptions, lab-results
+- **Gaming:** players, matches, inventory, leaderboards, guilds
+- **Education:** courses, students, assignments, grading, enrollment
+
+**Learn more:** See [Custom Scopes Documentation](docs/content/custom-scopes.mdx)
 
 ---
 

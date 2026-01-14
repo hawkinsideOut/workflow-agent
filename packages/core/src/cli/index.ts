@@ -7,6 +7,8 @@ import { configCommand } from './commands/config.js';
 import { suggestCommand } from './commands/suggest.js';
 import { doctorCommand } from './commands/doctor.js';
 import { setupCommand } from './commands/setup.js';
+import { scopeCreateCommand } from './commands/scope-create.js';
+import { scopeMigrateCommand } from './commands/scope-migrate.js';
 
 const program = new Command();
 
@@ -58,5 +60,23 @@ program
   .command('doctor')
   .description('Run health check and get optimization suggestions')
   .action(doctorCommand);
+
+program
+  .command('scope:create')
+  .description('Create a custom scope package')
+  .option('--name <name>', 'Package name (e.g., "fintech", "gaming")')
+  .option('--scopes <scopes>', 'Comma-separated scopes (format: name:description:emoji:category)')
+  .option('--preset-name <preset>', 'Preset display name')
+  .option('--output-dir <dir>', 'Output directory')
+  .option('--no-test', 'Skip test file generation')
+  .action(scopeCreateCommand);
+
+program
+  .command('scope:migrate')
+  .description('Migrate inline scopes to a custom package')
+  .option('--name <name>', 'Package name for the preset')
+  .option('--output-dir <dir>', 'Output directory')
+  .option('--keep-config', 'Keep inline scopes in config after migration')
+  .action(scopeMigrateCommand);
 
 program.parse();

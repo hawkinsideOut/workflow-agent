@@ -1,0 +1,540 @@
+---
+title: Custom Scopes
+description: Create and manage custom scope packages for your projects
+---
+
+# Custom Scopes
+
+Create reusable scope packages tailored to your project's domain and workflow.
+
+## When to Create Custom Scopes
+
+Consider creating a custom scope package when:
+
+- **Your domain isn't covered** by existing presets (SaaS, Library, API, E-commerce, CMS)
+- **You want to reuse scopes** across multiple projects
+- **You need domain-specific scopes** (fintech, healthcare, gaming, education, etc.)
+- **You're standardizing** workflow across a team or organization
+
+## Quick Start
+
+Create a custom scope package interactively:
+
+```bash
+workflow scope:create
+```
+
+This command will:
+1. Prompt for package name and preset details
+2. Guide you through defining scopes
+3. Validate all scope definitions
+4. Generate a complete package structure
+5. Provide next steps for building and publishing
+
+## Interactive CLI Walkthrough
+
+The `scope:create` command guides you through the entire process:
+
+### Step 1: Package Details
+
+```
+🎨 Create Custom Scope Package
+
+✓ Detected monorepo workspace
+
+? What is the package name? (e.g., "fintech", "gaming", "healthcare")
+> fintech
+
+? What is the preset display name? (e.g., "FinTech Application")
+> FinTech Platform
+```
+
+### Step 2: Define Scopes
+
+```
+Add scopes to your preset (aim for 8-15 scopes):
+
+Scope #1 - Name:
+> accounts
+
+Description:
+> Account management and user profiles
+
+Emoji (optional):
+> 👤
+
+Category (optional):
+  1. Authentication & Authorization
+  2. Features & Functionality
+  3. Infrastructure & DevOps
+  ...
+> 2
+
+✓ Added scope: accounts
+
+You have 1 scope. Add another? (y/n)
+> y
+```
+
+Continue adding scopes for your project's feature areas.
+
+### Step 3: Review and Create
+
+```
+✓ 12 scopes validated successfully
+
+Output directory:
+> ./packages/scopes-fintech
+
+✨ Custom scope package created successfully!
+
+Package details:
+  Location: /path/to/packages/scopes-fintech
+  Package: @workflow/scopes-fintech
+  Scopes: 12 defined
+
+Next steps:
+  1. cd packages/scopes-fintech
+  2. pnpm install
+  3. pnpm build
+  4. pnpm test
+  5. Update repository URL in package.json
+```
+
+## Package Structure
+
+Each scope package follows this structure:
+
+```
+scopes-{name}/
+├── package.json       # Package metadata and dependencies
+├── tsconfig.json      # TypeScript configuration
+├── tsup.config.ts     # Build configuration
+└── src/
+    ├── index.ts       # Scope definitions and preset export
+    └── index.test.ts  # Test suite (generated automatically)
+```
+
+### src/index.ts
+
+```typescript
+import type { Scope } from '@hawkinside_out/workflow-agent/config';
+
+export const scopes: Scope[] = [
+  {
+    name: 'accounts',
+    description: 'Account management and user profiles',
+    emoji: '👤',
+    category: 'features',
+  },
+  {
+    name: 'payments',
+    description: 'Payment processing and transactions',
+    emoji: '💳',
+    category: 'features',
+  },
+  // ... more scopes
+];
+
+export const preset = {
+  name: 'FinTech Platform',
+  description: 'Scope configuration for FinTech Platform',
+  scopes,
+  version: '1.0.0',
+};
+
+export default preset;
+```
+
+## Scope Schema
+
+Each scope must conform to this schema:
+
+```typescript
+interface Scope {
+  name: string;              // Required: lowercase, alphanumeric, hyphens
+                             // Max length: 32 characters
+                             // Cannot be: init, create, build, test, 
+                             //            config, docs, ci, deps
+  
+  description: string;       // Required: min 10 characters
+  
+  emoji?: string;            // Optional: visual identifier
+  
+  category?: 'auth' |        // Optional: grouping
+             'features' |
+             'infrastructure' |
+             'documentation' |
+             'testing' |
+             'performance' |
+             'other';
+}
+```
+
+### Validation Rules
+
+✅ **Valid scope names:**
+- `auth`
+- `user-management`
+- `api-endpoints`
+- `payment-processing`
+
+❌ **Invalid scope names:**
+- `Auth` (uppercase)
+- `user_management` (underscores)
+- `build` (reserved word)
+- `x` (description too short)
+
+## Non-Interactive Mode
+
+For CI/CD or automation:
+
+```bash
+workflow scope:create \
+  --name fintech \
+  --preset-name "FinTech Platform" \
+  --scopes "accounts:Account management:👤:features,payments:Payment processing:💳:features,transactions:Transaction history:📊:features"
+```
+
+Format: `name:description:emoji:category` (comma-separated)
+
+## Testing Your Scope Package
+
+Every scope package includes a test suite:
+
+```bash
+cd packages/scopes-fintech
+pnpm install
+pnpm test
+```
+
+Tests verify:
+- ✅ All scopes match the schema
+- ✅ No duplicate scope names
+- ✅ All descriptions are present
+- ✅ Preset structure is valid
+
+### Example Test Output
+
+```
+✓ src/index.test.ts (5)
+  ✓ FinTech Platform Scope Preset (5)
+    ✓ should export valid scopes array
+    ✓ should have valid preset object
+    ✓ should have no duplicate scope names
+    ✓ should have all scopes match schema
+    ✓ should have descriptions for all scopes
+
+Test Files  1 passed (1)
+Tests  5 passed (5)
+```
+
+## Publishing to npm
+
+### 1. Update package.json
+
+Before publishing, update:
+
+```json
+{
+  "name": "@your-org/scopes-fintech",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/your-repo.git",
+    "directory": "packages/scopes-fintech"
+  },
+  "author": "Your Name"
+}
+```
+
+### 2. Build and Publish
+
+```bash
+# Build the package
+pnpm build
+
+# Log in to npm (first time only)
+npm login
+
+# Publish
+pnpm publish --access public
+```
+
+### 3. Use in Other Projects
+
+```bash
+# Install the published package
+pnpm add @your-org/scopes-fintech
+
+# Reference in workflow.config.json
+{
+  "projectName": "my-project",
+  "preset": "@your-org/scopes-fintech",
+  "enforcement": { "level": "strict" }
+}
+```
+
+## Migrating Existing Scopes
+
+If you already have scopes defined in `workflow.config.json`, migrate them to a package:
+
+```bash
+workflow scope:migrate
+```
+
+This command will:
+1. Load your existing scopes
+2. Prompt for package details
+3. Create a new package with your scopes
+4. Optionally update `workflow.config.json` to reference the package
+
+### Example Migration
+
+**Before** (`workflow.config.json`):
+
+```json
+{
+  "projectName": "my-app",
+  "scopes": [
+    { "name": "auth", "description": "Authentication" },
+    { "name": "api", "description": "API endpoints" },
+    { "name": "ui", "description": "User interface" }
+  ]
+}
+```
+
+**After migration:**
+
+```json
+{
+  "projectName": "my-app",
+  "preset": "scopes-my-app",
+  "enforcement": { "level": "strict" }
+}
+```
+
+Scopes are now in `packages/scopes-my-app/src/index.ts` and can be reused!
+
+## Monorepo Integration
+
+Workflow Agent automatically detects monorepos (checks for `pnpm-workspace.yaml`).
+
+### Automatic Workspace Addition
+
+When creating a scope package in a monorepo:
+
+```yaml
+# pnpm-workspace.yaml
+packages:
+  - 'packages/*'  # Your new scope package is automatically included
+```
+
+If using explicit package listing, you'll be prompted to add:
+
+```yaml
+packages:
+  - 'packages/scopes-fintech'
+```
+
+### Installing in Monorepo
+
+```bash
+# From workspace root
+pnpm install
+
+# Build the scope package
+cd packages/scopes-fintech
+pnpm build
+
+# Use in other workspace packages
+cd ../my-app
+pnpm add -w @workflow/scopes-fintech
+```
+
+## Best Practices
+
+### 1. Scope Count
+
+🎯 **Aim for 8-15 scopes per preset**
+
+- Too few (<5): Not granular enough for tracking
+- Too many (>20): Difficult to remember and use consistently
+- Sweet spot (8-15): Comprehensive coverage, easy to remember
+
+### 2. Naming Conventions
+
+✅ **Good:** Domain-specific, clear
+- `patient-records`
+- `prescription-management`
+- `insurance-claims`
+
+❌ **Avoid:** Generic terms
+- `feature`
+- `thing`
+- `stuff`
+
+### 3. Description Quality
+
+✅ **Good:** Specific, actionable
+- "Patient medical records and history management"
+- "Real-time payment processing and transaction handling"
+
+❌ **Avoid:** Vague descriptions
+- "Handles things"
+- "Some feature"
+
+### 4. Folder Alignment
+
+Map scopes to your codebase structure:
+
+```
+src/
+├── auth/          → scope: auth
+├── billing/       → scope: billing  
+├── analytics/     → scope: analytics
+└── ui/
+    ├── dashboard/ → scope: dashboard
+    └── reports/   → scope: reports
+```
+
+### 5. Category Usage
+
+Use categories for logical grouping:
+
+```typescript
+// Authentication & Security
+{ category: 'auth' }  // login, signup, mfa, sessions
+
+// Core Features
+{ category: 'features' }  // business logic, workflows
+
+// Technical Infrastructure  
+{ category: 'infrastructure' }  // deployment, monitoring
+
+// Quality & Testing
+{ category: 'testing' }  // unit tests, e2e tests
+```
+
+## Automatic Scope Discovery
+
+Workflow Agent automatically discovers and loads custom scope packages:
+
+### Discovery Locations
+
+1. **Workspace packages:** `packages/scopes-*/src/index.{ts,js}`
+2. **Node modules:** `node_modules/@*/workflow-scopes-*/dist/index.{js,mjs}`
+
+### Caching
+
+Discovered scopes are cached for 5 minutes to improve performance.
+
+Invalidate cache programmatically:
+
+```typescript
+import { invalidateCustomScopesCache } from '@hawkinside_out/workflow-agent/validators';
+
+invalidateCustomScopesCache();
+```
+
+## Troubleshooting
+
+### Build Errors
+
+**Problem:** TypeScript errors during build
+
+```bash
+# Ensure peer dependencies are installed
+pnpm install
+
+# Run type checking
+pnpm typecheck
+```
+
+### Validation Errors
+
+**Problem:** Scopes fail schema validation
+
+```typescript
+import { validateScopeDefinitions } from '@hawkinside_out/workflow-agent/config';
+
+const result = validateScopeDefinitions(scopes);
+if (!result.valid) {
+  console.error('Validation errors:', result.errors);
+}
+```
+
+### Import Errors
+
+**Problem:** Cannot import scope package
+
+```bash
+# Ensure package is built
+cd packages/scopes-fintech
+pnpm build
+
+# Check exports in package.json
+cat package.json | grep exports
+```
+
+## Advanced: Extending Existing Presets
+
+Combine presets with custom scopes:
+
+```typescript
+import { scopes as saasScopes } from '@workflow/scopes-saas';
+import { scopes as customScopes } from './custom-scopes.js';
+
+export const scopes = [
+  ...saasScopes,
+  ...customScopes,
+  {
+    name: 'compliance',
+    description: 'Regulatory compliance and audit features',
+    category: 'features',
+  },
+];
+```
+
+## Examples
+
+### Healthcare Application
+
+```typescript
+export const scopes: Scope[] = [
+  { name: 'patients', description: 'Patient records and profiles', emoji: '👤' },
+  { name: 'appointments', description: 'Scheduling and calendar', emoji: '📅' },
+  { name: 'prescriptions', description: 'Prescription management', emoji: '💊' },
+  { name: 'lab-results', description: 'Laboratory test results', emoji: '🧪' },
+  { name: 'billing', description: 'Medical billing and insurance', emoji: '💳' },
+  { name: 'messaging', description: 'Secure patient messaging', emoji: '💬' },
+  { name: 'reports', description: 'Medical reports and analytics', emoji: '📊' },
+  { name: 'compliance', description: 'HIPAA and regulatory compliance', emoji: '🔒' },
+];
+```
+
+### Gaming Platform
+
+```typescript
+export const scopes: Scope[] = [
+  { name: 'players', description: 'Player accounts and profiles', emoji: '🎮' },
+  { name: 'matches', description: 'Game matches and sessions', emoji: '🏆' },
+  { name: 'leaderboards', description: 'Rankings and leaderboards', emoji: '📊' },
+  { name: 'inventory', description: 'In-game items and inventory', emoji: '🎒' },
+  { name: 'marketplace', description: 'Item trading and marketplace', emoji: '🏪' },
+  { name: 'chat', description: 'Player communication and chat', emoji: '💬' },
+  { name: 'guilds', description: 'Clans and guild management', emoji: '⚔️' },
+  { name: 'events', description: 'Tournaments and special events', emoji: '🎯' },
+];
+```
+
+## Next Steps
+
+- ✅ **[View existing presets](/docs/presets)** to see if one fits your needs
+- ✅ **[Learn about configuration](/docs/configuration)** to customize enforcement
+- ✅ **[Create your first scope package](#quick-start)** with `workflow scope:create`
+- ✅ **[Migrate existing scopes](#migrating-existing-scopes)** with `workflow scope:migrate`
+
+---
+
+**Need help?** Check the [template reference](/templates/CUSTOM_SCOPE_TEMPLATE.md) or [workflow guide](/templates/SCOPE_CREATION_WORKFLOW.md) for detailed examples.

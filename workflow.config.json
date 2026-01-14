@@ -3,24 +3,31 @@
   "scopes": [
     {
       "name": "feat",
-      "description": "New features",
+      "description": "New features and functionality",
       "emoji": "✨"
     },
     {
       "name": "fix",
-      "description": "Bug fixes",
+      "description": "Bug fixes and corrections",
       "emoji": "🐛"
     },
     {
       "name": "docs",
-      "description": "Documentation",
+      "description": "Documentation changes and improvements",
       "emoji": "📚"
     }
   ],
-  "enforcement": {
-    "level": "strict",
-    "preCommit": true,
-    "prePush": true
-  },
-  "language": "en"
+  "enforcement": "strict",
+  "language": "en",
+  "scopeCreationWorkflow": {
+    "enabled": true,
+    "promptTemplate": "templates/SCOPE_CREATION_WORKFLOW.md",
+    "requireAllPrompts": true,
+    "includeTests": true,
+    "validationRules": {
+      "maxScopes": 20,
+      "minDescription": 10,
+      "requireCategories": false
+    }
+  }
 }

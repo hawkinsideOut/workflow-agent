@@ -12,6 +12,7 @@ const contentDir = path.join(process.cwd(), 'content');
 const docs = [
   { slug: 'getting-started', title: 'Getting Started' },
   { slug: 'presets', title: 'Presets' },
+  { slug: 'custom-scopes', title: 'Custom Scopes' },
   { slug: 'configuration', title: 'Configuration' },
 ];
 
