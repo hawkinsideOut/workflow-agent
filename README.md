@@ -70,10 +70,10 @@ node packages/core/dist/cli/index.js --help
 
 ```bash
 # npm
-npm install -g @hawkinside_out/workflow-agent --ignore-scripts
+npm install -g @hawkinside_out/workflow-agent
 
 # pnpm
-pnpm add -g @hawkinside_out/workflow-agent --ignore-scripts
+pnpm add -g @hawkinside_out/workflow-agent
 ```
 
 #### Local Installation (Per-Project)
@@ -86,33 +86,39 @@ npm install -D @hawkinside_out/workflow-agent
 pnpm add -D @hawkinside_out/workflow-agent
 ```
 
-**pnpm users:** pnpm blocks postinstall scripts by default. Run the setup command after installation:
+**Setup Scripts (Recommended):**
+
+pnpm blocks postinstall scripts by default, so run the setup command after installation:
 
 ```bash
+# If using pnpm or npm locally:
 pnpm workflow-agent setup
 # or
 npx workflow-agent setup
+
+# If installed globally:
+workflow-agent setup
 ```
 
-This will add workflow scripts to your `package.json`:
+This adds these scripts to your `package.json`:
 
-When installed locally, run commands via:
-
-```bash
-# pnpm
-pnpm workflow-agent init
-
-# npx
-npx workflow-agent init
-
-# package.json scripts
+```json
 {
   "scripts": {
     "workflow:init": "workflow-agent init",
-    "workflow:validate": "workflow-agent validate branch feature/add-auth",
+    "workflow:validate": "workflow-agent validate",
+    "workflow:suggest": "workflow-agent suggest",
     "workflow:doctor": "workflow-agent doctor"
   }
 }
+```
+
+Then run commands via:
+
+```bash
+pnpm run workflow:init
+# or
+npm run workflow:init
 ```
 
 ---
