@@ -23,7 +23,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "pnpm --filter @workflow-agent/core run build && pnpm -r run build",
+    "build": "pnpm --filter workflow-agent-cli run build && pnpm -r run build",
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",

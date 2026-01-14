@@ -1,5 +1,5 @@
 {
-  "name": "@workflow-agent/core",
+  "name": "workflow-agent-cli",
   "version": "1.1.2",
   "description": "A self-evolving workflow management system for AI agent development",
   "keywords": [

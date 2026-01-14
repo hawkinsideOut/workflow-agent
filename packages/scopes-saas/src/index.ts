@@ -1,4 +1,4 @@
-import type { Scope } from '@workflow-agent/core/config';
+import type { Scope } from 'workflow-agent-cli/config';
 
 export const scopes: Scope[] = [
   {
