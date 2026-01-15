@@ -79,16 +79,16 @@ export async function initCommand(options: { migrate?: boolean; workspace?: bool
     } catch (error) {
       console.log(chalk.yellow(`\n⚠️  Could not load preset package. Using basic scopes.`));
       scopes = [
-        { name: 'feat', description: 'New features', emoji: '✨' },
-        { name: 'fix', description: 'Bug fixes', emoji: '🐛' },
-        { name: 'docs', description: 'Documentation', emoji: '📚' },
+        { name: 'feat', description: 'New features and enhancements', emoji: '✨' },
+        { name: 'fix', description: 'Bug fixes and patches', emoji: '🐛' },
+        { name: 'documentation', description: 'Documentation updates and improvements', emoji: '📚' },
       ];
     }
   } else {
     scopes = [
-      { name: 'feat', description: 'New features', emoji: '✨' },
-      { name: 'fix', description: 'Bug fixes', emoji: '🐛' },
-      { name: 'docs', description: 'Documentation', emoji: '📚' },
+      { name: 'feat', description: 'New features and enhancements', emoji: '✨' },
+      { name: 'fix', description: 'Bug fixes and patches', emoji: '🐛' },
+      { name: 'documentation', description: 'Documentation updates and improvements', emoji: '📚' },
     ];
     console.log(chalk.dim('\n💡 Tip: Edit workflow.config.json to add your custom scopes'));
   }
