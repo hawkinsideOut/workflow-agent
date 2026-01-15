@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/workflow-agent/workflow-agent.git",
+    "url": "git+https://github.com/hawkinsideOut/workflow-agent.git",
     "directory": "packages/core"
   },
   "license": "MIT",

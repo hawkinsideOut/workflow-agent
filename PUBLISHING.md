@@ -106,7 +106,7 @@ git tag -a v1.0.0 -m "Release v1.0.0"
 git push origin v1.0.0
 
 # Create release on GitHub
-# Go to: https://github.com/workflow-agent/workflow-agent/releases/new
+# Go to: https://github.com/hawkinsideOut/workflow-agent/releases/new
 # - Tag: v1.0.0
 # - Title: Workflow Agent v1.0.0
 # - Description: Copy from CHANGELOG.md
@@ -218,6 +218,6 @@ jobs:
 
 ## Support
 
-- **Issues**: https://github.com/workflow-agent/workflow-agent/issues
-- **Discussions**: https://github.com/workflow-agent/workflow-agent/discussions
+- **Issues**: https://github.com/hawkinsideOut/workflow-agent/issues
+- **Discussions**: https://github.com/hawkinsideOut/workflow-agent/discussions
 - **Docs**: https://workflow-agent.dev

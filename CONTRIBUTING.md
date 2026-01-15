@@ -4,8 +4,8 @@ Thank you for your interest in contributing to Workflow Agent! This document pro
 
 ## 🎯 Ways to Contribute
 
-1. **Report Bugs** - Found a bug? [Open an issue](https://github.com/workflow-agent/workflow-agent/issues/new?template=bug_report.md)
-2. **Suggest Improvements** - Use `workflow suggest "<your-idea>"` or [open a discussion](https://github.com/workflow-agent/workflow-agent/discussions)
+1. **Report Bugs** - Found a bug? [Open an issue](https://github.com/hawkinsideOut/workflow-agent/issues/new?template=bug_report.md)
+2. **Suggest Improvements** - Use `workflow suggest "<your-idea>"` or [open a discussion](https://github.com/hawkinsideOut/workflow-agent/discussions)
 3. **Submit Pull Requests** - Fix bugs, add features, improve documentation
 4. **Create Presets** - Share scope presets for new project types
 5. **Translate** - Help translate to new languages
@@ -23,7 +23,7 @@ Thank you for your interest in contributing to Workflow Agent! This document pro
 
 ```bash
 # Clone the repository
-git clone https://github.com/workflow-agent/workflow-agent.git
+git clone https://github.com/hawkinsideOut/workflow-agent.git
 cd workflow-agent
 
 # Install dependencies
@@ -164,11 +164,11 @@ Good bug reports include:
 5. **Logs**: Any error messages or logs
 6. **Screenshots**: For UI issues
 
-Use the [bug report template](https://github.com/workflow-agent/workflow-agent/issues/new?template=bug_report.md).
+Use the [bug report template](https://github.com/hawkinsideOut/workflow-agent/issues/new?template=bug_report.md).
 
 ## 💡 Suggesting Improvements
 
-Use `workflow suggest` CLI command or [open a discussion](https://github.com/workflow-agent/workflow-agent/discussions).
+Use `workflow suggest` CLI command or [open a discussion](https://github.com/hawkinsideOut/workflow-agent/discussions).
 
 Include:
 
@@ -230,7 +230,7 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ## ❓ Questions?
 
-- [GitHub Discussions](https://github.com/workflow-agent/workflow-agent/discussions)
+- [GitHub Discussions](https://github.com/hawkinsideOut/workflow-agent/discussions)
 - [Discord Community](https://discord.gg/workflow-agent)
 
 ---

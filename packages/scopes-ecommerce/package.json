@@ -5,7 +5,7 @@
   "keywords": ["workflow", "scopes", "ecommerce", "shop", "preset"],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/workflow-agent/workflow-agent.git",
+    "url": "git+https://github.com/hawkinsideOut/workflow-agent.git",
     "directory": "packages/scopes-ecommerce"
   },
   "license": "MIT",

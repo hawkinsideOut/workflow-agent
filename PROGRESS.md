@@ -354,7 +354,7 @@ Add comprehensive tests:
 
 ### From Source
 ```bash
-git clone https://github.com/workflow-agent/workflow-agent.git
+git clone https://github.com/hawkinsideOut/workflow-agent.git
 cd workflow-agent
 pnpm install
 pnpm build

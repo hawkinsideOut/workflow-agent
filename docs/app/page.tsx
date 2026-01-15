@@ -12,7 +12,7 @@ export default function Home() {
             <Link href="/docs/getting-started" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
               Docs
             </Link>
-            <a href="https://github.com/workflow-agent/workflow-agent" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
+            <a href="https://github.com/hawkinsideOut/workflow-agent" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
               GitHub
             </a>
           </div>
@@ -36,7 +36,7 @@ export default function Home() {
               Get Started
             </Link>
             <a
-              href="https://github.com/workflow-agent/workflow-agent"
+              href="https://github.com/hawkinsideOut/workflow-agent"
               className="px-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors font-semibold"
             >
               View on GitHub

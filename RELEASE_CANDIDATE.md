@@ -191,7 +191,7 @@ git tag -a v1.0.0 -m "Release v1.0.0"
 git push origin v1.0.0
 
 # Create GitHub release (automatic via GitHub Actions)
-# Or manually at: https://github.com/workflow-agent/workflow-agent/releases/new
+# Or manually at: https://github.com/hawkinsideOut/workflow-agent/releases/new
 ```
 
 ---

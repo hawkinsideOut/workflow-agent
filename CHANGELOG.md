@@ -83,4 +83,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[1.0.0]: https://github.com/workflow-agent/workflow-agent/releases/tag/v1.0.0
+[1.0.0]: https://github.com/hawkinsideOut/workflow-agent/releases/tag/v1.0.0

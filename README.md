@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue.svg)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-%3E%3D18-green.svg)](https://nodejs.org/)
-[![CI](https://github.com/workflow-agent/workflow-agent/workflows/CI/badge.svg)](https://github.com/workflow-agent/workflow-agent/actions)
+[![CI](https://github.com/hawkinsideOut/workflow-agent/workflows/CI/badge.svg)](https://github.com/hawkinsideOut/workflow-agent/actions)
 [![pnpm](https://img.shields.io/badge/maintained%20with-pnpm-cc00ff.svg)](https://pnpm.io/)
 
 **Workflow Agent** is a portable, framework-agnostic tool that brings structure and consistency to your development workflow. Born from real-world needs at [ProjectHub](https://github.com/hawkinsideOut/projecthub), it enforces branch naming conventions, validates commit messages, and includes a self-improvement system that learns from community feedback.
@@ -53,7 +53,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/workflow-agent/workflow-agent.git
+git clone https://github.com/hawkinsideOut/workflow-agent.git
 cd workflow-agent
 
 # Install dependencies
