@@ -9,6 +9,8 @@ import { doctorCommand } from './commands/doctor.js';
 import { setupCommand } from './commands/setup.js';
 import { scopeCreateCommand } from './commands/scope-create.js';
 import { scopeMigrateCommand } from './commands/scope-migrate.js';
+import { hooksCommand } from './commands/hooks.js';
+import { githubCommand } from './commands/github-actions.js';
 
 const program = new Command();
 
@@ -59,7 +61,20 @@ program
 program
   .command('doctor')
   .description('Run health check and get optimization suggestions')
+  .option('--check-guidelines-only', 'Only check mandatory guidelines exist (exits 0 or 1)')
   .action(doctorCommand);
+
+program
+  .command('hooks')
+  .description('Manage git hooks (install, uninstall, status)')
+  .argument('<action>', 'Action: install, uninstall, status')
+  .action(hooksCommand);
+
+program
+  .command('github')
+  .description('Manage GitHub Actions CI (setup, check)')
+  .argument('<action>', 'Action: setup, check')
+  .action(githubCommand);
 
 program
   .command('scope:create')
