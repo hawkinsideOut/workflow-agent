@@ -522,7 +522,160 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-## 🙏 Acknowledgments
+## � Troubleshooting
+
+### Publishing Issues
+
+#### npm Token Errors
+
+**Error: "Access token expired or revoked" or "404 Not Found"**
+
+This typically means your npm token doesn't have the correct permissions. To fix:
+
+1. **Create a Granular Access Token on npm:**
+   - Go to https://www.npmjs.com/ → Profile → Access Tokens
+   - Click "Generate New Token" → Select "Granular Access Token"
+   - Configure:
+     - **Packages and scopes**: Select **"All packages"** + **"Read and write"**
+     - **Organizations**: Leave **unchecked/empty** (unless publishing under an org)
+     - **Token type**: Should support automation/bypass 2FA
+   - Copy the token immediately
+
+2. **Test the token locally:**
+   ```bash
+   echo '//registry.npmjs.org/:_authToken=YOUR_TOKEN' > ~/.npmrc
+   npm whoami  # Should show your npm username
+   cd packages/core
+   npm publish --access public --dry-run  # Should succeed
+   ```
+
+3. **Update GitHub Secret:**
+   - Go to your repo → Settings → Secrets and variables → Actions
+   - Update `NPM_TOKEN` with the exact token that works locally
+
+**Error: "This operation requires a one-time password (EOTP)"**
+
+Your npm account has 2FA enabled. Options:
+
+1. **Use an Automation token** that bypasses 2FA (recommended)
+2. **Disable 2FA for publishing** (keeps it for login):
+   - Go to npm → Account Settings → Two-Factor Authentication
+   - Change from "Authorization and Publishing" to "Authorization only"
+
+#### Package Name Conflicts
+
+**Error: "must not have multiple workspaces with the same name"**
+
+If you have workspace packages with duplicate names:
+
+1. **Check all package.json files** in `packages/*/package.json`
+2. **Rename conflicting packages:**
+   ```bash
+   # Example: rename vscode-extension to avoid conflict
+   # packages/vscode-extension/package.json
+   { "name": "workflow-agent-vscode" }
+   ```
+3. **Update imports** in dependent packages
+4. **Run `pnpm install`** to update lockfile
+
+#### Lockfile Out of Sync
+
+**Error: "Cannot install with frozen-lockfile because pnpm-lock.yaml is not up to date"**
+
+After changing package dependencies:
+
+```bash
+pnpm install  # Update lockfile
+git add pnpm-lock.yaml
+git commit -m "chore: update lockfile"
+```
+
+### Build Issues
+
+#### TypeScript Compilation Errors
+
+**Error: "Cannot find module 'workflow-agent-cli/config'"**
+
+This means the core package wasn't built before dependent packages:
+
+```bash
+# Build core package first
+pnpm --filter workflow-agent-cli run build
+
+# Then build everything
+pnpm build
+```
+
+**Fix permanently** by updating the root `package.json`:
+
+```json
+{
+  "scripts": {
+    "build": "pnpm --filter workflow-agent-cli run build && pnpm -r run build"
+  }
+}
+```
+
+#### MDX Syntax Errors in Documentation
+
+**Error: "Unexpected character before name" in MDX files**
+
+MDX interprets certain characters as JSX:
+
+```mdx
+<!-- Bad: MDX tries to parse as JSX -->
+Too few (<5) items
+Use {name} for variables
+
+<!-- Good: Escape or use code blocks -->
+Too few (&lt;5) items
+Use `{name}` for variables
+
+```text
+Or wrap in text code blocks: {name}
+```
+```
+
+### Template Issues
+
+**Error: Guidelines directory not created**
+
+If templates aren't bundled with the npm package:
+
+1. **Ensure templates are in the package:**
+   ```json
+   // packages/core/package.json
+   {
+     "files": ["dist", "templates"]
+   }
+   ```
+
+2. **Copy templates to package directory:**
+   ```bash
+   cp -r templates packages/core/
+   ```
+
+3. **Update template paths** in code to use relative paths from the package
+
+### Local Publishing
+
+If GitHub Actions publishing continues to fail, you can publish locally:
+
+```bash
+# Ensure you're authenticated
+npm whoami
+
+# Build the package
+cd packages/core
+pnpm build
+
+# Publish
+npm publish --access public
+```
+
+---
+
+## �🙏 Acknowledgments
 
 - Inspired by [Conventional Commits](https://www.conventionalcommits.org/)
 - Built with [Commander.js](https://github.com/tj/commander.js), [@clack/prompts](https://github.com/natemoo-re/clack), and [Zod](https://github.com/colinhacks/zod)
