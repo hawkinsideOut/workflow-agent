@@ -117,11 +117,64 @@ Before generating the package, confirm:
 
 - [ ] All scope names are lowercase alphanumeric with hyphens
 - [ ] All scope names are 32 characters or less
-- [ ] No scope names match reserved words: init, create, build, test, config, docs, ci, deps
+- [ ] No scope names match reserved words (by default: init, create, build, test, config, docs, ci, deps)
 - [ ] All scope descriptions are at least 10 characters
 - [ ] No duplicate scope names
 - [ ] Scope count is between 8-15 (or user explicitly accepted otherwise)
 - [ ] Package name is valid and doesn't conflict with existing packages
+
+### Reserved Scope Names
+
+By default, the following scope names are **reserved** and cannot be used:
+
+- `init` - Reserved for initialization commands
+- `create` - Reserved for creation commands
+- `build` - Reserved for build commands
+- `test` - Reserved for testing commands
+- `config` - Reserved for configuration commands
+- `docs` - Reserved for documentation commands
+- `ci` - Reserved for CI/CD commands
+- `deps` - Reserved for dependency commands
+
+**Suggested Alternatives:**
+
+| Reserved Name | Suggested Alternative |
+|---------------|----------------------|
+| docs | documentation |
+| test | testing |
+| config | configuration |
+| build | builds |
+| ci | cicd |
+| deps | dependencies |
+
+**Customizing Reserved Names:**
+
+Users can customize the reserved scope names list in their `workflow.config.json`:
+
+```json
+{
+  "projectName": "my-project",
+  "scopes": [...],
+  "reservedScopeNames": ["init", "create", "custom-reserved"]
+}
+```
+
+If a user wants to use a reserved word (not recommended), they can:
+1. Remove it from `reservedScopeNames` in their config
+2. Use `workflow config add scope --force` to bypass validation
+
+**Validation Tools:**
+
+```bash
+# Validate configuration including scope names
+workflow config validate
+
+# List reserved scope names
+workflow config list reserved
+
+# Add a new scope (validates against reserved names)
+workflow config add scope
+```
 
 ---
 

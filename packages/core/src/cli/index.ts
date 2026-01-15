@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import { initCommand } from './commands/init.js';
 import { validateCommand } from './commands/validate.js';
-import { configCommand } from './commands/config.js';
+import { createConfigCommand } from './commands/config.js';
 import { suggestCommand } from './commands/suggest.js';
 import { doctorCommand } from './commands/doctor.js';
 import { setupCommand } from './commands/setup.js';
@@ -37,13 +37,8 @@ program
   .option('--suggest-on-error', 'Offer improvement suggestions on validation errors')
   .action(validateCommand);
 
-program
-  .command('config <action>')
-  .description('Manage workflow configuration')
-  .argument('<action>', 'Action: get, set, add, remove')
-  .argument('[key]', 'Config key')
-  .argument('[value]', 'Config value')
-  .action(configCommand);
+// Register the new config command with subcommands
+program.addCommand(createConfigCommand());
 
 program
   .command('suggest')

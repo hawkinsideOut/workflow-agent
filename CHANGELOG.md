@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-01-15
+
+### Added
+- **Configurable Reserved Scope Names**: New `reservedScopeNames` field in workflow.config.json to customize which scope names are reserved (defaults to: init, create, build, test, config, docs, ci, deps)
+- **Full Config Command**: Complete `workflow config` command with subcommands:
+  - `workflow config validate`: Validate configuration with friendly error messages
+  - `workflow config add scope`: Interactive scope creation with upfront validation and suggestions
+  - `workflow config remove scope <name>`: Remove a scope from configuration
+  - `workflow config list [type]`: List scopes, reserved names, or all config items
+  - `workflow config get <path>`: Get a configuration value by path
+  - `workflow config set <path> <value>`: Set a configuration value
+- **Scope Name Validation**: New `validateScopeName()` helper function with intelligent suggestions for reserved words
+- **Force Flag**: `--force` flag for config command to bypass validation checks
+- **Pre-commit Scope Validation**: New `validate-scopes` hook check type
+- **Interactive Prompts**: Full interactive scope creation with prompts for name, description, types, and guidelines
+- **User-Friendly Error Messages**: Error messages now show scope names instead of array indices and include helpful suggestions
+
+### Fixed
+- **Reserved Word Errors**: Scope validation now happens upfront during `workflow config add scope` instead of only at config load time
+- **Error Message Quality**: Zod errors are now formatted to show `Scope "name"` instead of `scopes[2].name`
+- **Validation Timing**: Reserved word validation now respects custom `reservedScopeNames` configuration
+
+### Changed
+- **Config Schema**: Scope validation moved from individual scope level to config level using `superRefine`
+- **Config Index**: Added `validateConfig()` function and improved error formatting in `loadConfig()`
+- **Hooks Generation**: Added support for `validate-scopes` command in pre-commit hooks
+
+### Dependencies
+- Added `prompts@^2.4.2` for interactive CLI prompts
+- Added `@types/prompts@^2.4.9` for TypeScript support
+
+## [2.0.1] - 2026-01-14
+
+### Fixed
+- **Fallback Scopes**: Fixed default fallback scopes to use valid names instead of reserved words
+
+## [2.0.0] - 2026-01-14
+
+### Added
+- **Mandatory Guidelines Enforcement System**: Comprehensive enforcement of template guidelines
+- **Guideline Metadata**: New metadata.json for tracking mandatory vs optional templates
+- **Doctor Command Enhancements**: New `--check-guidelines-only` flag for focused checks
+- **Pre-commit Hooks**: Automatic git hook installation with guideline validation
+- **GitHub Actions Integration**: Generate `.github/workflows/workflow-check.yml` for CI/CD
+- All existing features from 1.0.0
+
 ## [1.0.0] - 2026-01-14
 
 ### Added
