@@ -48,6 +48,47 @@ export const AnalyticsConfigSchema = z.object({
   shareAnonymous: z.boolean().default(false),
 });
 
+// Pre-commit hook check types
+export const HookCheckSchema = z.enum([
+  'validate-branch',
+  'validate-commit',
+  'check-guidelines',
+]);
+
+// Git hooks configuration
+export const HooksConfigSchema = z.object({
+  /** Whether hooks are enabled */
+  enabled: z.boolean().default(true),
+  /** Checks to run on pre-commit */
+  preCommit: z.array(HookCheckSchema).default(['validate-branch', 'check-guidelines']),
+  /** Checks to run on commit-msg */
+  commitMsg: z.array(HookCheckSchema).default(['validate-commit']),
+});
+
+// Guidelines configuration with mandatory templates and user overrides
+export const GuidelinesConfigSchema = z.object({
+  /** Additional templates to make mandatory (beyond the core set) */
+  additionalMandatory: z.array(z.string()).optional(),
+  /** Templates to make optional (override core mandatory templates) */
+  optionalOverrides: z.array(z.string()).optional(),
+});
+
+// CI provider types
+export const CIProviderSchema = z.enum(['github', 'gitlab', 'bitbucket']);
+
+// CI check types
+export const CICheckSchema = z.enum(['lint', 'typecheck', 'format', 'test', 'build']);
+
+// CI/CD configuration
+export const CIConfigSchema = z.object({
+  /** Whether CI setup is enabled */
+  enabled: z.boolean().default(true),
+  /** CI provider (currently only github supported) */
+  provider: CIProviderSchema.default('github'),
+  /** Checks to run in CI pipeline */
+  checks: z.array(CICheckSchema).default(['lint', 'typecheck', 'format', 'build', 'test']),
+});
+
 export const WorkflowConfigSchema = z.object({
   projectName: z.string().min(1),
   scopes: z.array(ScopeSchema).min(1),
@@ -58,6 +99,9 @@ export const WorkflowConfigSchema = z.object({
   analytics: AnalyticsConfigSchema.optional(),
   adapter: z.string().optional(),
   syncRemote: z.string().optional(),
+  hooks: HooksConfigSchema.optional(),
+  guidelines: GuidelinesConfigSchema.optional(),
+  ci: CIConfigSchema.optional(),
 });
 
 export type Scope = z.infer<typeof ScopeSchema>;
@@ -65,6 +109,12 @@ export type BranchType = z.infer<typeof BranchTypeSchema>;
 export type ConventionalType = z.infer<typeof ConventionalTypeSchema>;
 export type EnforcementLevel = z.infer<typeof EnforcementLevelSchema>;
 export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>;
+export type HookCheck = z.infer<typeof HookCheckSchema>;
+export type HooksConfig = z.infer<typeof HooksConfigSchema>;
+export type GuidelinesConfig = z.infer<typeof GuidelinesConfigSchema>;
+export type CIProvider = z.infer<typeof CIProviderSchema>;
+export type CICheck = z.infer<typeof CICheckSchema>;
+export type CIConfig = z.infer<typeof CIConfigSchema>;
 export type WorkflowConfig = z.infer<typeof WorkflowConfigSchema>;
 
 export const defaultBranchTypes: BranchType[] = [
