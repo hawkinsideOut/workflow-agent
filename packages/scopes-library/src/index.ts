@@ -20,19 +20,19 @@ export const scopes: Scope[] = [
     category: 'features',
   },
   {
-    name: 'build',
+    name: 'bundler',
     description: 'Build configuration, bundling, tooling setup',
     emoji: '🔨',
     category: 'infrastructure',
   },
   {
-    name: 'docs',
+    name: 'documentation',
     description: 'Documentation, API docs, guides, examples',
     emoji: '📚',
     category: 'documentation',
   },
   {
-    name: 'test',
+    name: 'testing',
     description: 'Test suites, test utilities, testing infrastructure',
     emoji: '🧪',
     category: 'testing',
@@ -44,7 +44,7 @@ export const scopes: Scope[] = [
     category: 'documentation',
   },
   {
-    name: 'deps',
+    name: 'packages',
     description: 'Dependency updates, peer dependencies, version bumps',
     emoji: '📦',
     category: 'infrastructure',

@@ -68,8 +68,8 @@ export const scopes: Scope[] = [
     category: 'infrastructure',
   },
   {
-    name: 'deps',
-    description: 'Dependencies, package updates, third-party integrations',
+    name: 'packages',
+    description: 'Package dependencies, updates, third-party integrations',
     emoji: '📦',
     category: 'infrastructure',
   },

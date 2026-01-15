@@ -1,5 +1,5 @@
 {
-  "projectName": "test-project",
+  "projectName": "workflow-agent",
   "scopes": [
     {
       "name": "feat",
@@ -12,7 +12,7 @@
       "emoji": "🐛"
     },
     {
-      "name": "docs",
+      "name": "documentation",
       "description": "Documentation changes and improvements",
       "emoji": "📚"
     }

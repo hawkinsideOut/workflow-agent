@@ -74,19 +74,19 @@ export const scopes: Scope[] = [
     category: 'infrastructure',
   },
   {
-    name: 'deps',
-    description: 'Dependency updates, package management',
+    name: 'packages',
+    description: 'Package dependencies, updates, version management',
     emoji: '🔧',
     category: 'infrastructure',
   },
   {
-    name: 'docs',
+    name: 'documentation',
     description: 'Documentation changes, guides, README updates',
     emoji: '📚',
     category: 'documentation',
   },
   {
-    name: 'test',
+    name: 'testing',
     description: 'Test additions, test fixes, test infrastructure',
     emoji: '🧪',
     category: 'testing',

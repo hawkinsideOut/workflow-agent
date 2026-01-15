@@ -56,13 +56,13 @@ export const scopes: Scope[] = [
     category: 'features',
   },
   {
-    name: 'docs',
+    name: 'documentation',
     description: 'API documentation, OpenAPI/Swagger specs',
     emoji: '📚',
     category: 'documentation',
   },
   {
-    name: 'test',
+    name: 'testing',
     description: 'API tests, integration tests, e2e tests',
     emoji: '🧪',
     category: 'testing',
@@ -74,7 +74,7 @@ export const scopes: Scope[] = [
     category: 'infrastructure',
   },
   {
-    name: 'deps',
+    name: 'packages',
     description: 'Dependencies, package updates, security patches',
     emoji: '📦',
     category: 'infrastructure',
