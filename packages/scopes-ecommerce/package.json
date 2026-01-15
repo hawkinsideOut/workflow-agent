@@ -1,6 +1,6 @@
 {
   "name": "@hawkinside_out/workflow-scopes-ecommerce",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Preset scope configuration for e-commerce applications",
   "keywords": ["workflow", "scopes", "ecommerce", "shop", "preset"],
   "repository": {

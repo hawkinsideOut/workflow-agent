@@ -1,6 +1,6 @@
 {
   "name": "@hawkinside_out/workflow-scopes-library",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Preset scope configuration for libraries and npm packages",
   "keywords": ["workflow", "scopes", "library", "preset"],
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "@hawkinside_out/workflow-scopes-api",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Preset scope configuration for API and backend services",
   "keywords": ["workflow", "scopes", "api", "backend", "preset"],
   "repository": {
