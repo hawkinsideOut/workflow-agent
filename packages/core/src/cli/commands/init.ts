@@ -124,8 +124,9 @@ export async function initCommand(options: { migrate?: boolean; workspace?: bool
 
     try {
       // Find templates directory
-      // When built: dist/cli/commands/init.js -> templates is at package root
-      const templatesDir = join(__dirname, '../../../templates');
+      // When built and installed: dist/cli/index.js -> ../../templates
+      // The templates are at the package root level
+      const templatesDir = join(__dirname, '../../templates');
       
       // Validate templates exist
       await validateTemplateDirectory(templatesDir);
