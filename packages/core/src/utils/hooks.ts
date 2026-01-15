@@ -66,6 +66,8 @@ function generatePreCommitHook(config?: HooksConfig): string {
         return '  workflow validate commit';
       case 'check-guidelines':
         return '  workflow doctor --check-guidelines-only 2>/dev/null || true';
+      case 'validate-scopes':
+        return '  workflow config validate';
       default:
         return '';
     }

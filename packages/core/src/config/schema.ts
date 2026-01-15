@@ -1,20 +1,50 @@
 import { z } from 'zod';
 
-// Reserved scope names that cannot be used
-const RESERVED_SCOPE_NAMES = ['init', 'create', 'build', 'test', 'config', 'docs', 'ci', 'deps'];
+// Default reserved scope names that cannot be used
+export const DEFAULT_RESERVED_SCOPE_NAMES = ['init', 'create', 'build', 'test', 'config', 'docs', 'ci', 'deps'];
 
-export const ScopeSchema = z.object({
-  name: z.string()
-    .min(1)
-    .max(32, 'Scope name must be 32 characters or less')
-    .regex(/^[a-z0-9-]+$/, 'Scope name must be lowercase alphanumeric with hyphens')
-    .refine((name) => !RESERVED_SCOPE_NAMES.includes(name), {
-      message: `Scope name cannot be a reserved word: ${RESERVED_SCOPE_NAMES.join(', ')}`,
-    }),
-  description: z.string().min(10, 'Scope description must be at least 10 characters'),
-  emoji: z.string().optional(),
-  category: z.enum(['auth', 'features', 'infrastructure', 'documentation', 'testing', 'performance', 'other']).optional(),
-});
+/**
+ * Validates a scope name against reserved words and naming rules
+ */
+export function validateScopeName(name: string, reservedNames: string[] = DEFAULT_RESERVED_SCOPE_NAMES): {
+  valid: boolean;
+  error?: string;
+  suggestion?: string;
+} {
+  if (reservedNames.includes(name)) {
+    // Provide suggestions for common reserved words
+    const suggestions: Record<string, string> = {
+      'docs': 'documentation',
+      'test': 'testing',
+      'config': 'configuration',
+      'build': 'builds',
+      'ci': 'cicd',
+      'deps': 'dependencies',
+    };
+    
+    return {
+      valid: false,
+      error: `Scope name "${name}" is reserved`,
+      suggestion: suggestions[name] || `${name}-scope`,
+    };
+  }
+  
+  if (!/^[a-z0-9-]+$/.test(name)) {
+    return {
+      valid: false,
+      error: 'Scope name must be lowercase alphanumeric with hyphens',
+    };
+  }
+  
+  if (name.length === 0 || name.length > 32) {
+    return {
+      valid: false,
+      error: 'Scope name must be 1-32 characters',
+    };
+  }
+  
+  return { valid: true };
+}
 
 export const BranchTypeSchema = z.enum([
   'feature',
@@ -41,6 +71,18 @@ export const ConventionalTypeSchema = z.enum([
   'revert',
 ]);
 
+export const ScopeSchema = z.object({
+  name: z.string()
+    .min(1)
+    .max(32, 'Scope name must be 32 characters or less')
+    .regex(/^[a-z0-9-]+$/, 'Scope name must be lowercase alphanumeric with hyphens'),
+  description: z.string().min(10, 'Scope description must be at least 10 characters'),
+  allowedTypes: z.array(ConventionalTypeSchema).optional(),
+  mandatoryGuidelines: z.array(z.string()).optional(),
+  emoji: z.string().optional(),
+  category: z.enum(['auth', 'features', 'infrastructure', 'documentation', 'testing', 'performance', 'other']).optional(),
+});
+
 export const EnforcementLevelSchema = z.enum(['strict', 'advisory', 'learning']);
 
 export const AnalyticsConfigSchema = z.object({
@@ -53,6 +95,7 @@ export const HookCheckSchema = z.enum([
   'validate-branch',
   'validate-commit',
   'check-guidelines',
+  'validate-scopes',
 ]);
 
 // Git hooks configuration
@@ -101,7 +144,27 @@ export const WorkflowConfigSchema = z.object({
   syncRemote: z.string().optional(),
   hooks: HooksConfigSchema.optional(),
   guidelines: GuidelinesConfigSchema.optional(),
+  reservedScopeNames: z.array(z.string()).optional().default(DEFAULT_RESERVED_SCOPE_NAMES),
   ci: CIConfigSchema.optional(),
+}).superRefine((config, ctx) => {
+  // Validate scopes against reserved names
+  const reservedNames = config.reservedScopeNames || DEFAULT_RESERVED_SCOPE_NAMES;
+  
+  config.scopes.forEach((scope, index) => {
+    const validation = validateScopeName(scope.name, reservedNames);
+    if (!validation.valid) {
+      let message = validation.error || 'Invalid scope name';
+      if (validation.suggestion) {
+        message += `. Try renaming to "${validation.suggestion}"`;
+      }
+      
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['scopes', index, 'name'],
+        message,
+      });
+    }
+  });
 });
 
 export type Scope = z.infer<typeof ScopeSchema>;
