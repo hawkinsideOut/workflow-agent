@@ -24,7 +24,14 @@ We deliver working code the first time, every time. No surprises. No broken pipe
 - All code must pass comprehensive validation before commit
 - Zero human intervention required for quality checks
 
-### 2. Mandatory Quality Gates
+### 2. Zero Configuration Friction
+
+- If quality tools are missing, Agent auto-configures them
+- No manual setup required from developers
+- Industry best practices applied automatically
+- See [Auto-Setup Tools](./AUTO_SETUP_TOOLS.md) for details
+
+### 3. Mandatory Quality Gates
 
 Every single commit must pass:
 

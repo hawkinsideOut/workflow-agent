@@ -29,6 +29,63 @@ Before ANY commit and push, the AI Agent MUST:
 
 The following checks are executed in order. If ANY check fails, Agent fixes the errors and restarts from Step 1:
 
+---
+
+## Phase 0: Auto-Setup (If Needed)
+
+Before running any checks, Agent automatically detects and configures missing tools:
+
+### Detection
+
+- ✅ **TypeScript**: Checks for `tsconfig.json`, typecheck script, typescript dependency
+- ✅ **ESLint**: Checks for ESLint config, lint script, eslint dependency
+- ✅ **Prettier**: Checks for Prettier config, format script, prettier dependency
+- ✅ **Tests**: Checks for test config, test script, test framework dependency
+- ✅ **Build**: Checks for build config, build script, build tool dependency
+
+### Auto-Setup Actions
+
+If ANY tool is missing:
+
+1. **Install dependencies**: One command for all missing tools
+2. **Create configurations**: Industry-standard configs based on project type
+3. **Add scripts**: Update `package.json` with check commands
+4. **Verify setup**: Test each tool works correctly
+5. **Commit changes**: Separate commit with descriptive message
+
+### Example Output
+
+```
+🔍 Phase 0: Detecting mandatory check tools...
+├─ ❌ TypeScript: tsconfig.json not found
+├─ ❌ ESLint: No configuration found
+├─ ✅ Prettier: .prettierrc exists
+├─ ❌ Tests: No test framework detected
+└─ ✅ Build: tsup.config.ts exists
+
+🔧 Auto-setup: Installing missing tools...
+📦 pnpm add -D typescript @types/node @eslint/js typescript-eslint vitest @vitest/coverage-v8
+✓ Dependencies installed (4.2s)
+
+📝 Creating configuration files...
+├─ ✓ Created tsconfig.json
+├─ ✓ Created eslint.config.mjs
+├─ ✓ Created vitest.config.ts
+└─ ✓ Created src/example.test.ts
+
+✏️  Updating package.json scripts...
+✓ Added: typecheck, lint, test
+
+🔍 Verifying setup...
+✅ All tools verified
+
+📝 Committed: chore(setup): configure mandatory pre-commit check tools
+```
+
+👉 **Full auto-setup documentation**: [AUTO_SETUP_TOOLS.md](./AUTO_SETUP_TOOLS.md)
+
+---
+
 ### 1. Type Check
 
 ```bash

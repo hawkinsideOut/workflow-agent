@@ -150,6 +150,12 @@ Any decisions, blockers, or context for future reference.
 
 > **CRITICAL RULE**: This is a "one-and-done" service commitment. The following pre-commit checks are MANDATORY before ANY commit and push. There are ZERO EXCEPTIONS to this rule.
 
+### Auto-Setup Guarantee
+
+**If ANY mandatory check tool is not configured** (missing config files, scripts, or dependencies), Agent MUST automatically set them up based on industry best practices BEFORE running checks.
+
+👉 **Complete auto-setup documentation**: [../../docs/AUTO_SETUP_TOOLS.md](../../docs/AUTO_SETUP_TOOLS.md)
+
 ### The Rule
 
 **Before EVERY commit and push, Agent MUST:**

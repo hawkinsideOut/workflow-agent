@@ -33,6 +33,8 @@ pnpm typecheck && pnpm lint && pnpm format && pnpm test && pnpm build
 ```
 Make Changes
     ↓
+[Auto-Setup Missing Tools if needed]
+    ↓
 Stage Files (git add .)
     ↓
 Run Pre-Commit Checks

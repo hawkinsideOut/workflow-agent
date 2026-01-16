@@ -509,6 +509,8 @@ pnpm test:coverage
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
+🚨 **MANDATORY**: Run pre-commit checks before pushing. Agent automatically configures missing tools. See [Pre-Commit Workflow](docs/PRE_COMMIT_WORKFLOW.md) and [Auto-Setup](docs/AUTO_SETUP_TOOLS.md) for details.
+
 **Ways to contribute:**
 
 1. 🐛 Report bugs
