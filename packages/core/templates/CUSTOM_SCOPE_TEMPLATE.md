@@ -137,11 +137,11 @@ describe('{{presetName}} Scope Preset', () => {
 ## tsup.config.ts Template
 
 ```typescript
-import { defineConfig } from 'tsup';
+import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ['src/index.ts'],
-  format: ['esm'],
+  entry: ["src/index.ts"],
+  format: ["esm"],
   dts: true,
   clean: true,
   sourcemap: true,
@@ -153,6 +153,7 @@ export default defineConfig({
 To create a custom scope package using these templates:
 
 1. **Use the CLI** (recommended):
+
    ```bash
    workflow scope:create
    ```
@@ -180,7 +181,7 @@ Each scope in `{{scopeDefinitions}}` must match:
   name: string;              // lowercase, alphanumeric, hyphens, max 32 chars
   description: string;       // min 10 characters
   emoji?: string;            // optional emoji
-  category?: 'auth' | 'features' | 'infrastructure' | 'documentation' | 
+  category?: 'auth' | 'features' | 'infrastructure' | 'documentation' |
              'testing' | 'performance' | 'other';
 }
 ```

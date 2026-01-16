@@ -1,7 +1,7 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { WorkflowConfig } from '../config/schema.js';
-import { detectAdapter, getAdapter } from '../adapters/index.js';
+import fs from "fs/promises";
+import path from "path";
+import { WorkflowConfig } from "../config/schema.js";
+import { detectAdapter, getAdapter } from "../adapters/index.js";
 
 export interface TemplateContext {
   projectName: string;
@@ -25,7 +25,10 @@ export interface TemplateContext {
 /**
  * Renders a template string with provided context using simple {{variable}} syntax
  */
-export function renderTemplate(template: string, context: TemplateContext): string {
+export function renderTemplate(
+  template: string,
+  context: TemplateContext,
+): string {
   return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
     return context[key] ?? match;
   });
@@ -36,7 +39,7 @@ export function renderTemplate(template: string, context: TemplateContext): stri
  */
 export async function buildTemplateContext(
   config: WorkflowConfig,
-  projectPath: string = process.cwd()
+  projectPath: string = process.cwd(),
 ): Promise<TemplateContext> {
   // Detect framework
   const detectedFramework = await detectAdapter();
@@ -44,14 +47,15 @@ export async function buildTemplateContext(
 
   // Build scope list as markdown
   const scopeList = config.scopes
-    .map(s => `- **${s.name}** - ${s.description}`)
-    .join('\n');
+    .map((s) => `- **${s.name}** - ${s.description}`)
+    .join("\n");
 
   // Build scope names list (comma-separated)
-  const scopes = config.scopes.map(s => s.name).join(', ');
+  const scopes = config.scopes.map((s) => s.name).join(", ");
 
   // Build path structure from adapter
-  const pathStructure = adapter ? `
+  const pathStructure = adapter
+    ? `
 ### Path Structure
 
 \`\`\`
@@ -60,14 +64,15 @@ ${adapter.paths.lib}/          → Utility functions and services
 ${adapter.paths.hooks}/        → Custom React hooks
 ${adapter.paths.types}/        → TypeScript type definitions
 \`\`\`
-`.trim() : 'N/A';
+`.trim()
+    : "N/A";
 
   // Get project name from package.json or directory name
   const projectName = await getProjectName(projectPath);
 
   return {
     projectName,
-    framework: adapter?.name || 'unknown',
+    framework: adapter?.name || "unknown",
     scopes,
     scopeList,
     pathStructure,
@@ -82,12 +87,12 @@ ${adapter.paths.types}/        → TypeScript type definitions
 export async function renderTemplateFile(
   templatePath: string,
   outputPath: string,
-  context: TemplateContext
+  context: TemplateContext,
 ): Promise<void> {
-  const template = await fs.readFile(templatePath, 'utf-8');
+  const template = await fs.readFile(templatePath, "utf-8");
   const rendered = renderTemplate(template, context);
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
-  await fs.writeFile(outputPath, rendered, 'utf-8');
+  await fs.writeFile(outputPath, rendered, "utf-8");
 }
 
 /**
@@ -97,7 +102,7 @@ export async function renderTemplateFile(
 export async function renderTemplateDirectory(
   templateDir: string,
   outputDir: string,
-  context: TemplateContext
+  context: TemplateContext,
 ): Promise<string[]> {
   const files = await fs.readdir(templateDir);
   const rendered: string[] = [];
@@ -121,8 +126,8 @@ export async function renderTemplateDirectory(
  */
 async function getProjectName(projectPath: string): Promise<string> {
   try {
-    const pkgPath = path.join(projectPath, 'package.json');
-    const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf-8'));
+    const pkgPath = path.join(projectPath, "package.json");
+    const pkg = JSON.parse(await fs.readFile(pkgPath, "utf-8"));
     return pkg.name || path.basename(projectPath);
   } catch {
     return path.basename(projectPath);
@@ -132,7 +137,9 @@ async function getProjectName(projectPath: string): Promise<string> {
 /**
  * Validates that template directory exists and contains markdown files
  */
-export async function validateTemplateDirectory(templateDir: string): Promise<void> {
+export async function validateTemplateDirectory(
+  templateDir: string,
+): Promise<void> {
   try {
     const stat = await fs.stat(templateDir);
     if (!stat.isDirectory()) {
@@ -140,13 +147,15 @@ export async function validateTemplateDirectory(templateDir: string): Promise<vo
     }
 
     const files = await fs.readdir(templateDir);
-    const templateFiles = files.filter(f => f.match(/\.(md|ts|json)$/));
+    const templateFiles = files.filter((f) => f.match(/\.(md|ts|json)$/));
 
     if (templateFiles.length === 0) {
-      throw new Error(`No template files found in template directory: ${templateDir}`);
+      throw new Error(
+        `No template files found in template directory: ${templateDir}`,
+      );
     }
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       throw new Error(`Template directory not found: ${templateDir}`);
     }
     throw error;
@@ -160,72 +169,79 @@ export async function validateTemplateDirectory(templateDir: string): Promise<vo
  */
 export async function renderScopePackage(
   outputDir: string,
-  context: Required<Pick<TemplateContext, 'scopeName' | 'presetName' | 'scopeDefinitions' | 'packageVersion'>> & TemplateContext
+  context: Required<
+    Pick<
+      TemplateContext,
+      "scopeName" | "presetName" | "scopeDefinitions" | "packageVersion"
+    >
+  > &
+    TemplateContext,
 ): Promise<void> {
   // Ensure output directory exists
-  await fs.mkdir(path.join(outputDir, 'src'), { recursive: true });
+  await fs.mkdir(path.join(outputDir, "src"), { recursive: true });
 
   // Write package.json
   const packageJson = {
     name: `@workflow/scopes-${context.scopeName}`,
     version: context.packageVersion,
     description: `Scope preset for ${context.presetName}`,
-    keywords: ['workflow', 'scopes', context.scopeName, 'preset'],
+    keywords: ["workflow", "scopes", context.scopeName, "preset"],
     repository: {
-      type: 'git',
-      url: 'git+https://github.com/your-org/your-repo.git',
-      directory: context.packageDirectory || `packages/scopes-${context.scopeName}`,
+      type: "git",
+      url: "git+https://github.com/your-org/your-repo.git",
+      directory:
+        context.packageDirectory || `packages/scopes-${context.scopeName}`,
     },
-    license: 'MIT',
-    author: 'Your Name',
-    type: 'module',
+    license: "MIT",
+    author: "Your Name",
+    type: "module",
     exports: {
-      '.': {
-        types: './dist/index.d.ts',
-        import: './dist/index.js',
+      ".": {
+        types: "./dist/index.d.ts",
+        import: "./dist/index.js",
       },
     },
-    files: ['dist'],
+    files: ["dist"],
     scripts: {
-      build: 'tsup',
-      dev: 'tsup --watch',
-      typecheck: 'tsc --noEmit',
-      test: 'vitest run',
+      build: "tsup",
+      dev: "tsup --watch",
+      typecheck: "tsc --noEmit",
+      test: "vitest run",
     },
     peerDependencies: {
-      '@hawkinside_out/workflow-agent': '^1.0.0',
+      "@hawkinside_out/workflow-agent": "^1.0.0",
     },
     devDependencies: {
-      '@hawkinside_out/workflow-agent': '^1.0.0',
-      tsup: '^8.0.1',
-      typescript: '^5.3.3',
-      vitest: '^1.0.0',
+      "@hawkinside_out/workflow-agent": "^1.0.0",
+      tsup: "^8.0.1",
+      typescript: "^5.3.3",
+      vitest: "^1.0.0",
     },
     publishConfig: {
-      access: 'public',
+      access: "public",
     },
   };
 
   await fs.writeFile(
-    path.join(outputDir, 'package.json'),
+    path.join(outputDir, "package.json"),
     JSON.stringify(packageJson, null, 2),
-    'utf-8'
+    "utf-8",
   );
 
   // Write tsconfig.json
   const tsconfig = {
-    extends: '../../tsconfig.json',
+    extends: "../../tsconfig.json",
     compilerOptions: {
-      outDir: './dist',
-      rootDir: './src',
+      outDir: "./dist",
+      rootDir: "./src",
     },
-    include: ['src/**/*'],
+    include: ["src/**/*"],
   };
 
   await fs.writeFile(
-    path.join(outputDir, 'tsconfig.json'),
+    path.join(outputDir, "tsconfig.json"),
     JSON.stringify(tsconfig, null, 2),
-    'utf-8'
+    "utf-8",
   );
 
   // Write tsup.config.ts
@@ -240,7 +256,11 @@ export default defineConfig({
 });
 `;
 
-  await fs.writeFile(path.join(outputDir, 'tsup.config.ts'), tsupConfig, 'utf-8');
+  await fs.writeFile(
+    path.join(outputDir, "tsup.config.ts"),
+    tsupConfig,
+    "utf-8",
+  );
 
   // Write src/index.ts
   const indexTs = `import type { Scope } from '@hawkinside_out/workflow-agent/config';
@@ -257,5 +277,5 @@ export const preset = {
 export default preset;
 `;
 
-  await fs.writeFile(path.join(outputDir, 'src', 'index.ts'), indexTs, 'utf-8');
+  await fs.writeFile(path.join(outputDir, "src", "index.ts"), indexTs, "utf-8");
 }

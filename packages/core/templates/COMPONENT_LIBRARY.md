@@ -269,11 +269,12 @@ import {
   FormDialogSection,
   FormDialogField,
   useFormDialog,
-} from '@/components/FormDialog';
+} from "@/components/FormDialog";
 
 function CreateSprintDialog() {
-  const { isOpen, isSubmitting, setIsSubmitting, open, close } = useFormDialog();
-  const [name, setName] = useState('');
+  const { isOpen, isSubmitting, setIsSubmitting, open, close } =
+    useFormDialog();
+  const [name, setName] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -359,8 +360,13 @@ Use sections to group related fields:
 Use `FormDialogField` error prop for validation:
 
 ```tsx
-<FormDialogField label="Email" required error={errors.email?.message} htmlFor="email">
-  <Input id="email" {...register('email')} />
+<FormDialogField
+  label="Email"
+  required
+  error={errors.email?.message}
+  htmlFor="email"
+>
+  <Input id="email" {...register("email")} />
 </FormDialogField>
 ```
 
@@ -418,14 +424,14 @@ components/
 #### Behavioral Tests
 
 ```typescript
-describe('StatusBadge', () => {
-  it('should render without crashing', () => {});
-  it('should render all status variants', () => {});
-  it('should apply correct colors for each status', () => {});
-  it('should respect size prop', () => {});
-  it('should apply custom className', () => {});
-  it('should handle feature flag disabled state', () => {});
-  it('should handle feature flag enabled state', () => {});
+describe("StatusBadge", () => {
+  it("should render without crashing", () => {});
+  it("should render all status variants", () => {});
+  it("should apply correct colors for each status", () => {});
+  it("should respect size prop", () => {});
+  it("should apply custom className", () => {});
+  it("should handle feature flag disabled state", () => {});
+  it("should handle feature flag enabled state", () => {});
 });
 ```
 
@@ -510,19 +516,19 @@ function TaskRow({ task }) {
 ### Testing with Flags
 
 ```typescript
-import { mockFeatureFlag, clearFeatureFlagMocks } from '@/lib/feature-flags';
+import { mockFeatureFlag, clearFeatureFlagMocks } from "@/lib/feature-flags";
 
-describe('Component with feature flag', () => {
+describe("Component with feature flag", () => {
   afterEach(() => {
     clearFeatureFlagMocks();
   });
 
-  it('should render new component when flag enabled', () => {
+  it("should render new component when flag enabled", () => {
     mockFeatureFlag(FeatureFlag.STATUS_BADGE, true);
     // test new behavior
   });
 
-  it('should render fallback when flag disabled', () => {
+  it("should render fallback when flag disabled", () => {
     mockFeatureFlag(FeatureFlag.STATUS_BADGE, false);
     // test fallback behavior
   });

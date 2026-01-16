@@ -3,18 +3,16 @@
  * Creates CI workflow with lint, typecheck, format, build, and test checks
  */
 
-import { existsSync } from 'fs';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import type { CIConfig } from '../config/schema.js';
-import { 
-  type PackageManager, 
-  getInstallCommand, 
+import { existsSync } from "fs";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
+import type { CIConfig } from "../config/schema.js";
+import {
+  type PackageManager,
+  getInstallCommand,
   getRunCommand,
-  detectPackageManager,
-  isMonorepo as checkMonorepo,
   getProjectInfo,
-} from './git-repo.js';
+} from "./git-repo.js";
 
 export interface WorkflowGeneratorOptions {
   /** Project path */
@@ -66,7 +64,7 @@ export function generateCIWorkflowContent(options: {
   } = options;
 
   const installCmd = getInstallCommand(packageManager);
-  
+
   // Build steps based on available scripts and checks
   const steps: string[] = [];
 
@@ -76,13 +74,15 @@ export function generateCIWorkflowContent(options: {
 
   // Setup package manager cache based on type
   let cacheType = packageManager;
-  if (packageManager === 'bun') {
-    cacheType = 'npm'; // fallback for bun
+  if (packageManager === "bun") {
+    cacheType = "npm"; // fallback for bun
   }
 
   // Setup Node.js (using matrix for multiple versions)
   const useMatrix = nodeVersions.length > 1;
-  const nodeVersionValue = useMatrix ? `\${{ matrix.node-version }}` : nodeVersions[0] || '20';
+  const nodeVersionValue = useMatrix
+    ? `\${{ matrix.node-version }}`
+    : nodeVersions[0] || "20";
 
   steps.push(`
       - name: Setup Node.js
@@ -92,7 +92,7 @@ export function generateCIWorkflowContent(options: {
           cache: '${cacheType}'`);
 
   // Setup pnpm if needed
-  if (packageManager === 'pnpm') {
+  if (packageManager === "pnpm") {
     steps.push(`
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -106,9 +106,9 @@ export function generateCIWorkflowContent(options: {
         run: ${installCmd}`);
 
   // Lint check
-  if (checks.includes('lint')) {
+  if (checks.includes("lint")) {
     if (hasLintScript) {
-      const lintCmd = getRunCommand(packageManager, 'lint', isMonorepo);
+      const lintCmd = getRunCommand(packageManager, "lint", isMonorepo);
       steps.push(`
       - name: Lint
         run: ${lintCmd}`);
@@ -120,9 +120,13 @@ export function generateCIWorkflowContent(options: {
   }
 
   // Typecheck
-  if (checks.includes('typecheck')) {
+  if (checks.includes("typecheck")) {
     if (hasTypecheckScript) {
-      const typecheckCmd = getRunCommand(packageManager, 'typecheck', isMonorepo);
+      const typecheckCmd = getRunCommand(
+        packageManager,
+        "typecheck",
+        isMonorepo,
+      );
       steps.push(`
       - name: Type check
         run: ${typecheckCmd}`);
@@ -134,10 +138,14 @@ export function generateCIWorkflowContent(options: {
   }
 
   // Format check
-  if (checks.includes('format')) {
+  if (checks.includes("format")) {
     if (hasFormatScript) {
       // Check if there's a format:check script, otherwise use prettier directly
-      const formatCmd = getRunCommand(packageManager, 'format:check', isMonorepo);
+      const formatCmd = getRunCommand(
+        packageManager,
+        "format:check",
+        isMonorepo,
+      );
       steps.push(`
       - name: Format check
         run: ${formatCmd} || npx prettier --check "**/*.{ts,tsx,js,jsx,json,md}"`);
@@ -149,9 +157,9 @@ export function generateCIWorkflowContent(options: {
   }
 
   // Build
-  if (checks.includes('build')) {
+  if (checks.includes("build")) {
     if (hasBuildScript) {
-      const buildCmd = getRunCommand(packageManager, 'build', isMonorepo);
+      const buildCmd = getRunCommand(packageManager, "build", isMonorepo);
       steps.push(`
       - name: Build
         run: ${buildCmd}`);
@@ -163,9 +171,9 @@ export function generateCIWorkflowContent(options: {
   }
 
   // Test
-  if (checks.includes('test')) {
+  if (checks.includes("test")) {
     if (hasTestScript) {
-      const testCmd = getRunCommand(packageManager, 'test', isMonorepo);
+      const testCmd = getRunCommand(packageManager, "test", isMonorepo);
       steps.push(`
       - name: Test
         run: ${testCmd}`);
@@ -177,12 +185,12 @@ export function generateCIWorkflowContent(options: {
   }
 
   // Build the matrix strategy if using multiple Node versions
-  let matrixStrategy = '';
+  let matrixStrategy = "";
   if (useMatrix) {
     matrixStrategy = `
     strategy:
       matrix:
-        node-version: [${nodeVersions.map(v => `'${v}'`).join(', ')}]`;
+        node-version: [${nodeVersions.map((v) => `'${v}'`).join(", ")}]`;
   }
 
   const workflow = `# Workflow Agent CI Pipeline
@@ -202,7 +210,7 @@ jobs:
     runs-on: ubuntu-latest${matrixStrategy}
 
     steps:
-${steps.join('\n')}
+${steps.join("\n")}
 `;
 
   return workflow;
@@ -212,11 +220,11 @@ ${steps.join('\n')}
  * Create the GitHub Actions CI workflow file
  */
 export async function createCIWorkflow(
-  options: WorkflowGeneratorOptions = {}
+  options: WorkflowGeneratorOptions = {},
 ): Promise<GenerateResult> {
   const projectPath = options.projectPath || process.cwd();
-  const workflowsDir = join(projectPath, '.github', 'workflows');
-  const workflowPath = join(workflowsDir, 'ci.yml');
+  const workflowsDir = join(projectPath, ".github", "workflows");
+  const workflowPath = join(workflowsDir, "ci.yml");
 
   const result: GenerateResult = {
     success: false,
@@ -230,9 +238,15 @@ export async function createCIWorkflow(
     const isMonorepo = options.isMonorepo ?? projectInfo.isMonorepo;
 
     // Get CI checks from config or use defaults
-    const checks = options.ciConfig?.checks || ['lint', 'typecheck', 'format', 'build', 'test'];
-    const nodeVersions = options.nodeVersions || ['20'];
-    const defaultBranch = options.defaultBranch || 'main';
+    const checks = options.ciConfig?.checks || [
+      "lint",
+      "typecheck",
+      "format",
+      "build",
+      "test",
+    ];
+    const nodeVersions = options.nodeVersions || ["20"];
+    const defaultBranch = options.defaultBranch || "main";
 
     // Ensure .github/workflows directory exists
     if (!existsSync(workflowsDir)) {
@@ -254,7 +268,7 @@ export async function createCIWorkflow(
     });
 
     // Write workflow file
-    await writeFile(workflowPath, content, 'utf-8');
+    await writeFile(workflowPath, content, "utf-8");
 
     result.success = true;
   } catch (error) {
@@ -268,8 +282,8 @@ export async function createCIWorkflow(
  * Check if a CI workflow already exists
  */
 export function hasCIWorkflow(projectPath: string = process.cwd()): boolean {
-  const workflowsDir = join(projectPath, '.github', 'workflows');
-  const possibleNames = ['ci.yml', 'ci.yaml', 'main.yml', 'main.yaml'];
-  
-  return possibleNames.some(name => existsSync(join(workflowsDir, name)));
+  const workflowsDir = join(projectPath, ".github", "workflows");
+  const possibleNames = ["ci.yml", "ci.yaml", "main.yml", "main.yaml"];
+
+  return possibleNames.some((name) => existsSync(join(workflowsDir, name)));
 }

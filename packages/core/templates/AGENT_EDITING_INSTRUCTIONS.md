@@ -144,6 +144,170 @@ Any decisions, blockers, or context for future reference.
 
 > ⚠️ **IMPORTANT**: Never push directly to `main`. Always push to your feature branch and create a PR.
 
+---
+
+## 🚨 MANDATORY PRE-COMMIT CHECKLIST - ZERO EXCEPTIONS
+
+> **CRITICAL RULE**: This is a "one-and-done" service commitment. The following pre-commit checks are MANDATORY before ANY commit and push. There are ZERO EXCEPTIONS to this rule.
+
+### The Rule
+
+**Before EVERY commit and push, Agent MUST:**
+
+1. ✅ **Run all pre-commit checks** (listed below)
+2. 🔧 **Fix ALL errors encountered** automatically
+3. 🔄 **Re-run checks** until all pass
+4. ✅ **Only then commit and push**
+
+### Pre-Commit Execution Sequence
+
+Execute these commands in this exact order. If ANY command fails, fix the errors and restart from step 1:
+
+#### Step 1: Type Check
+
+```bash
+pnpm typecheck
+```
+
+**If errors occur:**
+
+- Fix all TypeScript type errors
+- Remove any `any` types
+- Ensure proper type imports
+- Re-run until clean
+
+#### Step 2: Lint Check
+
+```bash
+pnpm lint
+```
+
+**If errors occur:**
+
+- Fix all ESLint errors
+- Address all warnings
+- Ensure import ordering is correct
+- Re-run until clean
+
+#### Step 3: Format Check
+
+```bash
+pnpm format
+```
+
+**This command auto-fixes, then verify:**
+
+- All files are properly formatted
+- No formatting inconsistencies remain
+
+#### Step 4: Unit Tests
+
+```bash
+pnpm test
+```
+
+**If tests fail:**
+
+- Fix failing test logic
+- Update test expectations if changes are intentional
+- Add missing test coverage for new code
+- Re-run until all tests pass
+
+#### Step 5: Build Verification
+
+```bash
+pnpm build
+```
+
+**If build fails:**
+
+- Fix compilation errors
+- Resolve module resolution issues
+- Ensure all imports are valid
+- Re-run until build succeeds
+
+### Automated Pre-Commit Check Script
+
+Agent should execute this comprehensive check:
+
+```bash
+#!/bin/bash
+# Pre-commit validation - ALL must pass
+
+echo "🔍 Running pre-commit checks..."
+
+echo "📘 Step 1/5: Type checking..."
+pnpm typecheck || { echo "❌ Type check failed. Fix errors and retry."; exit 1; }
+
+echo "🔍 Step 2/5: Linting..."
+pnpm lint || { echo "❌ Lint check failed. Fix errors and retry."; exit 1; }
+
+echo "✨ Step 3/5: Formatting..."
+pnpm format || { echo "❌ Format check failed. Fix errors and retry."; exit 1; }
+
+echo "🧪 Step 4/5: Unit tests..."
+pnpm test || { echo "❌ Tests failed. Fix errors and retry."; exit 1; }
+
+echo "🏗️  Step 5/5: Build verification..."
+pnpm build || { echo "❌ Build failed. Fix errors and retry."; exit 1; }
+
+echo "✅ All pre-commit checks passed! Ready to commit."
+```
+
+### Agent Workflow for Commits
+
+When Agent is ready to commit, follow this EXACT workflow:
+
+1. **Stage changes**: `git add .`
+
+2. **Run pre-commit checks**: Execute all 5 steps above
+
+3. **If ANY check fails**:
+   - Analyze the error output
+   - Fix the errors in the codebase
+   - Commit the fixes
+   - Return to step 2 (re-run ALL checks)
+
+4. **When ALL checks pass**:
+   - Commit with proper message: `git commit -m "<type>(<scope>): <description>"`
+   - Push to branch: `git push origin <branch-name>`
+
+5. **Verification**: After push, confirm:
+   - GitHub Actions pipeline is triggered
+   - All CI checks are passing
+   - No pipeline failures
+
+### Error Handling Protocol
+
+**When errors are encountered:**
+
+| Error Type    | Agent Action                                                 |
+| ------------- | ------------------------------------------------------------ |
+| Type errors   | Analyze and fix type definitions, imports, and usage         |
+| Lint errors   | Apply auto-fix where possible, manual fix for complex issues |
+| Format errors | Re-run `pnpm format` (usually auto-fixes)                    |
+| Test failures | Update test logic, fix implementation, or update snapshots   |
+| Build errors  | Fix compilation issues, resolve imports, check dependencies  |
+
+**After fixing errors:**
+
+- ✅ Commit the fixes separately if needed
+- 🔄 Re-run the COMPLETE pre-commit checklist from step 1
+- ⚠️ Never skip steps or assume fixes worked without verification
+
+### Accountability
+
+This workflow ensures:
+
+- ✅ **Zero regressions** reach the main branch
+- ✅ **All code is production-ready** before merging
+- ✅ **CI/CD pipelines always pass** (no surprises)
+- ✅ **"One-and-done"** - customers receive working code, first time
+
+> 🔒 **ENFORCEMENT**: This rule has ZERO EXCEPTIONS. Agent will not commit or push code that fails any of these checks. Period.
+
+---
+
 ### Auto-Cleanup Rules
 
 | Trigger                      | Action                                        |
@@ -350,15 +514,15 @@ Every component story file MUST include:
 **Story Template:**
 
 ```tsx
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { ComponentName } from './ui/component-name';
-import { mockFeatureFlags } from '@/lib/feature-flags';
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { ComponentName } from "./ui/component-name";
+import { mockFeatureFlags } from "@/lib/feature-flags";
 
 const meta: Meta<typeof ComponentName> = {
-  title: 'Category/ComponentName',
+  title: "Category/ComponentName",
   component: ComponentName,
-  tags: ['autodocs'],
-  parameters: { layout: 'centered' },
+  tags: ["autodocs"],
+  parameters: { layout: "centered" },
   decorators: [
     (Story) => {
       mockFeatureFlags({ FEATURE_FLAG: true });
@@ -501,28 +665,28 @@ Imports MUST follow this exact order, with blank lines between groups:
 
 ```typescript
 // 1. Directive (MUST be first line if present)
-'use server';
+"use server";
 // OR
-'use client';
+"use client";
 
 // 2. React imports
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 
 // 3. External library imports (alphabetical)
-import { useDrag } from 'react-dnd';
-import { QueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
+import { useDrag } from "react-dnd";
+import { QueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 
 // 4. Internal absolute imports with @/ prefix (alphabetical by path)
-import { createServerClient } from '@/lib/supabase/server';
-import { verifyBoardAccess } from '@/utils/authorization.server';
-import type { Task, Sprint } from '@/types';
-import { useAuth } from '@/app/providers';
+import { createServerClient } from "@/lib/supabase/server";
+import { verifyBoardAccess } from "@/utils/authorization.server";
+import type { Task, Sprint } from "@/types";
+import { useAuth } from "@/app/providers";
 
 // 5. Relative imports (parent directories first, then siblings)
-import { Button } from '../ui/button';
-import { TaskCard } from './TaskCard';
-import type { LocalType } from './types';
+import { Button } from "../ui/button";
+import { TaskCard } from "./TaskCard";
+import type { LocalType } from "./types";
 ```
 
 ### Naming Conventions
@@ -548,27 +712,31 @@ import type { LocalType } from './types';
 
 ```typescript
 export async function getEntity(
-  id: string
+  id: string,
 ): Promise<{ data: Entity | null; error: string | null }> {
   try {
     // 1. Verify access FIRST
     const access = await verifyEntityAccess(id);
     if (!access.hasAccess) {
-      return { data: null, error: access.error || 'Access denied' };
+      return { data: null, error: access.error || "Access denied" };
     }
 
     const supabase = await createServerClient();
-    const { data, error } = await supabase.from('entities').select('*').eq('id', id).single();
+    const { data, error } = await supabase
+      .from("entities")
+      .select("*")
+      .eq("id", id)
+      .single();
 
     if (error) {
-      console.error('Error fetching entity:', error);
+      console.error("Error fetching entity:", error);
       return { data: null, error: error.message };
     }
 
     return { data: transformEntity(data), error: null };
   } catch (err) {
-    console.error('Unexpected error:', err);
-    return { data: null, error: 'An unexpected error occurred' };
+    console.error("Unexpected error:", err);
+    return { data: null, error: "An unexpected error occurred" };
   }
 }
 ```
@@ -583,10 +751,10 @@ const handleSubmit = async () => {
       toast.error(error);
       return;
     }
-    toast.success('Created successfully');
+    toast.success("Created successfully");
     onSuccess?.(data);
   } catch (err) {
-    toast.error('An unexpected error occurred');
+    toast.error("An unexpected error occurred");
   }
 };
 ```
@@ -612,12 +780,12 @@ const handleSubmit = async () => {
 5. **Never expose sensitive data** - filter fields before returning
 
 ```typescript
-'use server';
+"use server";
 
-import { createServerClient } from '@/lib/supabase/server';
-import { verifyBoardAccess } from '@/utils/authorization.server';
-import { revalidatePath } from 'next/cache';
-import type { Task } from '@/types';
+import { createServerClient } from "@/lib/supabase/server";
+import { verifyBoardAccess } from "@/utils/authorization.server";
+import { revalidatePath } from "next/cache";
+import type { Task } from "@/types";
 
 interface TaskRow {
   id: string;
@@ -636,17 +804,20 @@ function transformTask(row: TaskRow): Task {
 }
 
 export async function getTasks(
-  boardId: string
+  boardId: string,
 ): Promise<{ data: Task[] | null; error: string | null }> {
   // 1. Authorization FIRST
   const access = await verifyBoardAccess(boardId);
   if (!access.hasAccess) {
-    return { data: null, error: access.error || 'Access denied' };
+    return { data: null, error: access.error || "Access denied" };
   }
 
   // 2. Fetch data
   const supabase = await createServerClient();
-  const { data, error } = await supabase.from('tasks').select('*').eq('board_id', boardId);
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("board_id", boardId);
 
   if (error) {
     return { data: null, error: error.message };
@@ -717,12 +888,15 @@ export function TaskCard({ task, onEdit, readOnly = false }: TaskCardProps) {
 
 ```typescript
 // Server action
-import { verifyBoardAccess, requireContributorAccess } from '@/utils/authorization.server';
+import {
+  verifyBoardAccess,
+  requireContributorAccess,
+} from "@/utils/authorization.server";
 
 export async function createTask(boardId: string, data: CreateTaskData) {
   const boardAccess = await verifyBoardAccess(boardId);
   if (!boardAccess.hasAccess) {
-    return { data: null, error: 'Access denied' };
+    return { data: null, error: "Access denied" };
   }
 
   // For write operations, also check role
@@ -853,15 +1027,22 @@ When creating a PR, use Agent to automatically fill out the PR description:
 
 Before creating a PR, Agent must verify:
 
+- [ ] **🚨 MANDATORY PRE-COMMIT CHECKLIST completed** - See section above (ZERO EXCEPTIONS)
+  - [ ] ✅ Type check passed (`pnpm typecheck`)
+  - [ ] ✅ Lint check passed (`pnpm lint`)
+  - [ ] ✅ Format check passed (`pnpm format`)
+  - [ ] ✅ Unit tests passed (`pnpm test`)
+  - [ ] ✅ Build verification passed (`pnpm build`)
 - [ ] All required files for the change type have been touched
 - [ ] No `any` types introduced
 - [ ] Authorization added for new data access
 - [ ] Types updated in `types/index.ts`
-- [ ] Unit tests added/updated and passing (`pnpm test`)
-- [ ] E2E tests pass for affected flows (`pnpm test:e2e`)
+- [ ] E2E tests pass for affected flows (`pnpm test:e2e`) if applicable
 - [ ] No unapproved new libraries added
 - [ ] Import order follows the standard
 - [ ] `data-testid` attributes added for testable elements
+
+> ⚠️ **NOTE**: The mandatory pre-commit checklist MUST be completed before even considering a PR. If any pre-commit check fails, the code is not ready for PR.
 
 ---
 

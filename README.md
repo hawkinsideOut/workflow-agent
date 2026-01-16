@@ -13,6 +13,7 @@
 **Workflow Agent** is a portable, framework-agnostic tool that brings structure and consistency to your development workflow. Born from real-world needs at [ProjectHub](https://github.com/hawkinsideOut/projecthub), it enforces branch naming conventions, validates commit messages, and includes a self-improvement system that learns from community feedback.
 
 **🎯 Perfect for:**
+
 - AI agent development with strict workflow requirements
 - Teams maintaining multiple repositories
 - Open source projects enforcing contribution guidelines
@@ -23,6 +24,7 @@
 ## ✨ Features
 
 ### Core Functionality
+
 - 🎯 **Scope-based workflow** - Organize work with preset or custom scopes
 - ✅ **Branch validation** - `<type>/<scope>/<description>` format enforcement
 - 📝 **Commit validation** - Conventional commits: `type(scope): description`
@@ -33,6 +35,7 @@
 - 🔄 **Scope migration** - Convert inline scopes to reusable packages with `scope:migrate`
 
 ### Self-Improvement System
+
 - 💡 **Community suggestions** - Submit improvement ideas via CLI
 - 🛡️ **Content moderation** - Spam filtering, rate limiting, trust scores
 - 👥 **Trust scoring** - Earn reputation through quality contributions
@@ -40,6 +43,7 @@
 - 🔄 **Automatic integration** - Approved suggestions go into future releases
 
 ### Developer Experience
+
 - 🚀 **Interactive CLI** - Beautiful prompts with @clack/prompts
 - 🤖 **Non-interactive mode** - CI/CD friendly with `--preset --name --yes`
 - 📋 **Template system** - Generate customized project guidelines
@@ -130,6 +134,7 @@ npm run workflow:init
 ### Initialize a Project
 
 #### Interactive Mode
+
 ```bash
 # If installed globally:
 workflow-agent init
@@ -143,11 +148,13 @@ pnpm run workflow:init
 ```
 
 Prompts you to:
+
 1. Enter project name
 2. Choose a preset (SaaS, Library, API, E-commerce, CMS, Custom)
 3. Generate guidelines (optional)
 
 #### Non-Interactive Mode
+
 ```bash
 # Perfect for CI/CD or automation
 
@@ -173,6 +180,7 @@ npx workflow-agent validate commit "feat(auth): add OAuth support"
 ```
 
 **Expected formats:**
+
 - **Branch:** `<type>/<scope>/<description>`
   - Types: `feature`, `bugfix`, `hotfix`, `chore`, `refactor`, `docs`, `test`
   - Example: `feature/auth/implement-2fa`
@@ -202,17 +210,20 @@ pnpm run workflow:suggest "Add support for GitLab repositories"
 ### Build Custom Scope Packages
 
 #### Create a new custom scope package:
+
 ```bash
 workflow-agent scope:create
 ```
 
 Follow the interactive prompts to:
+
 - Name your package (e.g., "fintech", "healthcare", "gaming")
 - Define 8-15 scopes with names, descriptions, emojis, and categories
 - Automatically generate package structure with tests
 - Get publishing instructions for npm
 
 #### Migrate existing scopes to a package:
+
 ```bash
 workflow-agent scope:migrate
 ```
@@ -220,6 +231,7 @@ workflow-agent scope:migrate
 Converts your inline scopes from `workflow.config.json` into a standalone, reusable package.
 
 **Non-interactive mode:**
+
 ```bash
 workflow-agent scope:create \
   --name fintech \
@@ -230,6 +242,7 @@ workflow-agent scope:create \
 **Learn more:** See the [Custom Scopes Guide](docs/content/custom-scopes.mdx)
 
 **Moderation Rules:**
+
 - 5 suggestions per day per user
 - 10-1000 characters
 - Spam filtered
@@ -242,6 +255,7 @@ workflow-agent doctor
 ```
 
 Analyzes your project for:
+
 - Configuration issues
 - Optimization opportunities
 - Best practice violations
@@ -253,36 +267,46 @@ Analyzes your project for:
 Choose a preset during `workflow-agent init` or create custom scopes:
 
 ### @workflow/scopes-saas (17 scopes)
+
 Perfect for SaaS applications:
+
 ```
-auth, tasks, boards, sprints, epics, comments, notifications, 
+auth, tasks, boards, sprints, epics, comments, notifications,
 settings, admin, ui, api, db, deps, docs, test, perf, infra
 ```
 
 ### @workflow/scopes-library (10 scopes)
+
 For npm packages and libraries:
+
 ```
 types, ui, core, build, docs, test, examples, deps, perf, api
 ```
 
 ### @workflow/scopes-api (13 scopes)
+
 Backend services and APIs:
+
 ```
-auth, api, endpoints, middleware, validators, db, migrations, 
+auth, api, endpoints, middleware, validators, db, migrations,
 models, services, docs, test, infra, deps
 ```
 
 ### @workflow/scopes-ecommerce (12 scopes)
+
 E-commerce platforms:
+
 ```
-cart, checkout, products, orders, payments, inventory, auth, 
+cart, checkout, products, orders, payments, inventory, auth,
 admin, analytics, ui, db, deps
 ```
 
 ### @workflow/scopes-cms (13 scopes)
+
 Content management systems:
+
 ```
-content, media, pages, editor, templates, collections, auth, 
+content, media, pages, editor, templates, collections, auth,
 workflows, publishing, ui, db, test, deps
 ```
 
@@ -291,11 +315,13 @@ workflows, publishing, ui, db, test, deps
 **Don't see a preset that fits your domain?** Create a custom scope package!
 
 #### Create from scratch:
+
 ```bash
 workflow-agent scope:create
 ```
 
 This interactive CLI will:
+
 1. Guide you through defining 8-15 scopes
 2. Generate a complete package structure
 3. Include automatic test suite
@@ -303,6 +329,7 @@ This interactive CLI will:
 5. Provide publishing instructions
 
 #### Migrate existing scopes:
+
 ```bash
 workflow-agent scope:migrate
 ```
@@ -310,6 +337,7 @@ workflow-agent scope:migrate
 Converts inline scopes from `workflow.config.json` into a reusable package for sharing across projects.
 
 **Example custom domains:**
+
 - **FinTech:** accounts, transactions, payments, compliance, kyc
 - **Healthcare:** patients, appointments, prescriptions, lab-results
 - **Gaming:** players, matches, inventory, leaderboards, guilds
@@ -323,17 +351,18 @@ Converts inline scopes from `workflow.config.json` into a reusable package for s
 
 Workflow Agent automatically detects your framework and adapts path structures:
 
-| Framework | Detection | Status |
-|-----------|-----------|--------|
-| Next.js (App Router) | `next.config.ts/js` + `app/` | ✅ |
-| Next.js (Pages) | `next.config.ts/js` + `pages/` | ✅ |
-| Vite + React | `vite.config.ts/js` | ✅ |
-| Remix | `remix.config.js` | ✅ |
-| Astro | `astro.config.mjs` | ✅ |
-| SvelteKit | `svelte.config.js` | ✅ |
-| Generic | (fallback) | ✅ |
+| Framework            | Detection                      | Status |
+| -------------------- | ------------------------------ | ------ |
+| Next.js (App Router) | `next.config.ts/js` + `app/`   | ✅     |
+| Next.js (Pages)      | `next.config.ts/js` + `pages/` | ✅     |
+| Vite + React         | `vite.config.ts/js`            | ✅     |
+| Remix                | `remix.config.js`              | ✅     |
+| Astro                | `astro.config.mjs`             | ✅     |
+| SvelteKit            | `svelte.config.js`             | ✅     |
+| Generic              | (fallback)                     | ✅     |
 
 **Path structures are customized per framework:**
+
 ```typescript
 // Next.js App Router
 {
@@ -372,6 +401,7 @@ Create `workflow.config.json` in your project root:
 ```
 
 **Configuration options:**
+
 - `projectName` - Your project name
 - `scopes` - Array of scope definitions
 - `enforcement` - `strict` | `advisory` | `learning`
@@ -396,15 +426,16 @@ Workflow Agent includes a complete improvement tracking system with moderation:
 
 Contributors earn trust through quality contributions:
 
-| Action | Points |
-|--------|--------|
-| Merged PR | +10 |
-| Helpful review | +5 |
-| Quality bug report | +3 |
-| Approved suggestion | +5 |
-| Spam | -50 |
+| Action              | Points |
+| ------------------- | ------ |
+| Merged PR           | +10    |
+| Helpful review      | +5     |
+| Quality bug report  | +3     |
+| Approved suggestion | +5     |
+| Spam                | -50    |
 
 **Trust score affects:**
+
 - **80+**: Auto-approved suggestions
 - **50-79**: Reviewed within 24h
 - **20-49**: Reviewed within 1 week
@@ -429,6 +460,7 @@ workflow-agent init --preset saas --name my-app
 ```
 
 **Templates include:**
+
 - `AGENT_EDITING_INSTRUCTIONS.md` - Core agent rules
 - `BRANCHING_STRATEGY.md` - Branch naming conventions
 - `TESTING_STRATEGY.md` - Testing requirements
@@ -439,6 +471,7 @@ workflow-agent init --preset saas --name my-app
 - `SELF_IMPROVEMENT_MANDATE.md` - Improvement tracking rules
 
 **Variable substitution:**
+
 - `{{projectName}}` - Your project name
 - `{{framework}}` - Detected framework
 - `{{scopes}}` - Comma-separated scopes
@@ -465,6 +498,7 @@ pnpm test:coverage
 ```
 
 **Current test coverage:**
+
 - improvement-tracker: 14 tests, 71% pass rate
 - validators: Coming soon
 - adapters: Coming soon
@@ -476,6 +510,7 @@ pnpm test:coverage
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **Ways to contribute:**
+
 1. 🐛 Report bugs
 2. 💡 Submit improvement suggestions via `workflow-agent suggest`
 3. 🔧 Fix issues and submit PRs
@@ -484,9 +519,13 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 6. 📚 Improve documentation
 
 **Workflow Agent dogfoods itself!** Follow the same workflow patterns:
+
 - Branch: `feature/<scope>/<description>`
 - Commit: `type(scope): description`
-- Run tests before pushing
+- 🚨 **MANDATORY**: Run pre-commit checks before pushing (see [Pre-Commit Workflow](docs/PRE_COMMIT_WORKFLOW.md))
+
+**"One-and-Done" Commitment:**  
+All contributions must pass our [mandatory pre-commit checklist](docs/PRE_COMMIT_WORKFLOW.md) with zero exceptions. This ensures quality and reliability for our customers.
 
 ---
 
@@ -501,6 +540,7 @@ See [LICENSE](LICENSE) for details.
 ## 🗺️ Roadmap
 
 ### Phase 2 (In Progress)
+
 - [x] Improvement tracking system
 - [x] Non-interactive mode
 - [x] Unit tests
@@ -508,6 +548,7 @@ See [LICENSE](LICENSE) for details.
 - [ ] Documentation site
 
 ### Phase 3 (Planned)
+
 - [ ] npm publication
 - [ ] GitHub App for PR validation
 - [ ] Migration detection (`--migrate`)
@@ -515,6 +556,7 @@ See [LICENSE](LICENSE) for details.
 - [ ] Multilingual i18n
 
 ### Phase 4 (Future)
+
 - [ ] Team sync server
 - [ ] Analytics dashboard
 - [ ] Preset marketplace
@@ -542,6 +584,7 @@ This typically means your npm token doesn't have the correct permissions. To fix
    - Copy the token immediately
 
 2. **Test the token locally:**
+
    ```bash
    echo '//registry.npmjs.org/:_authToken=YOUR_TOKEN' > ~/.npmrc
    npm whoami  # Should show your npm username
@@ -622,19 +665,23 @@ pnpm build
 
 MDX interprets certain characters as JSX:
 
-```mdx
+````mdx
 <!-- Bad: MDX tries to parse as JSX -->
+
 Too few (<5) items
 Use {name} for variables
 
 <!-- Good: Escape or use code blocks -->
+
 Too few (&lt;5) items
 Use `{name}` for variables
 
 ```text
 Or wrap in text code blocks: {name}
 ```
-```
+````
+
+````
 
 ### Template Issues
 
@@ -648,9 +695,10 @@ If templates aren't bundled with the npm package:
    {
      "files": ["dist", "templates"]
    }
-   ```
+````
 
 2. **Copy templates to package directory:**
+
    ```bash
    cp -r templates packages/core/
    ```

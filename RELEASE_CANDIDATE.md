@@ -11,21 +11,21 @@
 
 ### Core Packages
 
-| Package | Version | Status | npm | VS Code |
-|---------|---------|--------|-----|---------|
-| `@hawkinside_out/workflow-agent` | 1.0.1 | ✅ Published | https://www.npmjs.com/package/@hawkinside_out/workflow-agent | npm install -g @hawkinside_out/workflow-agent |
-| `@workflow/improvement-tracker` | 1.0.0 | ✅ Ready | Unpublished | - |
-| `workflow-agent` (VS Code) | 0.1.0 | ✅ Ready | - | Unpublished |
+| Package                          | Version | Status       | npm                                                          | VS Code                                       |
+| -------------------------------- | ------- | ------------ | ------------------------------------------------------------ | --------------------------------------------- |
+| `@hawkinside_out/workflow-agent` | 1.0.1   | ✅ Published | https://www.npmjs.com/package/@hawkinside_out/workflow-agent | npm install -g @hawkinside_out/workflow-agent |
+| `@workflow/improvement-tracker`  | 1.0.0   | ✅ Ready     | Unpublished                                                  | -                                             |
+| `workflow-agent` (VS Code)       | 0.1.0   | ✅ Ready     | -                                                            | Unpublished                                   |
 
 ### Preset Packages
 
-| Package | Version | Status | Scopes |
-|---------|---------|--------|--------|
-| `@workflow/scopes-saas` | 1.0.0 | ✅ Ready | 10 |
-| `@workflow/scopes-library` | 1.0.0 | ✅ Ready | 8 |
-| `@workflow/scopes-api` | 1.0.0 | ✅ Ready | 10 |
-| `@workflow/scopes-ecommerce` | 1.0.0 | ✅ Ready | 10 |
-| `@workflow/scopes-cms` | 1.0.0 | ✅ Ready | 10 |
+| Package                      | Version | Status   | Scopes |
+| ---------------------------- | ------- | -------- | ------ |
+| `@workflow/scopes-saas`      | 1.0.0   | ✅ Ready | 10     |
+| `@workflow/scopes-library`   | 1.0.0   | ✅ Ready | 8      |
+| `@workflow/scopes-api`       | 1.0.0   | ✅ Ready | 10     |
+| `@workflow/scopes-ecommerce` | 1.0.0   | ✅ Ready | 10     |
+| `@workflow/scopes-cms`       | 1.0.0   | ✅ Ready | 10     |
 
 ---
 
@@ -221,6 +221,7 @@ git push origin v1.0.0
 ### Immediate
 
 1. Verify packages on npm:
+
    ```bash
    npm view @hawkinside_out/workflow-agent
    npm view @workflow/improvement-tracker
@@ -228,6 +229,7 @@ git push origin v1.0.0
    ```
 
 2. Test global installation:
+
    ```bash
    npm install -g @hawkinside_out/workflow-agent
    workflow --version
@@ -327,6 +329,7 @@ git push origin v1.0.0
 **Ready to ship! 🚀**
 
 To publish now, run:
+
 ```bash
 pnpm publish:all && pnpm pack:vscode
 ```

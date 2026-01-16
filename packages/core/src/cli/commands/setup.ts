@@ -1,28 +1,28 @@
-import * as p from '@clack/prompts';
-import chalk from 'chalk';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import * as p from "@clack/prompts";
+import chalk from "chalk";
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { join } from "path";
 
 const WORKFLOW_SCRIPTS = {
-  'workflow:init': 'workflow-agent init',
-  'workflow:validate': 'workflow-agent validate',
-  'workflow:suggest': 'workflow-agent suggest',
-  'workflow:doctor': 'workflow-agent doctor',
+  "workflow:init": "workflow-agent init",
+  "workflow:validate": "workflow-agent validate",
+  "workflow:suggest": "workflow-agent suggest",
+  "workflow:doctor": "workflow-agent doctor",
 };
 
 export async function setupCommand(): Promise<void> {
-  p.intro(chalk.bgBlue(' workflow-agent setup '));
+  p.intro(chalk.bgBlue(" workflow-agent setup "));
 
   const cwd = process.cwd();
-  const packageJsonPath = join(cwd, 'package.json');
+  const packageJsonPath = join(cwd, "package.json");
 
   if (!existsSync(packageJsonPath)) {
-    p.cancel('No package.json found in current directory');
+    p.cancel("No package.json found in current directory");
     process.exit(1);
   }
 
   // Read package.json
-  const packageJsonContent = readFileSync(packageJsonPath, 'utf-8');
+  const packageJsonContent = readFileSync(packageJsonPath, "utf-8");
   const packageJson = JSON.parse(packageJsonContent);
 
   // Initialize scripts if needed
@@ -43,30 +43,30 @@ export async function setupCommand(): Promise<void> {
   }
 
   if (Object.keys(scriptsToAdd).length === 0) {
-    p.outro(chalk.green('✓ All workflow scripts are already configured!'));
+    p.outro(chalk.green("✓ All workflow scripts are already configured!"));
     return;
   }
 
   // Show what will be added
-  console.log(chalk.dim('\nScripts to add:'));
+  console.log(chalk.dim("\nScripts to add:"));
   for (const [scriptName, scriptCommand] of Object.entries(scriptsToAdd)) {
     console.log(chalk.dim(`  ${scriptName}: ${scriptCommand}`));
   }
 
   if (existingScripts.length > 0) {
-    console.log(chalk.yellow('\nExisting scripts (will be skipped):'));
+    console.log(chalk.yellow("\nExisting scripts (will be skipped):"));
     existingScripts.forEach((name) => {
       console.log(chalk.yellow(`  ${name}`));
     });
   }
 
   const shouldAdd = await p.confirm({
-    message: 'Add these scripts to package.json?',
+    message: "Add these scripts to package.json?",
     initialValue: true,
   });
 
   if (p.isCancel(shouldAdd) || !shouldAdd) {
-    p.cancel('Setup cancelled');
+    p.cancel("Setup cancelled");
     process.exit(0);
   }
 
@@ -78,12 +78,16 @@ export async function setupCommand(): Promise<void> {
   // Write back to package.json
   writeFileSync(
     packageJsonPath,
-    JSON.stringify(packageJson, null, 2) + '\n',
-    'utf-8'
+    JSON.stringify(packageJson, null, 2) + "\n",
+    "utf-8",
   );
 
-  p.outro(chalk.green(`✓ Added ${Object.keys(scriptsToAdd).length} workflow scripts to package.json!`));
-  console.log(chalk.dim('\nRun them with:'));
-  console.log(chalk.dim('  pnpm run workflow:init'));
-  console.log(chalk.dim('  npm run workflow:init\n'));
+  p.outro(
+    chalk.green(
+      `✓ Added ${Object.keys(scriptsToAdd).length} workflow scripts to package.json!`,
+    ),
+  );
+  console.log(chalk.dim("\nRun them with:"));
+  console.log(chalk.dim("  pnpm run workflow:init"));
+  console.log(chalk.dim("  npm run workflow:init\n"));
 }

@@ -1,5 +1,5 @@
-import * as vscode from 'vscode';
-import { ConfigManager } from './config';
+import * as vscode from "vscode";
+import { ConfigManager } from "./config";
 
 export class StatusBarManager implements vscode.Disposable {
   private statusBarItem: vscode.StatusBarItem;
@@ -7,9 +7,9 @@ export class StatusBarManager implements vscode.Disposable {
   constructor() {
     this.statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left,
-      100
+      100,
     );
-    this.statusBarItem.command = 'workflow-agent.showConfig';
+    this.statusBarItem.command = "workflow-agent.showConfig";
   }
 
   show(): void {
@@ -23,8 +23,8 @@ export class StatusBarManager implements vscode.Disposable {
 
   update(config?: ConfigManager): void {
     if (!config) {
-      this.statusBarItem.text = '$(workflow) Workflow';
-      this.statusBarItem.tooltip = 'Workflow Agent - Not configured';
+      this.statusBarItem.text = "$(workflow) Workflow";
+      this.statusBarItem.tooltip = "Workflow Agent - Not configured";
       return;
     }
 
@@ -32,19 +32,19 @@ export class StatusBarManager implements vscode.Disposable {
     const hasConfig = config.hasConfig();
 
     if (!hasConfig) {
-      this.statusBarItem.text = '$(workflow) Workflow: Not initialized';
-      this.statusBarItem.tooltip = 'Click to initialize Workflow Agent';
-      this.statusBarItem.command = 'workflow-agent.init';
+      this.statusBarItem.text = "$(workflow) Workflow: Not initialized";
+      this.statusBarItem.tooltip = "Click to initialize Workflow Agent";
+      this.statusBarItem.command = "workflow-agent.init";
       this.statusBarItem.backgroundColor = new vscode.ThemeColor(
-        'statusBarItem.warningBackground'
+        "statusBarItem.warningBackground",
       );
       return;
     }
 
     const enforcement = config.getEnforcement();
-    const icon = enforcement === 'strict' ? '$(shield)' : '$(check)';
-    
-    this.statusBarItem.text = `${icon} Workflow: ${branch || 'Unknown'}`;
+    const icon = enforcement === "strict" ? "$(shield)" : "$(check)";
+
+    this.statusBarItem.text = `${icon} Workflow: ${branch || "Unknown"}`;
     this.statusBarItem.tooltip = `Workflow Agent\nBranch: ${branch}\nEnforcement: ${enforcement}\nClick for details`;
     this.statusBarItem.backgroundColor = undefined;
   }
@@ -57,7 +57,7 @@ export class StatusBarManager implements vscode.Disposable {
       }
     } else {
       this.statusBarItem.backgroundColor = new vscode.ThemeColor(
-        'statusBarItem.errorBackground'
+        "statusBarItem.errorBackground",
       );
       if (message) {
         this.statusBarItem.tooltip = `⚠ ${message}`;

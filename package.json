@@ -42,7 +42,9 @@
     "workflow:init": "workflow-agent init",
     "workflow:validate": "workflow-agent validate",
     "workflow:suggest": "workflow-agent suggest",
-    "workflow:doctor": "workflow-agent doctor"
+    "workflow:doctor": "workflow-agent doctor",
+    "pre-commit": "./scripts/pre-commit-checks.sh",
+    "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test && pnpm build"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",

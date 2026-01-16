@@ -30,9 +30,11 @@ Anyone who has contributed code, documentation, or other work to the project.
 Core team members with commit access to the repository.
 
 **Current Maintainers:**
+
 - @hawkinsideOut (Project Creator)
 
 **Responsibilities:**
+
 - Review and merge pull requests
 - Triage issues and feature requests
 - Maintain project roadmap
@@ -41,6 +43,7 @@ Core team members with commit access to the repository.
 - Make final decisions on contentious issues
 
 **Nomination Process:**
+
 1. Must be an active contributor for 6+ months
 2. Must have 10+ merged pull requests
 3. Must demonstrate understanding of project goals
@@ -237,4 +240,4 @@ This governance document can be changed by:
 
 ---
 
-*Last updated: January 14, 2026*
+_Last updated: January 14, 2026_

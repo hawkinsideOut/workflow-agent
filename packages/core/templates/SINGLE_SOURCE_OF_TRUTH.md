@@ -33,20 +33,20 @@ All Supabase client creation MUST go through these files. Never create clients d
 
 ```typescript
 // ❌ WRONG - Never create clients directly
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 const supabase = createClient(url, key);
 
 // ✅ CORRECT - Use the appropriate helper
 // In client components:
-import { getSupabaseClient } from '@/lib/supabase/client';
+import { getSupabaseClient } from "@/lib/supabase/client";
 const supabase = getSupabaseClient();
 
 // In server actions/components:
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient } from "@/lib/supabase/server";
 const supabase = await createServerClient();
 
 // For admin operations (bypasses RLS):
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createAdminClient } from "@/lib/supabase/admin";
 const supabase = createAdminClient();
 ```
 
@@ -66,27 +66,38 @@ Authorization logic is centralized in these files. Never implement permission ch
 
 ```typescript
 // Role types
-export type OrgRole = 'super_admin' | 'owner' | 'admin' | 'manager' | 'developer' | 'viewer';
+export type OrgRole =
+  | "super_admin"
+  | "owner"
+  | "admin"
+  | "manager"
+  | "developer"
+  | "viewer";
 
 // Role hierarchy (higher index = more permissions)
 export const ROLE_HIERARCHY: OrgRole[] = [
-  'viewer',
-  'developer',
-  'manager',
-  'admin',
-  'owner',
-  'super_admin',
+  "viewer",
+  "developer",
+  "manager",
+  "admin",
+  "owner",
+  "super_admin",
 ];
 
 // Role groups for permission checks
-export const ADMIN_ROLES: OrgRole[] = ['super_admin', 'owner', 'admin'];
-export const PRIVILEGED_ROLES: OrgRole[] = ['super_admin', 'owner', 'admin', 'manager'];
+export const ADMIN_ROLES: OrgRole[] = ["super_admin", "owner", "admin"];
+export const PRIVILEGED_ROLES: OrgRole[] = [
+  "super_admin",
+  "owner",
+  "admin",
+  "manager",
+];
 export const CONTRIBUTOR_ROLES: OrgRole[] = [
-  'super_admin',
-  'owner',
-  'admin',
-  'manager',
-  'developer',
+  "super_admin",
+  "owner",
+  "admin",
+  "manager",
+  "developer",
 ];
 ```
 
@@ -100,13 +111,13 @@ import {
   requireAdminAccess,
   requirePrivilegedAccess,
   requireContributorAccess,
-} from '@/utils/authorization.server';
+} from "@/utils/authorization.server";
 
 // In server actions - always verify access FIRST
 export async function getTask(taskId: string) {
   const access = await verifyTaskAccess(taskId);
   if (!access.hasAccess) {
-    return { data: null, error: access.error || 'Access denied' };
+    return { data: null, error: access.error || "Access denied" };
   }
   // ... proceed with data access
 }
@@ -179,19 +190,19 @@ export type TaskType = "story" | "task" | "bug" | "epic";
 
 ```typescript
 // lib/validations/task.schema.ts
-import { z } from 'zod';
+import { z } from "zod";
 
 export const TaskSchema = z.object({
   id: z.string().uuid(),
   ticketId: z.string().regex(/^[A-Z]{1,6}-\d{4}$/),
   title: z.string().min(1).max(255),
-  priority: z.enum(['low', 'medium', 'high', 'critical']),
+  priority: z.enum(["low", "medium", "high", "critical"]),
 });
 
 export type Task = z.infer<typeof TaskSchema>;
 
 // lib/validations/index.ts
-export { TaskSchema, type Task } from './task.schema';
+export { TaskSchema, type Task } from "./task.schema";
 ```
 
 ---
@@ -233,7 +244,7 @@ app/providers/
 
 ```typescript
 // Always import hooks from the providers module
-import { useAuth, useOrganization, useNotifications } from '@/app/providers';
+import { useAuth, useOrganization, useNotifications } from "@/app/providers";
 
 function MyComponent() {
   const { user, loading } = useAuth();
@@ -277,11 +288,11 @@ Every action file MUST:
 4. Transform snake_case DB fields to camelCase
 
 ```typescript
-'use server';
+"use server";
 
-import { createServerClient } from '@/lib/supabase/server';
-import { verifyBoardAccess } from '@/utils/authorization.server';
-import { revalidatePath } from 'next/cache';
+import { createServerClient } from "@/lib/supabase/server";
+import { verifyBoardAccess } from "@/utils/authorization.server";
+import { revalidatePath } from "next/cache";
 
 export async function getTasks(boardId: string) {
   const access = await verifyBoardAccess(boardId);
@@ -290,7 +301,10 @@ export async function getTasks(boardId: string) {
   }
 
   const supabase = await createServerClient();
-  const { data, error } = await supabase.from('tasks').select('*').eq('board_id', boardId);
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("board_id", boardId);
 
   if (error) return { data: null, error: error.message };
 
@@ -317,7 +331,7 @@ Custom React hooks live in `hooks/`.
 ### Hook Pattern
 
 ```typescript
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 export function useHookName(param: string) {
   const [data, setData] = useState<DataType | null>(null);
@@ -457,30 +471,33 @@ export function useHookName(param: string) {
 
 ```typescript
 // Supabase clients
-import { getSupabaseClient } from '@/lib/supabase/client';
-import { createServerClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getSupabaseClient } from "@/lib/supabase/client";
+import { createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // Authorization
-import { ROLE_HIERARCHY, ADMIN_ROLES } from '@/utils/authorization';
-import { verifyBoardAccess, requireAdminAccess } from '@/utils/authorization.server';
-import { useAuthorization } from '@/hooks/useAuthorization';
+import { ROLE_HIERARCHY, ADMIN_ROLES } from "@/utils/authorization";
+import {
+  verifyBoardAccess,
+  requireAdminAccess,
+} from "@/utils/authorization.server";
+import { useAuthorization } from "@/hooks/useAuthorization";
 
 // Types
-import type { Task, Board, Sprint, Organization } from '@/types';
-import type { Database } from '@/types/supabase';
+import type { Task, Board, Sprint, Organization } from "@/types";
+import type { Database } from "@/types/supabase";
 
 // Providers/Context
-import { useAuth, useOrganization, useTeams } from '@/app/providers';
+import { useAuth, useOrganization, useTeams } from "@/app/providers";
 
 // UI Components
-import { Button, Input, Dialog } from '@/components/ui';
+import { Button, Input, Dialog } from "@/components/ui";
 
 // Schemas
-import { TaskSchema, CreateTaskSchema } from '@/lib/validations';
+import { TaskSchema, CreateTaskSchema } from "@/lib/validations";
 
 // Test utilities
-import { mockTasks, createMockTask, seedTasks } from '@test/fixtures';
+import { mockTasks, createMockTask, seedTasks } from "@test/fixtures";
 ```
 
 ---

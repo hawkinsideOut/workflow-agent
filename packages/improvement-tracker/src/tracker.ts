@@ -1,5 +1,5 @@
-import { FileSystemStore, Moderator, TrustScoreManager } from './moderator.js';
-import { Suggestion } from './schema.js';
+import { FileSystemStore, Moderator, TrustScoreManager } from "./moderator.js";
+import { Suggestion } from "./schema.js";
 
 export interface ImprovementTrackerConfig {
   storePath?: string;
@@ -22,11 +22,14 @@ export class ImprovementTracker {
     return this.moderator.submitSuggestion(feedback, author, category);
   }
 
-  async vote(suggestionId: string, vote: 'up' | 'down') {
+  async vote(suggestionId: string, vote: "up" | "down") {
     return this.moderator.vote(suggestionId, vote);
   }
 
-  async list(filters?: { status?: string; category?: string }): Promise<Suggestion[]> {
+  async list(filters?: {
+    status?: string;
+    category?: string;
+  }): Promise<Suggestion[]> {
     return this.store.findAll(filters);
   }
 
@@ -35,20 +38,20 @@ export class ImprovementTracker {
   }
 
   async approve(id: string, implementedIn?: string) {
-    await this.store.update(id, { 
-      status: implementedIn ? 'implemented' : 'approved',
+    await this.store.update(id, {
+      status: implementedIn ? "implemented" : "approved",
       implementedIn,
     });
 
     const suggestion = await this.store.findById(id);
     if (suggestion?.author) {
-      this.trustManager.updateScore(suggestion.author, 'approvedSuggestions');
+      this.trustManager.updateScore(suggestion.author, "approvedSuggestions");
     }
   }
 
   async reject(id: string, reason?: string) {
-    await this.store.update(id, { 
-      status: 'rejected',
+    await this.store.update(id, {
+      status: "rejected",
       moderationNotes: reason,
     });
   }
@@ -57,11 +60,21 @@ export class ImprovementTracker {
     return this.trustManager.getTrustScore(userId);
   }
 
-  updateTrustScore(userId: string, contribution: 'mergedPRs' | 'helpfulReviews' | 'qualityBugReports' | 'approvedSuggestions' | 'spam') {
+  updateTrustScore(
+    userId: string,
+    contribution:
+      | "mergedPRs"
+      | "helpfulReviews"
+      | "qualityBugReports"
+      | "approvedSuggestions"
+      | "spam",
+  ) {
     this.trustManager.updateScore(userId, contribution);
   }
 }
 
-export function createTracker(config?: ImprovementTrackerConfig): ImprovementTracker {
+export function createTracker(
+  config?: ImprovementTrackerConfig,
+): ImprovementTracker {
   return new ImprovementTracker(config);
 }

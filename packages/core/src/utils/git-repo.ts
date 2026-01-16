@@ -3,12 +3,12 @@
  * package manager, monorepo setup, and GitHub remote
  */
 
-import { execa, type ExecaError } from 'execa';
-import { existsSync } from 'fs';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
+import { execa } from "execa";
+import { existsSync } from "fs";
+import { readFile } from "fs/promises";
+import { join } from "path";
 
-export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
+export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
 
 export interface GitHubInfo {
   owner: string;
@@ -36,9 +36,11 @@ export interface ProjectInfo {
 /**
  * Check if the current directory is a git repository
  */
-export async function isGitRepo(projectPath: string = process.cwd()): Promise<boolean> {
+export async function isGitRepo(
+  projectPath: string = process.cwd(),
+): Promise<boolean> {
   try {
-    await execa('git', ['rev-parse', '--git-dir'], { cwd: projectPath });
+    await execa("git", ["rev-parse", "--git-dir"], { cwd: projectPath });
     return true;
   } catch {
     return false;
@@ -48,9 +50,13 @@ export async function isGitRepo(projectPath: string = process.cwd()): Promise<bo
 /**
  * Get the git remote URL for origin
  */
-export async function getGitRemoteUrl(projectPath: string = process.cwd()): Promise<string | null> {
+export async function getGitRemoteUrl(
+  projectPath: string = process.cwd(),
+): Promise<string | null> {
   try {
-    const { stdout } = await execa('git', ['remote', 'get-url', 'origin'], { cwd: projectPath });
+    const { stdout } = await execa("git", ["remote", "get-url", "origin"], {
+      cwd: projectPath,
+    });
     return stdout.trim() || null;
   } catch {
     return null;
@@ -62,7 +68,7 @@ export async function getGitRemoteUrl(projectPath: string = process.cwd()): Prom
  */
 export function isGitHubRemote(remoteUrl: string | null): boolean {
   if (!remoteUrl) return false;
-  return remoteUrl.includes('github.com');
+  return remoteUrl.includes("github.com");
 }
 
 /**
@@ -74,36 +80,46 @@ export function parseGitHubUrl(remoteUrl: string | null): GitHubInfo | null {
 
   // Match: git@github.com:owner/repo.git or https://github.com/owner/repo.git
   const match = remoteUrl.match(/github\.com[:/]([^/]+)\/([^/.]+)/);
-  
+
   if (match) {
     return {
       owner: match[1],
-      repo: match[2].replace(/\.git$/, ''),
+      repo: match[2].replace(/\.git$/, ""),
     };
   }
-  
+
   return null;
 }
 
 /**
  * Get the default branch name
  */
-export async function getDefaultBranch(projectPath: string = process.cwd()): Promise<string | null> {
+export async function getDefaultBranch(
+  projectPath: string = process.cwd(),
+): Promise<string | null> {
   try {
     // Try to get from remote
-    const { stdout } = await execa('git', ['symbolic-ref', 'refs/remotes/origin/HEAD'], { 
-      cwd: projectPath 
-    });
-    return stdout.trim().replace('refs/remotes/origin/', '') || 'main';
+    const { stdout } = await execa(
+      "git",
+      ["symbolic-ref", "refs/remotes/origin/HEAD"],
+      {
+        cwd: projectPath,
+      },
+    );
+    return stdout.trim().replace("refs/remotes/origin/", "") || "main";
   } catch {
     // Fallback: try HEAD
     try {
-      const { stdout } = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { 
-        cwd: projectPath 
-      });
-      return stdout.trim() || 'main';
+      const { stdout } = await execa(
+        "git",
+        ["rev-parse", "--abbrev-ref", "HEAD"],
+        {
+          cwd: projectPath,
+        },
+      );
+      return stdout.trim() || "main";
     } catch {
-      return 'main';
+      return "main";
     }
   }
 }
@@ -111,9 +127,11 @@ export async function getDefaultBranch(projectPath: string = process.cwd()): Pro
 /**
  * Get comprehensive repository information
  */
-export async function getRepoInfo(projectPath: string = process.cwd()): Promise<RepoInfo> {
+export async function getRepoInfo(
+  projectPath: string = process.cwd(),
+): Promise<RepoInfo> {
   const isRepo = await isGitRepo(projectPath);
-  
+
   if (!isRepo) {
     return {
       isGitRepo: false,
@@ -141,30 +159,32 @@ export async function getRepoInfo(projectPath: string = process.cwd()): Promise<
 /**
  * Detect the package manager used in the project
  */
-export async function detectPackageManager(projectPath: string = process.cwd()): Promise<PackageManager> {
+export async function detectPackageManager(
+  projectPath: string = process.cwd(),
+): Promise<PackageManager> {
   // Check for lockfiles in order of preference
-  if (existsSync(join(projectPath, 'pnpm-lock.yaml'))) {
-    return 'pnpm';
+  if (existsSync(join(projectPath, "pnpm-lock.yaml"))) {
+    return "pnpm";
   }
-  if (existsSync(join(projectPath, 'yarn.lock'))) {
-    return 'yarn';
+  if (existsSync(join(projectPath, "yarn.lock"))) {
+    return "yarn";
   }
-  if (existsSync(join(projectPath, 'bun.lockb'))) {
-    return 'bun';
+  if (existsSync(join(projectPath, "bun.lockb"))) {
+    return "bun";
   }
-  if (existsSync(join(projectPath, 'package-lock.json'))) {
-    return 'npm';
+  if (existsSync(join(projectPath, "package-lock.json"))) {
+    return "npm";
   }
 
   // Check packageManager field in package.json
   try {
-    const pkgPath = join(projectPath, 'package.json');
+    const pkgPath = join(projectPath, "package.json");
     if (existsSync(pkgPath)) {
-      const pkg = JSON.parse(await readFile(pkgPath, 'utf-8'));
+      const pkg = JSON.parse(await readFile(pkgPath, "utf-8"));
       if (pkg.packageManager) {
-        if (pkg.packageManager.startsWith('pnpm')) return 'pnpm';
-        if (pkg.packageManager.startsWith('yarn')) return 'yarn';
-        if (pkg.packageManager.startsWith('bun')) return 'bun';
+        if (pkg.packageManager.startsWith("pnpm")) return "pnpm";
+        if (pkg.packageManager.startsWith("yarn")) return "yarn";
+        if (pkg.packageManager.startsWith("bun")) return "bun";
       }
     }
   } catch {
@@ -172,23 +192,25 @@ export async function detectPackageManager(projectPath: string = process.cwd()):
   }
 
   // Default to npm
-  return 'npm';
+  return "npm";
 }
 
 /**
  * Check if the project is a monorepo
  */
-export async function isMonorepo(projectPath: string = process.cwd()): Promise<boolean> {
+export async function isMonorepo(
+  projectPath: string = process.cwd(),
+): Promise<boolean> {
   // Check for pnpm workspace
-  if (existsSync(join(projectPath, 'pnpm-workspace.yaml'))) {
+  if (existsSync(join(projectPath, "pnpm-workspace.yaml"))) {
     return true;
   }
 
   // Check for yarn/npm workspaces in package.json
   try {
-    const pkgPath = join(projectPath, 'package.json');
+    const pkgPath = join(projectPath, "package.json");
     if (existsSync(pkgPath)) {
-      const pkg = JSON.parse(await readFile(pkgPath, 'utf-8'));
+      const pkg = JSON.parse(await readFile(pkgPath, "utf-8"));
       if (pkg.workspaces) {
         return true;
       }
@@ -198,17 +220,17 @@ export async function isMonorepo(projectPath: string = process.cwd()): Promise<b
   }
 
   // Check for lerna.json
-  if (existsSync(join(projectPath, 'lerna.json'))) {
+  if (existsSync(join(projectPath, "lerna.json"))) {
     return true;
   }
 
   // Check for nx.json
-  if (existsSync(join(projectPath, 'nx.json'))) {
+  if (existsSync(join(projectPath, "nx.json"))) {
     return true;
   }
 
   // Check for turbo.json
-  if (existsSync(join(projectPath, 'turbo.json'))) {
+  if (existsSync(join(projectPath, "turbo.json"))) {
     return true;
   }
 
@@ -218,13 +240,15 @@ export async function isMonorepo(projectPath: string = process.cwd()): Promise<b
 /**
  * Get available scripts from package.json
  */
-export async function getPackageScripts(projectPath: string = process.cwd()): Promise<Record<string, string>> {
+export async function getPackageScripts(
+  projectPath: string = process.cwd(),
+): Promise<Record<string, string>> {
   try {
-    const pkgPath = join(projectPath, 'package.json');
+    const pkgPath = join(projectPath, "package.json");
     if (!existsSync(pkgPath)) {
       return {};
     }
-    const pkg = JSON.parse(await readFile(pkgPath, 'utf-8'));
+    const pkg = JSON.parse(await readFile(pkgPath, "utf-8"));
     return pkg.scripts || {};
   } catch {
     return {};
@@ -234,7 +258,9 @@ export async function getPackageScripts(projectPath: string = process.cwd()): Pr
 /**
  * Get comprehensive project information
  */
-export async function getProjectInfo(projectPath: string = process.cwd()): Promise<ProjectInfo> {
+export async function getProjectInfo(
+  projectPath: string = process.cwd(),
+): Promise<ProjectInfo> {
   const packageManager = await detectPackageManager(projectPath);
   const monorepo = await isMonorepo(projectPath);
   const scripts = await getPackageScripts(projectPath);
@@ -242,11 +268,11 @@ export async function getProjectInfo(projectPath: string = process.cwd()): Promi
   return {
     packageManager,
     isMonorepo: monorepo,
-    hasLintScript: 'lint' in scripts,
-    hasTypecheckScript: 'typecheck' in scripts || 'type-check' in scripts,
-    hasFormatScript: 'format' in scripts || 'format:check' in scripts,
-    hasTestScript: 'test' in scripts,
-    hasBuildScript: 'build' in scripts,
+    hasLintScript: "lint" in scripts,
+    hasTypecheckScript: "typecheck" in scripts || "type-check" in scripts,
+    hasFormatScript: "format" in scripts || "format:check" in scripts,
+    hasTestScript: "test" in scripts,
+    hasBuildScript: "build" in scripts,
   };
 }
 
@@ -255,15 +281,15 @@ export async function getProjectInfo(projectPath: string = process.cwd()): Promi
  */
 export function getInstallCommand(packageManager: PackageManager): string {
   switch (packageManager) {
-    case 'pnpm':
-      return 'pnpm install --frozen-lockfile';
-    case 'yarn':
-      return 'yarn install --frozen-lockfile';
-    case 'bun':
-      return 'bun install --frozen-lockfile';
-    case 'npm':
+    case "pnpm":
+      return "pnpm install --frozen-lockfile";
+    case "yarn":
+      return "yarn install --frozen-lockfile";
+    case "bun":
+      return "bun install --frozen-lockfile";
+    case "npm":
     default:
-      return 'npm ci';
+      return "npm ci";
   }
 }
 
@@ -271,19 +297,23 @@ export function getInstallCommand(packageManager: PackageManager): string {
  * Get the run command for a package manager (handles monorepo -r flag for pnpm)
  */
 export function getRunCommand(
-  packageManager: PackageManager, 
-  script: string, 
-  isMonorepo: boolean = false
+  packageManager: PackageManager,
+  script: string,
+  isMonorepo: boolean = false,
 ): string {
   switch (packageManager) {
-    case 'pnpm':
+    case "pnpm":
       return isMonorepo ? `pnpm -r run ${script}` : `pnpm run ${script}`;
-    case 'yarn':
-      return isMonorepo ? `yarn workspaces run ${script}` : `yarn run ${script}`;
-    case 'bun':
+    case "yarn":
+      return isMonorepo
+        ? `yarn workspaces run ${script}`
+        : `yarn run ${script}`;
+    case "bun":
       return `bun run ${script}`;
-    case 'npm':
+    case "npm":
     default:
-      return isMonorepo ? `npm run ${script} --workspaces --if-present` : `npm run ${script}`;
+      return isMonorepo
+        ? `npm run ${script} --workspaces --if-present`
+        : `npm run ${script}`;
   }
 }

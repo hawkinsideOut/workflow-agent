@@ -2,7 +2,13 @@
   "name": "@hawkinside_out/workflow-scopes-cms",
   "version": "1.0.2",
   "description": "Preset scope configuration for content management systems",
-  "keywords": ["workflow", "scopes", "cms", "content", "preset"],
+  "keywords": [
+    "workflow",
+    "scopes",
+    "cms",
+    "content",
+    "preset"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hawkinsideOut/workflow-agent.git",
@@ -17,7 +23,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

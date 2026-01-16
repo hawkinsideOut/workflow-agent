@@ -74,10 +74,33 @@ test(validators): add tests for PR title validation
 
 ### Code Quality Checklist
 
-- [ ] Code follows TypeScript best practices
-- [ ] All tests pass (`pnpm test`)
-- [ ] No linting errors (`pnpm lint`)
-- [ ] Types are correct (`pnpm typecheck`)
+**🚨 MANDATORY PRE-COMMIT CHECKLIST - ZERO EXCEPTIONS**
+
+Before committing and pushing ANY code, you MUST complete the following checks. This is part of our "one-and-done" service commitment. See [Pre-Commit Workflow](docs/PRE_COMMIT_WORKFLOW.md) for full details.
+
+**Run the automated check script:**
+
+```bash
+./scripts/pre-commit-checks.sh
+```
+
+**Or run each check manually:**
+
+- [ ] ✅ **Type check passed** - `pnpm typecheck`
+- [ ] ✅ **Lint check passed** - `pnpm lint`
+- [ ] ✅ **Format check passed** - `pnpm format`
+- [ ] ✅ **Unit tests passed** - `pnpm test`
+- [ ] ✅ **Build verification passed** - `pnpm build`
+
+**If ANY check fails:**
+
+1. Fix the errors
+2. Commit the fixes
+3. Re-run ALL checks from the beginning
+4. Do NOT proceed until all checks pass
+
+> 🔒 **ZERO EXCEPTIONS**: No code may be committed that fails any of these checks. This ensures our GitHub Actions pipeline always passes and customers receive quality code the first time.
+
 - [ ] Build succeeds (`pnpm build`)
 - [ ] Documentation updated (if needed)
 - [ ] CHANGELOG.md updated (for user-facing changes)
@@ -99,6 +122,7 @@ When opening a PR, include:
 Want to create a preset for a new project type?
 
 1. **Copy an existing preset**:
+
    ```bash
    cp -r packages/scopes-saas packages/scopes-<name>
    ```
@@ -112,6 +136,7 @@ Want to create a preset for a new project type?
    - Update preset metadata
 
 4. **Test it**:
+
    ```bash
    pnpm build
    cd /tmp/test-project

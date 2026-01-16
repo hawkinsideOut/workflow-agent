@@ -1,17 +1,23 @@
-import chalk from 'chalk';
-import { execa } from 'execa';
-import { loadConfig } from '../../config/index.js';
-import { validateBranchName, validateCommitMessage, validatePRTitle } from '../../validators/index.js';
+import chalk from "chalk";
+import { execa } from "execa";
+import { loadConfig } from "../../config/index.js";
+import {
+  validateBranchName,
+  validateCommitMessage,
+  validatePRTitle,
+} from "../../validators/index.js";
 
 export async function validateCommand(
   type: string,
   value?: string,
-  _options: { suggestOnError?: boolean } = {}
+  _options: { suggestOnError?: boolean } = {},
 ) {
   const config = await loadConfig();
 
   if (!config) {
-    console.error(chalk.red('✗ No workflow configuration found. Run: workflow init'));
+    console.error(
+      chalk.red("✗ No workflow configuration found. Run: workflow init"),
+    );
     process.exit(1);
   }
 
@@ -20,28 +26,28 @@ export async function validateCommand(
   try {
     let result;
     switch (type) {
-      case 'branch': {
+      case "branch": {
         if (!targetValue) {
-          const { stdout } = await execa('git', ['branch', '--show-current']);
+          const { stdout } = await execa("git", ["branch", "--show-current"]);
           targetValue = stdout.trim();
         }
         result = await validateBranchName(targetValue, config);
         break;
       }
 
-      case 'commit': {
+      case "commit": {
         if (!targetValue) {
-          const { stdout } = await execa('git', ['log', '-1', '--pretty=%s']);
+          const { stdout } = await execa("git", ["log", "-1", "--pretty=%s"]);
           targetValue = stdout.trim();
         }
         result = await validateCommitMessage(targetValue, config);
         break;
       }
 
-      case 'pr':
-      case 'pr-title': {
+      case "pr":
+      case "pr-title": {
         if (!targetValue) {
-          console.error(chalk.red('✗ PR title must be provided as argument'));
+          console.error(chalk.red("✗ PR title must be provided as argument"));
           process.exit(1);
         }
         result = await validatePRTitle(targetValue, config);
@@ -50,7 +56,7 @@ export async function validateCommand(
 
       default:
         console.error(chalk.red(`✗ Unknown validation type: ${type}`));
-        console.error(chalk.dim('Valid types: branch, commit, pr'));
+        console.error(chalk.dim("Valid types: branch, commit, pr"));
         process.exit(1);
     }
 
@@ -63,12 +69,16 @@ export async function validateCommand(
       if (result.suggestion) {
         console.error(chalk.cyan(`  💡 ${result.suggestion}`));
       }
-      
+
       const enforcementLevel = config.enforcement;
-      if (enforcementLevel === 'strict') {
+      if (enforcementLevel === "strict") {
         process.exit(1);
       } else {
-        console.log(chalk.yellow(`\n⚠️  Advisory mode: validation failed but not blocking`));
+        console.log(
+          chalk.yellow(
+            `\n⚠️  Advisory mode: validation failed but not blocking`,
+          ),
+        );
         process.exit(0);
       }
     }

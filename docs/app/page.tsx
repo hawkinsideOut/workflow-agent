@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -9,10 +9,16 @@ export default function Home() {
             Workflow Agent
           </div>
           <div className="flex gap-6">
-            <Link href="/docs/getting-started" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
+            <Link
+              href="/docs/getting-started"
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+            >
               Docs
             </Link>
-            <a href="https://github.com/hawkinsideOut/workflow-agent" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
+            <a
+              href="https://github.com/hawkinsideOut/workflow-agent"
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+            >
               GitHub
             </a>
           </div>
@@ -25,8 +31,8 @@ export default function Home() {
             Self-Evolving Workflow Management
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Maintain consistent development practices with intelligent validation,
-            automated guidelines, and community-driven improvements.
+            Maintain consistent development practices with intelligent
+            validation, automated guidelines, and community-driven improvements.
           </p>
           <div className="flex gap-4 justify-center">
             <Link
@@ -49,21 +55,26 @@ export default function Home() {
             <div className="text-3xl mb-4">🎯</div>
             <h3 className="text-xl font-bold mb-2">Intelligent Validation</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Real-time validation of commit messages and branch names with helpful suggestions.
+              Real-time validation of commit messages and branch names with
+              helpful suggestions.
             </p>
           </div>
           <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <div className="text-3xl mb-4">📚</div>
-            <h3 className="text-xl font-bold mb-2">Auto-Generated Guidelines</h3>
+            <h3 className="text-xl font-bold mb-2">
+              Auto-Generated Guidelines
+            </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Project-specific guidelines generated from pre-configured presets or custom rules.
+              Project-specific guidelines generated from pre-configured presets
+              or custom rules.
             </p>
           </div>
           <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <div className="text-3xl mb-4">🔄</div>
             <h3 className="text-xl font-bold mb-2">Self-Improving System</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Community suggestions with moderation and trust scores improve the system over time.
+              Community suggestions with moderation and trust scores improve the
+              system over time.
             </p>
           </div>
         </div>
@@ -76,11 +87,15 @@ export default function Home() {
             </div>
             <div className="mb-4">npm install -g @workflow/agent</div>
             <div className="mb-2">
-              <span className="text-gray-500"># Initialize in your project</span>
+              <span className="text-gray-500">
+                # Initialize in your project
+              </span>
             </div>
             <div className="mb-4">workflow init</div>
             <div className="mb-2">
-              <span className="text-gray-500"># Start working with validation</span>
+              <span className="text-gray-500">
+                # Start working with validation
+              </span>
             </div>
             <div>git commit -m "feat(auth): add oauth support"</div>
           </div>
@@ -88,7 +103,9 @@ export default function Home() {
 
         <div className="grid md:grid-cols-2 gap-8">
           <div>
-            <h2 className="text-2xl font-bold mb-4">5 Pre-Configured Presets</h2>
+            <h2 className="text-2xl font-bold mb-4">
+              5 Pre-Configured Presets
+            </h2>
             <ul className="space-y-2 text-gray-600 dark:text-gray-300">
               <li className="flex items-center gap-2">
                 <span className="text-blue-600">→</span> SaaS Application
@@ -103,7 +120,8 @@ export default function Home() {
                 <span className="text-blue-600">→</span> E-commerce Platform
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-blue-600">→</span> Content Management System
+                <span className="text-blue-600">→</span> Content Management
+                System
               </li>
             </ul>
           </div>

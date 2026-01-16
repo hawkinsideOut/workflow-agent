@@ -51,12 +51,12 @@ Located in `vitest.config.ts`:
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./test/setup.ts'],
-    include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    environment: "jsdom",
+    setupFiles: ["./test/setup.ts"],
+    include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      provider: "v8",
+      reporter: ["text", "json", "html"],
     },
   },
 });
@@ -149,16 +149,16 @@ describe("TaskCard", () => {
 #### Mocking Hooks
 
 ```typescript
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 // Mock a custom hook
-vi.mock('@/hooks/useAuthorization', () => ({
+vi.mock("@/hooks/useAuthorization", () => ({
   useAuthorization: () => ({
     can: {
       editTask: () => true,
       deleteTask: () => false,
     },
-    currentUserRole: 'developer',
+    currentUserRole: "developer",
   }),
 }));
 ```
@@ -169,11 +169,11 @@ vi.mock('@/hooks/useAuthorization', () => ({
 // Already set up in test/setup.ts - uses MSW for API mocking
 // For unit tests, you can also mock directly:
 
-vi.mock('@/lib/supabase/client', () => ({
+vi.mock("@/lib/supabase/client", () => ({
   getSupabaseClient: vi.fn(() => ({
     auth: {
       getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+        data: { user: { id: "test-user-id", email: "test@example.com" } },
         error: null,
       }),
     },
@@ -191,7 +191,7 @@ vi.mock('@/lib/supabase/client', () => ({
 #### Mocking Server Actions
 
 ```typescript
-vi.mock('@/app/actions/tasks', () => ({
+vi.mock("@/app/actions/tasks", () => ({
   getTasks: vi.fn().mockResolvedValue({ data: mockTasks, error: null }),
   createTask: vi.fn().mockResolvedValue({ data: mockTask, error: null }),
   deleteTask: vi.fn().mockResolvedValue({ success: true, error: null }),
@@ -397,25 +397,25 @@ Located in `playwright.config.ts`:
 
 ```typescript
 export default defineConfig({
-  testDir: './e2e',
+  testDir: "./e2e",
   fullyParallel: true,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: "html",
   use: {
-    baseURL: 'http://localhost:5173',
-    trace: 'on-first-retry',
+    baseURL: "http://localhost:5173",
+    trace: "on-first-retry",
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-    { name: 'Mobile Chrome', use: { ...devices['Pixel 5'] } },
-    { name: 'Mobile Safari', use: { ...devices['iPhone 12'] } },
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
+    { name: "Mobile Chrome", use: { ...devices["Pixel 5"] } },
+    { name: "Mobile Safari", use: { ...devices["iPhone 12"] } },
   ],
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:5173',
+    command: "pnpm dev",
+    url: "http://localhost:5173",
     reuseExistingServer: !process.env.CI,
   },
 });
@@ -443,19 +443,19 @@ npx playwright show-report
 ### E2E Test Structure
 
 ```typescript
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Task Management', () => {
+test.describe("Task Management", () => {
   test.beforeEach(async ({ page }) => {
     // Login or set up authenticated state
-    await page.goto('/login');
-    await page.fill('[data-testid="email-input"]', 'test@example.com');
-    await page.fill('[data-testid="password-input"]', 'password');
+    await page.goto("/login");
+    await page.fill('[data-testid="email-input"]', "test@example.com");
+    await page.fill('[data-testid="password-input"]', "password");
     await page.click('[data-testid="login-button"]');
-    await page.waitForURL('/dashboard');
+    await page.waitForURL("/dashboard");
   });
 
-  test('should create a new task', async ({ page }) => {
+  test("should create a new task", async ({ page }) => {
     // Navigate to board
     await page.click('[data-testid="nav-boards"]');
 
@@ -463,21 +463,23 @@ test.describe('Task Management', () => {
     await page.click('[data-testid="create-task-btn"]');
 
     // Fill form
-    await page.fill('[data-testid="task-title-input"]', 'New E2E Task');
-    await page.selectOption('[data-testid="priority-select"]', 'high');
+    await page.fill('[data-testid="task-title-input"]', "New E2E Task");
+    await page.selectOption('[data-testid="priority-select"]', "high");
 
     // Submit
     await page.click('[data-testid="submit-task-btn"]');
 
     // Verify creation
     await expect(
-      page.locator('[data-testid="task-card"]').filter({ hasText: 'New E2E Task' })
+      page
+        .locator('[data-testid="task-card"]')
+        .filter({ hasText: "New E2E Task" }),
     ).toBeVisible();
   });
 
-  test('should move task between columns', async ({ page }) => {
+  test("should move task between columns", async ({ page }) => {
     // Navigate to kanban board
-    await page.goto('/dashboard?view=kanban');
+    await page.goto("/dashboard?view=kanban");
 
     // Get task card
     const taskCard = page.locator('[data-testid="task-card-TASK-0001"]');
@@ -487,7 +489,9 @@ test.describe('Task Management', () => {
     await taskCard.dragTo(targetColumn);
 
     // Verify move
-    await expect(targetColumn.locator('[data-testid="task-card-TASK-0001"]')).toBeVisible();
+    await expect(
+      targetColumn.locator('[data-testid="task-card-TASK-0001"]'),
+    ).toBeVisible();
   });
 });
 ```
@@ -536,23 +540,23 @@ The setup file initializes:
 4. **jsdom Environment** - DOM simulation
 
 ```typescript
-import { beforeAll, afterAll, afterEach, vi } from 'vitest';
-import { server } from '@/lib/test-utils/server';
-import '@testing-library/jest-dom';
+import { beforeAll, afterAll, afterEach, vi } from "vitest";
+import { server } from "@/lib/test-utils/server";
+import "@testing-library/jest-dom";
 
 // Start MSW server
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
 // Mock Next.js
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-  usePathname: () => '/dashboard',
+  usePathname: () => "/dashboard",
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock('next/cache', () => ({
+vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
 }));
@@ -563,24 +567,30 @@ vi.mock('next/cache', () => ({
 Provides mock data factories and seeding utilities:
 
 ```typescript
-import type { Task, Board, Sprint, User } from '@/types';
+import type { Task, Board, Sprint, User } from "@/types";
 
 // ============== Mock Data ==============
 export const mockUser: User = {
-  id: 'user-001',
-  email: 'test@example.com',
-  name: 'Test User',
-  role: 'developer',
+  id: "user-001",
+  email: "test@example.com",
+  name: "Test User",
+  role: "developer",
 };
 
 export const mockTasks: Task[] = [
-  { id: 'task-001', ticketId: 'TEST-0001', title: 'First Task', priority: 'high', status: 'todo' },
   {
-    id: 'task-002',
-    ticketId: 'TEST-0002',
-    title: 'Second Task',
-    priority: 'medium',
-    status: 'in_progress',
+    id: "task-001",
+    ticketId: "TEST-0001",
+    title: "First Task",
+    priority: "high",
+    status: "todo",
+  },
+  {
+    id: "task-002",
+    ticketId: "TEST-0002",
+    title: "Second Task",
+    priority: "medium",
+    status: "in_progress",
   },
 ];
 
@@ -590,13 +600,13 @@ export function createMockTask(overrides: Partial<Task> = {}): Task {
     id: `task-${Date.now()}`,
     ticketId: `TEST-${Math.floor(Math.random() * 9999)
       .toString()
-      .padStart(4, '0')}`,
-    title: 'Mock Task',
-    description: '',
-    priority: 'medium',
-    status: 'todo',
-    type: 'task',
-    boardId: 'board-001',
+      .padStart(4, "0")}`,
+    title: "Mock Task",
+    description: "",
+    priority: "medium",
+    status: "todo",
+    type: "task",
+    boardId: "board-001",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides,
@@ -612,7 +622,7 @@ export function createMockSprint(overrides: Partial<Sprint> = {}): Sprint {
 
 // ============== Seeding Functions ==============
 export function seedTasks(tasks: Task[] = mockTasks): void {
-  localStorage.setItem('pm_tasks', JSON.stringify(tasks));
+  localStorage.setItem("pm_tasks", JSON.stringify(tasks));
 }
 
 export function seedBoards(): void {
@@ -629,9 +639,9 @@ export function clearLocalStorage(): void {
 // ============== Known Gaps ==============
 // Document areas that don't have full test coverage yet
 export const KNOWN_GAPS = {
-  dragAndDrop: 'Drag-and-drop testing requires special handling with react-dnd',
-  realTime: 'Real-time subscription testing not fully implemented',
-  fileUpload: 'File upload testing requires MSW file handling',
+  dragAndDrop: "Drag-and-drop testing requires special handling with react-dnd",
+  realTime: "Real-time subscription testing not fully implemented",
+  fileUpload: "File upload testing requires MSW file handling",
 };
 ```
 
@@ -654,21 +664,21 @@ lib/test-utils/
 Example handler (`lib/test-utils/handlers/tasks.ts`):
 
 ```typescript
-import { http, HttpResponse } from 'msw';
-import { mockTasks } from '@test/fixtures';
+import { http, HttpResponse } from "msw";
+import { mockTasks } from "@test/fixtures";
 
 export const taskHandlers = [
-  http.get('*/rest/v1/tasks*', () => {
+  http.get("*/rest/v1/tasks*", () => {
     return HttpResponse.json(mockTasks);
   }),
 
-  http.post('*/rest/v1/tasks', async ({ request }) => {
+  http.post("*/rest/v1/tasks", async ({ request }) => {
     const body = await request.json();
     const newTask = { id: `task-${Date.now()}`, ...body };
     return HttpResponse.json(newTask, { status: 201 });
   }),
 
-  http.delete('*/rest/v1/tasks*', () => {
+  http.delete("*/rest/v1/tasks*", () => {
     return new HttpResponse(null, { status: 204 });
   }),
 ];

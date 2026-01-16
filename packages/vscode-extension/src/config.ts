@@ -1,7 +1,7 @@
-import * as vscode from 'vscode';
-import { execSync } from 'child_process';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import * as vscode from "vscode";
+import { execSync } from "child_process";
+import { join } from "path";
+import { existsSync } from "fs";
 
 export class ConfigManager {
   private workspaceConfig: any = null;
@@ -18,14 +18,14 @@ export class ConfigManager {
       return;
     }
 
-    const configPath = join(this.workspaceRoot, 'workflow.config.json');
-    
+    const configPath = join(this.workspaceRoot, "workflow.config.json");
+
     if (existsSync(configPath)) {
       try {
         delete require.cache[require.resolve(configPath)];
         this.workspaceConfig = require(configPath);
       } catch (error) {
-        console.error('Failed to load workflow config:', error);
+        console.error("Failed to load workflow config:", error);
         this.workspaceConfig = null;
       }
     } else {
@@ -49,36 +49,36 @@ export class ConfigManager {
   }
 
   getEnforcement(): string {
-    return this.workspaceConfig?.enforcement || 'advisory';
+    return this.workspaceConfig?.enforcement || "advisory";
   }
 
   isEnabled(): boolean {
-    const config = vscode.workspace.getConfiguration('workflow-agent');
-    return config.get<boolean>('enabled', true);
+    const config = vscode.workspace.getConfiguration("workflow-agent");
+    return config.get<boolean>("enabled", true);
   }
 
   shouldValidateOnType(): boolean {
-    const config = vscode.workspace.getConfiguration('workflow-agent');
-    return config.get<boolean>('validateOnType', true);
+    const config = vscode.workspace.getConfiguration("workflow-agent");
+    return config.get<boolean>("validateOnType", true);
   }
 
   shouldShowStatusBar(): boolean {
-    const config = vscode.workspace.getConfiguration('workflow-agent');
-    return config.get<boolean>('showStatusBar', true);
+    const config = vscode.workspace.getConfiguration("workflow-agent");
+    return config.get<boolean>("showStatusBar", true);
   }
 
   isStrictMode(): boolean {
-    const config = vscode.workspace.getConfiguration('workflow-agent');
-    return config.get<boolean>('strictMode', false);
+    const config = vscode.workspace.getConfiguration("workflow-agent");
+    return config.get<boolean>("strictMode", false);
   }
 
   getCurrentBranch(): string | null {
     if (!this.workspaceRoot) return null;
 
     try {
-      const branch = execSync('git rev-parse --abbrev-ref HEAD', {
+      const branch = execSync("git rev-parse --abbrev-ref HEAD", {
         cwd: this.workspaceRoot,
-        encoding: 'utf-8',
+        encoding: "utf-8",
       }).trim();
       return branch;
     } catch {

@@ -1,18 +1,26 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { randomUUID } from 'crypto';
-import { Suggestion, TrustScore, ModerationRule, defaultModerationRules } from './schema.js';
+import fs from "fs/promises";
+import path from "path";
+import { randomUUID } from "crypto";
+import {
+  Suggestion,
+  TrustScore,
+  ModerationRule,
+  defaultModerationRules,
+} from "./schema.js";
 
 export interface SuggestionStore {
   save(suggestion: Suggestion): Promise<void>;
   findById(id: string): Promise<Suggestion | null>;
-  findAll(filters?: { status?: string; category?: string }): Promise<Suggestion[]>;
+  findAll(filters?: {
+    status?: string;
+    category?: string;
+  }): Promise<Suggestion[]>;
   update(id: string, updates: Partial<Suggestion>): Promise<void>;
   delete(id: string): Promise<void>;
 }
 
 export class FileSystemStore implements SuggestionStore {
-  constructor(private basePath: string = '.workflow/improvements') {}
+  constructor(private basePath: string = ".workflow/improvements") {}
 
   private async ensureDirectory(): Promise<void> {
     await fs.mkdir(this.basePath, { recursive: true });
@@ -31,41 +39,49 @@ export class FileSystemStore implements SuggestionStore {
   async findById(id: string): Promise<Suggestion | null> {
     try {
       const filePath = this.getSuggestionPath(id);
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await fs.readFile(filePath, "utf-8");
       return JSON.parse(content);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
         return null;
       }
       throw error;
     }
   }
 
-  async findAll(filters?: { status?: string; category?: string }): Promise<Suggestion[]> {
+  async findAll(filters?: {
+    status?: string;
+    category?: string;
+  }): Promise<Suggestion[]> {
     try {
       await this.ensureDirectory();
       const files = await fs.readdir(this.basePath);
       const suggestions: Suggestion[] = [];
 
       for (const file of files) {
-        if (!file.endsWith('.json')) continue;
-        
-        const content = await fs.readFile(path.join(this.basePath, file), 'utf-8');
+        if (!file.endsWith(".json")) continue;
+
+        const content = await fs.readFile(
+          path.join(this.basePath, file),
+          "utf-8",
+        );
         const suggestion = JSON.parse(content) as Suggestion;
 
         // Apply filters
         if (filters?.status && suggestion.status !== filters.status) continue;
-        if (filters?.category && suggestion.category !== filters.category) continue;
+        if (filters?.category && suggestion.category !== filters.category)
+          continue;
 
         suggestions.push(suggestion);
       }
 
       // Sort by creation date (newest first)
-      return suggestions.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      return suggestions.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
         return [];
       }
       throw error;
@@ -95,7 +111,13 @@ export class TrustScoreManager {
     const score = this.scores.get(userId);
     if (!score) return 50; // Default score for new users
 
-    const { mergedPRs, helpfulReviews, qualityBugReports, approvedSuggestions, spam } = score.contributions;
+    const {
+      mergedPRs,
+      helpfulReviews,
+      qualityBugReports,
+      approvedSuggestions,
+      spam,
+    } = score.contributions;
 
     // Weighted scoring system
     let totalScore = 50; // Start at 50 for new users
@@ -109,7 +131,10 @@ export class TrustScoreManager {
     return Math.max(0, Math.min(100, totalScore));
   }
 
-  updateScore(userId: string, contribution: keyof TrustScore['contributions']): void {
+  updateScore(
+    userId: string,
+    contribution: keyof TrustScore["contributions"],
+  ): void {
     const existing = this.scores.get(userId);
     const now = new Date().toISOString();
 
@@ -145,15 +170,17 @@ export class Moderator {
   constructor(
     private rules: ModerationRule[] = defaultModerationRules,
     private store: SuggestionStore,
-    private trustManager: TrustScoreManager
+    private trustManager: TrustScoreManager,
   ) {}
 
-  async moderate(suggestion: Omit<Suggestion, 'id' | 'createdAt' | 'status'>): Promise<{
+  async moderate(
+    suggestion: Omit<Suggestion, "id" | "createdAt" | "status">,
+  ): Promise<{
     allowed: boolean;
     reason?: string;
     action?: string;
   }> {
-    const userId = suggestion.author || 'anonymous';
+    const userId = suggestion.author || "anonymous";
     const trustScore = this.trustManager.getTrustScore(userId);
 
     // Check each rule
@@ -163,14 +190,14 @@ export class Moderator {
       // Check banned words first (highest priority)
       if (condition.bannedWords) {
         const lowerFeedback = suggestion.feedback.toLowerCase();
-        const foundBannedWord = condition.bannedWords.find(word => 
-          lowerFeedback.includes(word.toLowerCase())
+        const foundBannedWord = condition.bannedWords.find((word) =>
+          lowerFeedback.includes(word.toLowerCase()),
         );
 
         if (foundBannedWord) {
           // Track spam for trust score
-          if (userId !== 'anonymous') {
-            this.trustManager.updateScore(userId, 'spam');
+          if (userId !== "anonymous") {
+            this.trustManager.updateScore(userId, "spam");
           }
           return {
             allowed: false,
@@ -181,7 +208,10 @@ export class Moderator {
       }
 
       // Check length
-      if (condition.minLength && suggestion.feedback.length < condition.minLength) {
+      if (
+        condition.minLength &&
+        suggestion.feedback.length < condition.minLength
+      ) {
         return {
           allowed: false,
           reason: `Feedback too short (min ${condition.minLength} characters)`,
@@ -189,7 +219,10 @@ export class Moderator {
         };
       }
 
-      if (condition.maxLength && suggestion.feedback.length > condition.maxLength) {
+      if (
+        condition.maxLength &&
+        suggestion.feedback.length > condition.maxLength
+      ) {
         return {
           allowed: false,
           reason: `Feedback too long (max ${condition.maxLength} characters)`,
@@ -199,10 +232,10 @@ export class Moderator {
 
       // Check rate limiting
       if (condition.maxDailySubmissions) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split("T")[0];
         const todaysSuggestions = await this.store.findAll();
         const userSuggestionsToday = todaysSuggestions.filter(
-          s => s.author === userId && s.createdAt.startsWith(today)
+          (s) => s.author === userId && s.createdAt.startsWith(today),
         );
 
         if (userSuggestionsToday.length >= condition.maxDailySubmissions) {
@@ -215,9 +248,13 @@ export class Moderator {
       }
 
       // Check trust score last (for new users without scores)
-      if (condition.minTrustScore && trustScore && trustScore.score < condition.minTrustScore) {
+      if (
+        condition.minTrustScore &&
+        trustScore &&
+        trustScore.score < condition.minTrustScore
+      ) {
         return {
-          allowed: rule.action !== 'auto-reject',
+          allowed: rule.action !== "auto-reject",
           reason: `Trust score below minimum (${condition.minTrustScore})`,
           action: rule.action,
         };
@@ -230,7 +267,7 @@ export class Moderator {
   async submitSuggestion(
     feedback: string,
     author?: string,
-    category?: string
+    category?: string,
   ): Promise<{ success: boolean; suggestion?: Suggestion; error?: string }> {
     const partialSuggestion = {
       feedback,
@@ -249,8 +286,10 @@ export class Moderator {
       };
     }
 
-    const userTrustScore = author ? this.trustManager.getTrustScore(author)?.score : undefined;
-    
+    const userTrustScore = author
+      ? this.trustManager.getTrustScore(author)?.score
+      : undefined;
+
     const suggestion: Suggestion = {
       id: randomUUID(),
       feedback,
@@ -258,9 +297,12 @@ export class Moderator {
       category: category as any,
       createdAt: new Date().toISOString(),
       // Auto-approve if no moderation action or if trust score is good enough
-      status: moderation.action === 'require-review' && userTrustScore && userTrustScore < 20 
-        ? 'pending' 
-        : 'approved',
+      status:
+        moderation.action === "require-review" &&
+        userTrustScore &&
+        userTrustScore < 20
+          ? "pending"
+          : "approved",
       upvotes: 0,
       downvotes: 0,
       trustScore: userTrustScore,
@@ -274,13 +316,13 @@ export class Moderator {
     };
   }
 
-  async vote(suggestionId: string, vote: 'up' | 'down'): Promise<void> {
+  async vote(suggestionId: string, vote: "up" | "down"): Promise<void> {
     const suggestion = await this.store.findById(suggestionId);
     if (!suggestion) {
       throw new Error(`Suggestion not found: ${suggestionId}`);
     }
 
-    if (vote === 'up') {
+    if (vote === "up") {
       suggestion.upvotes++;
     } else {
       suggestion.downvotes++;

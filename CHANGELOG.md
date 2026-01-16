@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.0] - 2026-01-15
 
 ### Added
+
 - **Configurable Reserved Scope Names**: New `reservedScopeNames` field in workflow.config.json to customize which scope names are reserved (defaults to: init, create, build, test, config, docs, ci, deps)
 - **Full Config Command**: Complete `workflow config` command with subcommands:
   - `workflow config validate`: Validate configuration with friendly error messages
@@ -23,27 +24,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **User-Friendly Error Messages**: Error messages now show scope names instead of array indices and include helpful suggestions
 
 ### Fixed
+
 - **Reserved Word Errors**: Scope validation now happens upfront during `workflow config add scope` instead of only at config load time
 - **Error Message Quality**: Zod errors are now formatted to show `Scope "name"` instead of `scopes[2].name`
 - **Validation Timing**: Reserved word validation now respects custom `reservedScopeNames` configuration
 
 ### Changed
+
 - **Config Schema**: Scope validation moved from individual scope level to config level using `superRefine`
 - **Config Index**: Added `validateConfig()` function and improved error formatting in `loadConfig()`
 - **Hooks Generation**: Added support for `validate-scopes` command in pre-commit hooks
 
 ### Dependencies
+
 - Added `prompts@^2.4.2` for interactive CLI prompts
 - Added `@types/prompts@^2.4.9` for TypeScript support
 
 ## [2.0.1] - 2026-01-14
 
 ### Fixed
+
 - **Fallback Scopes**: Fixed default fallback scopes to use valid names instead of reserved words
 
 ## [2.0.0] - 2026-01-14
 
 ### Added
+
 - **Mandatory Guidelines Enforcement System**: Comprehensive enforcement of template guidelines
 - **Guideline Metadata**: New metadata.json for tracking mandatory vs optional templates
 - **Doctor Command Enhancements**: New `--check-guidelines-only` flag for focused checks
@@ -56,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Core Package (@hawkinside_out/workflow-agent)
+
 - **CLI Commands**: `init`, `validate`, `suggest`, `doctor`
 - **Non-Interactive Mode**: Support for `--preset`, `--name`, `--yes` flags
 - **Validation Engine**: Branch names and commit messages validation
@@ -64,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Did-You-Mean Suggestions**: Helpful suggestions for typos in scopes
 
 #### Preset Packages
+
 - **@workflow/scopes-saas**: 10 scopes for SaaS applications
 - **@workflow/scopes-library**: 8 scopes for npm packages
 - **@workflow/scopes-api**: 10 scopes for API services
@@ -71,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **@workflow/scopes-cms**: 10 scopes for content management systems
 
 #### Framework Adapters
+
 - **Next.js Adapter**: Detects App Router, Pages Router, Turbopack
 - **Vite Adapter**: Detects React, Vue, Svelte configurations
 - **Remix Adapter**: Detects routes and configuration
@@ -78,12 +87,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SvelteKit Adapter**: Detects routes and configuration
 
 #### Improvement Tracker (@workflow/improvement-tracker)
+
 - **Suggestion System**: Community-driven improvement suggestions
 - **Trust Score System**: Weighted contributions (PRs: +10, Reviews: +5)
 - **Moderation System**: Spam filtering, rate limiting (5/day), content validation
 - **Storage System**: File-based JSON storage in `.workflow/improvements/`
 
 #### VS Code Extension (workflow-agent)
+
 - **Real-Time Validation**: Commit messages and branch names
 - **Status Bar Integration**: Shows current branch and enforcement mode
 - **Command Palette Commands**: 5 commands (init, validate, suggest, doctor, showConfig)
@@ -91,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **IntelliSense**: Scope autocomplete in commit messages
 
 #### Documentation
+
 - **Documentation Site**: Next.js + MDX site with 3 pages
 - **Comprehensive README**: 366 lines covering all features
 - **Getting Started Guide**: Quick start for new users

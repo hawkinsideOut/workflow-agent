@@ -5,6 +5,7 @@ This document provides a structured workflow for AI agents creating custom scope
 ## Critical Rule: Zero-Assumption Principle
 
 **Never assume or infer details about:**
+
 - Project domain or industry
 - Feature areas or scope names
 - Naming conventions
@@ -20,6 +21,7 @@ This document provides a structured workflow for AI agents creating custom scope
 ### 1. Project Domain Clarification
 
 **Prompt:**
+
 > "What is the primary domain or industry for this project? For example: fintech, healthcare, gaming, education, e-commerce, etc."
 
 **Purpose:** Understand the context to suggest relevant scope categories.
@@ -31,6 +33,7 @@ This document provides a structured workflow for AI agents creating custom scope
 ### 2. Feature Area Enumeration
 
 **Prompt:**
+
 > "What are the main feature areas or functional components of your project? Please list them (aim for 8-15 areas). For example, for a SaaS app: authentication, user profiles, billing, notifications, analytics."
 
 **Purpose:** Identify specific scopes that map to actual functionality.
@@ -38,6 +41,7 @@ This document provides a structured workflow for AI agents creating custom scope
 **Expected Response:** List of feature areas (comma-separated or numbered).
 
 **Follow-up:** If fewer than 8 or more than 20 features listed:
+
 > "You listed [N] features. The recommended range is 8-15 scopes. Would you like to add more detail, consolidate some areas, or proceed as is?"
 
 ---
@@ -45,11 +49,13 @@ This document provides a structured workflow for AI agents creating custom scope
 ### 3. Naming Convention Preferences
 
 **Prompt:**
+
 > "What naming style do you prefer for your scopes? Examples:
+>
 > - Single words (auth, billing, users)
 > - Kebab-case (user-management, api-endpoints)
 > - Descriptive phrases (subscription-billing, email-notifications)
-> 
+>
 > Note: All scope names must be lowercase alphanumeric with hyphens only."
 
 **Purpose:** Ensure consistent naming that matches team conventions.
@@ -61,11 +67,13 @@ This document provides a structured workflow for AI agents creating custom scope
 ### 4. Scope-to-Structure Mapping
 
 **Prompt:**
+
 > "Do your scopes map to:
+>
 > 1. **Folders/modules** in your codebase (e.g., src/auth, src/billing)
 > 2. **Feature areas** regardless of folder structure
 > 3. **Both** - they align with both features and folders
-> 
+>
 > This helps determine how granular the scopes should be."
 
 **Purpose:** Align scopes with actual codebase organization.
@@ -77,10 +85,12 @@ This document provides a structured workflow for AI agents creating custom scope
 ### 5. Migration vs. New Creation
 
 **Prompt:**
+
 > "Are you:
+>
 > 1. **Migrating** existing scopes from workflow.config.json to a package
 > 2. **Creating** a new custom scope package from scratch
-> 
+>
 > If migrating, I can use your existing scope definitions. If creating new, we'll define them together."
 
 **Purpose:** Determine whether to use existing data or start fresh.
@@ -88,9 +98,10 @@ This document provides a structured workflow for AI agents creating custom scope
 **Expected Response:** "migrate" or "create new"
 
 **Follow-up if "migrate":**
+
 > "I found [N] scopes in your workflow.config.json:
 > [List scopes]
-> 
+>
 > Should I use these as-is, or would you like to review/modify them first?"
 
 ---
@@ -98,11 +109,13 @@ This document provides a structured workflow for AI agents creating custom scope
 ### 6. Package Publishing Intent
 
 **Prompt:**
+
 > "Do you plan to:
+>
 > 1. **Publish** this scope package to npm for reuse across projects
 > 2. **Keep it local** to this workspace only
 > 3. **Undecided** - create it now, decide later
-> 
+>
 > This affects whether we include publishing configuration."
 
 **Purpose:** Include appropriate publishing metadata and instructions.
@@ -130,22 +143,27 @@ Before generating the package, confirm:
 For each scope, ask:
 
 **Prompt:**
+
 > "Scope #[N] - Name: (lowercase, alphanumeric, hyphens only)"
 
 After name is provided:
 
 **Prompt:**
+
 > "Description for '[scope-name]': (minimum 10 characters, be specific)"
 
 After description:
 
 **Prompt:**
+
 > "Emoji for '[scope-name]': (optional, press Enter to skip)"
 
 After emoji:
 
 **Prompt:**
+
 > "Category for '[scope-name]':
+>
 > 1. auth - Authentication & Authorization
 > 2. features - Features & Functionality
 > 3. infrastructure - Infrastructure & DevOps
@@ -154,14 +172,15 @@ After emoji:
 > 6. performance - Performance & Optimization
 > 7. other - Other
 > 8. (none) - No category
-> 
+>
 > Choose 1-8:"
 
 After each scope:
 
 **Prompt:**
+
 > "✓ Added scope: [scope-name]
-> 
+>
 > You have [N] scopes. Add another? (y/n)"
 
 ---
@@ -172,9 +191,9 @@ After each scope:
 Agent: What is the primary domain or industry for this project?
 User: Healthcare SaaS platform
 
-Agent: What are the main feature areas of your healthcare SaaS? 
+Agent: What are the main feature areas of your healthcare SaaS?
       (aim for 8-15 areas)
-User: patient records, appointments, billing, insurance, 
+User: patient records, appointments, billing, insurance,
       prescriptions, lab results, messaging, reports
 
 Agent: What naming style do you prefer?
@@ -215,18 +234,22 @@ User: y
 If user provides invalid input:
 
 **For invalid scope name:**
+
 > "The name '[name]' is invalid. Scope names must be:
+>
 > - Lowercase letters, numbers, and hyphens only
 > - Maximum 32 characters
 > - Not a reserved word (init, create, build, test, config, docs, ci, deps)
-> 
+>
 > Please provide a different name:"
 
 **For short description:**
-> "The description must be at least 10 characters to be meaningful. 
+
+> "The description must be at least 10 characters to be meaningful.
 > Please provide more detail about what '[scope-name]' covers:"
 
 **For duplicate name:**
+
 > "A scope named '[name]' already exists. Please choose a different name:"
 
 ---
@@ -236,10 +259,13 @@ If user provides invalid input:
 After successfully creating the package, provide:
 
 1. **Location confirmation:**
+
    > "✨ Custom scope package created at: [path]"
 
 2. **Next steps:**
+
    > "Next steps:
+   >
    > 1. cd [path]
    > 2. pnpm install
    > 3. pnpm build
@@ -247,7 +273,9 @@ After successfully creating the package, provide:
    > 5. Update repository URL in package.json"
 
 3. **Publishing instructions** (if user indicated intent):
+
    > "To publish to npm:
+   >
    > 1. npm login
    > 2. Update version in package.json as needed
    > 3. pnpm publish --access public"

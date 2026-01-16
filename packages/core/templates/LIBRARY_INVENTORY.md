@@ -84,13 +84,13 @@
 
 ```typescript
 // Browser client (singleton)
-import { getSupabaseClient } from '@/lib/supabase/client';
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 // Server client (for server components/actions)
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient } from "@/lib/supabase/server";
 
 // Admin client (bypasses RLS)
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createAdminClient } from "@/lib/supabase/admin";
 ```
 
 **Files:**
@@ -112,11 +112,11 @@ import { createAdminClient } from '@/lib/supabase/admin';
 **Usage Patterns:**
 
 ```typescript
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Fetching data
 const { data, isLoading, error } = useQuery({
-  queryKey: ['tasks', boardId],
+  queryKey: ["tasks", boardId],
   queryFn: () => getTasks(boardId),
 });
 
@@ -125,7 +125,7 @@ const queryClient = useQueryClient();
 const mutation = useMutation({
   mutationFn: createTask,
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
   },
 });
 ```
@@ -197,9 +197,9 @@ const mutation = useMutation({
 **Usage Pattern:**
 
 ```typescript
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 ```
 
 ### Lucide React (Icons)
@@ -234,11 +234,11 @@ import { Plus, Trash, Settings, ChevronDown } from "lucide-react";
 **Usage Pattern:**
 
 ```typescript
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
-toast.success('Task created successfully');
-toast.error('Failed to delete task');
-toast.loading('Saving changes...');
+toast.success("Task created successfully");
+toast.error("Failed to delete task");
+toast.loading("Saving changes...");
 ```
 
 ### Vaul (Drawer)
@@ -273,12 +273,12 @@ toast.loading('Saving changes...');
 **Usage Pattern:**
 
 ```typescript
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 const form = useForm<FormData>({
   resolver: zodResolver(formSchema),
-  defaultValues: { title: '', description: '' },
+  defaultValues: { title: "", description: "" },
 });
 ```
 
@@ -294,13 +294,13 @@ const form = useForm<FormData>({
 **Usage Patterns:**
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 // Define schema
 export const TaskSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1).max(255),
-  priority: z.enum(['low', 'medium', 'high', 'critical']),
+  priority: z.enum(["low", "medium", "high", "critical"]),
 });
 
 // Infer type from schema
@@ -520,9 +520,9 @@ pnpm test:e2e  # Run E2E tests
 **Usage Pattern:**
 
 ```typescript
-import { format, parseISO, differenceInDays } from 'date-fns';
+import { format, parseISO, differenceInDays } from "date-fns";
 
-format(new Date(), 'MMM d, yyyy'); // "Jan 8, 2026"
+format(new Date(), "MMM d, yyyy"); // "Jan 8, 2026"
 differenceInDays(endDate, startDate);
 ```
 

@@ -195,7 +195,7 @@ name: Publish
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   publish:
@@ -205,9 +205,9 @@ jobs:
       - uses: pnpm/action-setup@v2
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          registry-url: 'https://registry.npmjs.org'
-      
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+
       - run: pnpm install
       - run: pnpm build
       - run: pnpm test

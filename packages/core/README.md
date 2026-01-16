@@ -10,6 +10,7 @@
 **Workflow Agent** is a portable, framework-agnostic CLI tool that brings structure and consistency to your development workflow. It enforces branch naming conventions, validates commit messages, and includes a self-improvement system that learns from community feedback.
 
 **🎯 Perfect for:**
+
 - AI agent development with strict workflow requirements
 - Teams maintaining multiple repositories
 - Open source projects enforcing contribution guidelines
@@ -94,6 +95,7 @@ This adds these scripts to your `package.json`:
 ### 1. Initialize Your Project
 
 #### Interactive Mode
+
 ```bash
 # If installed globally:
 workflow-agent init
@@ -107,11 +109,13 @@ pnpm run workflow:init
 ```
 
 Prompts you to:
+
 1. Enter project name
 2. Choose a preset (SaaS, Library, API, E-commerce, CMS, Custom)
 3. Generate guidelines (optional)
 
 #### Non-Interactive Mode
+
 ```bash
 # Perfect for CI/CD or automation
 
@@ -134,6 +138,7 @@ workflow-agent validate commit "feat(auth): add OAuth support"
 ```
 
 **Expected formats:**
+
 - **Branch:** `<type>/<scope>/<description>`
   - Types: `feature`, `bugfix`, `hotfix`, `chore`, `refactor`, `docs`, `test`
   - Example: `feature/auth/implement-2fa`
@@ -172,30 +177,33 @@ workflow-agent scope:migrate
 
 ## 🛠️ Commands
 
-| Command | Description |
-|---------|-------------|
-| `workflow-agent init` | Initialize project with interactive prompts |
-| `workflow-agent validate branch [name]` | Validate branch name format |
-| `workflow-agent validate commit [message]` | Validate commit message format |
-| `workflow-agent config get [key]` | View configuration values |
-| `workflow-agent config set <key> <value>` | Update configuration |
-| `workflow-agent suggest <idea>` | Submit improvement suggestion |
-| `workflow-agent doctor` | Run health checks and get optimization tips |
-| `workflow-agent scope:create` | Create a custom scope package |
-| `workflow-agent scope:migrate` | Migrate inline scopes to package |
+| Command                                    | Description                                 |
+| ------------------------------------------ | ------------------------------------------- |
+| `workflow-agent init`                      | Initialize project with interactive prompts |
+| `workflow-agent validate branch [name]`    | Validate branch name format                 |
+| `workflow-agent validate commit [message]` | Validate commit message format              |
+| `workflow-agent config get [key]`          | View configuration values                   |
+| `workflow-agent config set <key> <value>`  | Update configuration                        |
+| `workflow-agent suggest <idea>`            | Submit improvement suggestion               |
+| `workflow-agent doctor`                    | Run health checks and get optimization tips |
+| `workflow-agent scope:create`              | Create a custom scope package               |
+| `workflow-agent scope:migrate`             | Migrate inline scopes to package            |
 
 ### Command Options
 
 #### `init`
+
 - `--preset <name>` - Skip preset selection (saas, library, api, ecommerce, cms, custom)
 - `--name <name>` - Set project name without prompt
 - `--yes` - Accept all defaults (non-interactive)
 
 #### `validate`
+
 - `--fix` - Apply automatic fixes (coming soon)
 - `--json` - Output in JSON format
 
 #### `suggest`
+
 - `--category <type>` - Suggestion category (feature, bug, improvement, documentation)
 - `--author <name>` - Your name or username
 
@@ -204,18 +212,23 @@ workflow-agent scope:migrate
 ## 📦 Preset Scope Libraries
 
 ### SaaS (17 scopes)
+
 `auth`, `billing`, `analytics`, `notifications`, `teams`, `admin`, `api`, `integration`, `subscription`, `dashboard`, `onboarding`, `settings`, `payments`, `reports`, `support`, `webhooks`, `search`
 
 ### Library (10 scopes)
+
 `core`, `utils`, `types`, `config`, `cli`, `api`, `docs`, `examples`, `test`, `build`
 
 ### API (13 scopes)
+
 `routes`, `middleware`, `controllers`, `models`, `services`, `auth`, `validation`, `errors`, `logging`, `cache`, `queue`, `websocket`, `graphql`
 
 ### E-commerce (12 scopes)
+
 `products`, `cart`, `checkout`, `orders`, `payments`, `shipping`, `inventory`, `customers`, `reviews`, `discounts`, `recommendations`, `analytics`
 
 ### CMS (13 scopes)
+
 `content`, `media`, `pages`, `posts`, `categories`, `tags`, `users`, `comments`, `seo`, `templates`, `widgets`, `api`, `admin`
 
 ---
@@ -234,12 +247,12 @@ workflow-agent scope:create
 // packages/scopes-medical/src/index.ts
 export default {
   scopes: [
-    { name: 'patient', description: 'Patient records and profiles' },
-    { name: 'appointment', description: 'Scheduling and appointments' },
-    { name: 'billing', description: 'Medical billing and insurance' },
-    { name: 'prescription', description: 'Prescriptions and medications' },
-    { name: 'lab', description: 'Laboratory tests and results' }
-  ]
+    { name: "patient", description: "Patient records and profiles" },
+    { name: "appointment", description: "Scheduling and appointments" },
+    { name: "billing", description: "Medical billing and insurance" },
+    { name: "prescription", description: "Prescriptions and medications" },
+    { name: "lab", description: "Laboratory tests and results" },
+  ],
 };
 ```
 
@@ -298,6 +311,7 @@ This typically means your npm token doesn't have the correct permissions. To fix
    - Copy the token immediately
 
 2. **Test the token locally:**
+
    ```bash
    echo '//registry.npmjs.org/:_authToken=YOUR_TOKEN' > ~/.npmrc
    npm whoami  # Should show your npm username
@@ -379,6 +393,7 @@ pnpm build
 If templates aren't bundled with the npm package:
 
 1. **Ensure templates are in the package:**
+
    ```json
    // packages/core/package.json
    {
@@ -387,6 +402,7 @@ If templates aren't bundled with the npm package:
    ```
 
 2. **Copy templates to package directory:**
+
    ```bash
    cp -r templates packages/core/
    ```

@@ -89,6 +89,7 @@ The extension automatically validates commit messages as you type in:
 - SCM view commit message field
 
 Invalid messages will show:
+
 - Red squiggly underlines in the editor
 - Diagnostic messages in the Problems panel
 - Error icons in the status bar
@@ -98,11 +99,13 @@ Invalid messages will show:
 Press `Ctrl+Shift+W` (or `Cmd+Shift+W` on Mac) to validate the current branch name.
 
 Valid branch format:
+
 ```
 <type>/<scope>/<description>
 ```
 
 Examples:
+
 - ✅ `feature/auth/add-oauth`
 - ✅ `bugfix/api/fix-rate-limit`
 - ✅ `docs/readme/update-installation`

@@ -3,21 +3,21 @@
  * Supports wrapping existing hooks and CI environment detection
  */
 
-import { existsSync } from 'fs';
-import { readFile, writeFile, unlink, chmod, rename, mkdir } from 'fs/promises';
-import { join } from 'path';
-import type { HooksConfig } from '../config/schema.js';
+import { existsSync } from "fs";
+import { readFile, writeFile, unlink, chmod, rename, mkdir } from "fs/promises";
+import { join } from "path";
+import type { HooksConfig } from "../config/schema.js";
 
 export interface HookStatus {
   installed: boolean;
-  hookType: 'pre-commit' | 'commit-msg';
+  hookType: "pre-commit" | "commit-msg";
   hasExistingHook: boolean;
   wrappedOriginal: boolean;
 }
 
 export interface InstallResult {
   success: boolean;
-  hookType: 'pre-commit' | 'commit-msg';
+  hookType: "pre-commit" | "commit-msg";
   wrappedExisting: boolean;
   error?: string;
 }
@@ -42,36 +42,39 @@ export function isCI(): boolean {
  * Get the path to the .git/hooks directory
  */
 export function getGitHooksDir(projectPath: string = process.cwd()): string {
-  return join(projectPath, '.git', 'hooks');
+  return join(projectPath, ".git", "hooks");
 }
 
 /**
  * Check if a git repository exists
  */
 export function hasGitRepo(projectPath: string = process.cwd()): boolean {
-  return existsSync(join(projectPath, '.git'));
+  return existsSync(join(projectPath, ".git"));
 }
 
 /**
  * Generate the pre-commit hook script content
  */
 function generatePreCommitHook(config?: HooksConfig): string {
-  const checks = config?.preCommit || ['validate-branch', 'check-guidelines'];
-  
-  const checkCommands = checks.map(check => {
-    switch (check) {
-      case 'validate-branch':
-        return '  workflow validate branch';
-      case 'validate-commit':
-        return '  workflow validate commit';
-      case 'check-guidelines':
-        return '  workflow doctor --check-guidelines-only 2>/dev/null || true';
-      case 'validate-scopes':
-        return '  workflow config validate';
-      default:
-        return '';
-    }
-  }).filter(Boolean).join('\n');
+  const checks = config?.preCommit || ["validate-branch", "check-guidelines"];
+
+  const checkCommands = checks
+    .map((check) => {
+      switch (check) {
+        case "validate-branch":
+          return "  workflow validate branch";
+        case "validate-commit":
+          return "  workflow validate commit";
+        case "check-guidelines":
+          return "  workflow doctor --check-guidelines-only 2>/dev/null || true";
+        case "validate-scopes":
+          return "  workflow config validate";
+        default:
+          return "";
+      }
+    })
+    .filter(Boolean)
+    .join("\n");
 
   return `#!/bin/sh
 # Workflow Agent pre-commit hook
@@ -98,16 +101,19 @@ fi
  * Generate the commit-msg hook script content
  */
 function generateCommitMsgHook(config?: HooksConfig): string {
-  const checks = config?.commitMsg || ['validate-commit'];
-  
-  const checkCommands = checks.map(check => {
-    switch (check) {
-      case 'validate-commit':
-        return '  workflow validate commit "$(cat "$1")"';
-      default:
-        return '';
-    }
-  }).filter(Boolean).join('\n');
+  const checks = config?.commitMsg || ["validate-commit"];
+
+  const checkCommands = checks
+    .map((check) => {
+      switch (check) {
+        case "validate-commit":
+          return '  workflow validate commit "$(cat "$1")"';
+        default:
+          return "";
+      }
+    })
+    .filter(Boolean)
+    .join("\n");
 
   return `#!/bin/sh
 # Workflow Agent commit-msg hook
@@ -135,8 +141,10 @@ fi
  */
 async function isWorkflowHook(hookPath: string): Promise<boolean> {
   try {
-    const content = await readFile(hookPath, 'utf-8');
-    return content.includes('Workflow Agent') && content.includes('Auto-generated');
+    const content = await readFile(hookPath, "utf-8");
+    return (
+      content.includes("Workflow Agent") && content.includes("Auto-generated")
+    );
   } catch {
     return false;
   }
@@ -146,8 +154,8 @@ async function isWorkflowHook(hookPath: string): Promise<boolean> {
  * Get the status of a specific hook
  */
 export async function getHookStatus(
-  hookType: 'pre-commit' | 'commit-msg',
-  projectPath: string = process.cwd()
+  hookType: "pre-commit" | "commit-msg",
+  projectPath: string = process.cwd(),
 ): Promise<HookStatus> {
   const hooksDir = getGitHooksDir(projectPath);
   const hookPath = join(hooksDir, hookType);
@@ -178,11 +186,11 @@ export async function getHookStatus(
  * Get status of all hooks
  */
 export async function getAllHooksStatus(
-  projectPath: string = process.cwd()
+  projectPath: string = process.cwd(),
 ): Promise<HookStatus[]> {
   return Promise.all([
-    getHookStatus('pre-commit', projectPath),
-    getHookStatus('commit-msg', projectPath),
+    getHookStatus("pre-commit", projectPath),
+    getHookStatus("commit-msg", projectPath),
   ]);
 }
 
@@ -190,9 +198,9 @@ export async function getAllHooksStatus(
  * Install a single hook, wrapping existing if present
  */
 async function installSingleHook(
-  hookType: 'pre-commit' | 'commit-msg',
+  hookType: "pre-commit" | "commit-msg",
   config?: HooksConfig,
-  projectPath: string = process.cwd()
+  projectPath: string = process.cwd(),
 ): Promise<InstallResult> {
   const hooksDir = getGitHooksDir(projectPath);
   const hookPath = join(hooksDir, hookType);
@@ -213,7 +221,7 @@ async function installSingleHook(
     // Check for existing hook
     if (existsSync(hookPath)) {
       const isOurs = await isWorkflowHook(hookPath);
-      
+
       if (!isOurs) {
         // Backup existing hook
         await rename(hookPath, originalPath);
@@ -222,11 +230,12 @@ async function installSingleHook(
     }
 
     // Generate and write the hook
-    const hookContent = hookType === 'pre-commit' 
-      ? generatePreCommitHook(config)
-      : generateCommitMsgHook(config);
+    const hookContent =
+      hookType === "pre-commit"
+        ? generatePreCommitHook(config)
+        : generateCommitMsgHook(config);
 
-    await writeFile(hookPath, hookContent, 'utf-8');
+    await writeFile(hookPath, hookContent, "utf-8");
     await chmod(hookPath, 0o755);
 
     result.success = true;
@@ -242,20 +251,22 @@ async function installSingleHook(
  */
 export async function installHooks(
   config?: HooksConfig,
-  projectPath: string = process.cwd()
+  projectPath: string = process.cwd(),
 ): Promise<InstallResult[]> {
   if (!hasGitRepo(projectPath)) {
-    return [{
-      success: false,
-      hookType: 'pre-commit',
-      wrappedExisting: false,
-      error: 'No git repository found. Run git init first.',
-    }];
+    return [
+      {
+        success: false,
+        hookType: "pre-commit",
+        wrappedExisting: false,
+        error: "No git repository found. Run git init first.",
+      },
+    ];
   }
 
   const results = await Promise.all([
-    installSingleHook('pre-commit', config, projectPath),
-    installSingleHook('commit-msg', config, projectPath),
+    installSingleHook("pre-commit", config, projectPath),
+    installSingleHook("commit-msg", config, projectPath),
   ]);
 
   return results;
@@ -265,8 +276,8 @@ export async function installHooks(
  * Uninstall a single hook, restoring original if it was wrapped
  */
 async function uninstallSingleHook(
-  hookType: 'pre-commit' | 'commit-msg',
-  projectPath: string = process.cwd()
+  hookType: "pre-commit" | "commit-msg",
+  projectPath: string = process.cwd(),
 ): Promise<InstallResult> {
   const hooksDir = getGitHooksDir(projectPath);
   const hookPath = join(hooksDir, hookType);
@@ -285,9 +296,9 @@ async function uninstallSingleHook(
     }
 
     const isOurs = await isWorkflowHook(hookPath);
-    
+
     if (!isOurs) {
-      result.error = 'Hook is not managed by Workflow Agent';
+      result.error = "Hook is not managed by Workflow Agent";
       return result;
     }
 
@@ -312,10 +323,10 @@ async function uninstallSingleHook(
  * Uninstall all workflow hooks
  */
 export async function uninstallHooks(
-  projectPath: string = process.cwd()
+  projectPath: string = process.cwd(),
 ): Promise<InstallResult[]> {
   return Promise.all([
-    uninstallSingleHook('pre-commit', projectPath),
-    uninstallSingleHook('commit-msg', projectPath),
+    uninstallSingleHook("pre-commit", projectPath),
+    uninstallSingleHook("commit-msg", projectPath),
   ]);
 }

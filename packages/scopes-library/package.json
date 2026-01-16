@@ -2,7 +2,12 @@
   "name": "@hawkinside_out/workflow-scopes-library",
   "version": "1.0.2",
   "description": "Preset scope configuration for libraries and npm packages",
-  "keywords": ["workflow", "scopes", "library", "preset"],
+  "keywords": [
+    "workflow",
+    "scopes",
+    "library",
+    "preset"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hawkinsideOut/workflow-agent.git",
@@ -17,7 +22,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

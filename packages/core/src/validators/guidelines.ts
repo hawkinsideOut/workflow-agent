@@ -3,11 +3,14 @@
  * and GitHub Actions CI setup
  */
 
-import { existsSync } from 'fs';
-import { readFile, readdir } from 'fs/promises';
-import { join } from 'path';
-import type { WorkflowConfig, GuidelinesConfig } from '../config/schema.js';
-import { getMandatoryTemplateFilenames, templateMetadata } from '../templates/metadata.js';
+import { existsSync } from "fs";
+import { readFile, readdir } from "fs/promises";
+import { join } from "path";
+import type { WorkflowConfig, GuidelinesConfig } from "../config/schema.js";
+import {
+  getMandatoryTemplateFilenames,
+  templateMetadata,
+} from "../templates/metadata.js";
 
 export interface GuidelineValidationResult {
   valid: boolean;
@@ -32,9 +35,11 @@ export interface CIValidationResult {
 /**
  * Get the effective list of mandatory templates considering user overrides
  */
-export function getEffectiveMandatoryTemplates(guidelinesConfig?: GuidelinesConfig): string[] {
+export function getEffectiveMandatoryTemplates(
+  guidelinesConfig?: GuidelinesConfig,
+): string[] {
   const coreMandatory = getMandatoryTemplateFilenames();
-  
+
   if (!guidelinesConfig) {
     return coreMandatory;
   }
@@ -52,7 +57,9 @@ export function getEffectiveMandatoryTemplates(guidelinesConfig?: GuidelinesConf
 
   // Remove templates that user has overridden as optional
   if (guidelinesConfig.optionalOverrides) {
-    mandatory = mandatory.filter(t => !guidelinesConfig.optionalOverrides!.includes(t));
+    mandatory = mandatory.filter(
+      (t) => !guidelinesConfig.optionalOverrides!.includes(t),
+    );
   }
 
   return mandatory;
@@ -63,9 +70,9 @@ export function getEffectiveMandatoryTemplates(guidelinesConfig?: GuidelinesConf
  */
 export async function validateGuidelinesExist(
   projectPath: string = process.cwd(),
-  config?: WorkflowConfig
+  config?: WorkflowConfig,
 ): Promise<GuidelineValidationResult> {
-  const guidelinesDir = join(projectPath, 'guidelines');
+  const guidelinesDir = join(projectPath, "guidelines");
   const result: GuidelineValidationResult = {
     valid: true,
     missingMandatory: [],
@@ -79,7 +86,9 @@ export async function validateGuidelinesExist(
     const mandatory = getEffectiveMandatoryTemplates(config?.guidelines);
     result.valid = false;
     result.missingMandatory = mandatory;
-    result.errors.push('Guidelines directory does not exist. Run: workflow init');
+    result.errors.push(
+      "Guidelines directory does not exist. Run: workflow init",
+    );
     return result;
   }
 
@@ -89,7 +98,9 @@ export async function validateGuidelinesExist(
     existingFiles = await readdir(guidelinesDir);
   } catch (error) {
     result.valid = false;
-    result.errors.push(`Cannot read guidelines directory: ${error instanceof Error ? error.message : String(error)}`);
+    result.errors.push(
+      `Cannot read guidelines directory: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return result;
   }
 
@@ -116,7 +127,7 @@ export async function validateGuidelinesExist(
   if (result.missingMandatory.length > 0) {
     result.valid = false;
     result.errors.push(
-      `Missing mandatory guidelines: ${result.missingMandatory.join(', ')}. Run: workflow init`
+      `Missing mandatory guidelines: ${result.missingMandatory.join(", ")}. Run: workflow init`,
     );
   }
 
@@ -127,9 +138,9 @@ export async function validateGuidelinesExist(
  * Validate GitHub Actions CI workflow setup
  */
 export async function validateGitHubActionsSetup(
-  projectPath: string = process.cwd()
+  projectPath: string = process.cwd(),
 ): Promise<CIValidationResult> {
-  const workflowsDir = join(projectPath, '.github', 'workflows');
+  const workflowsDir = join(projectPath, ".github", "workflows");
   const result: CIValidationResult = {
     valid: true,
     hasWorkflowFile: false,
@@ -145,7 +156,9 @@ export async function validateGitHubActionsSetup(
   // Check if .github/workflows directory exists
   if (!existsSync(workflowsDir)) {
     result.valid = false;
-    result.errors.push('GitHub Actions workflows directory does not exist. Run: workflow github:setup');
+    result.errors.push(
+      "GitHub Actions workflows directory does not exist. Run: workflow github:setup",
+    );
     return result;
   }
 
@@ -155,17 +168,30 @@ export async function validateGitHubActionsSetup(
     workflowFiles = await readdir(workflowsDir);
   } catch (error) {
     result.valid = false;
-    result.errors.push(`Cannot read workflows directory: ${error instanceof Error ? error.message : String(error)}`);
+    result.errors.push(
+      `Cannot read workflows directory: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return result;
   }
 
   // Find CI-related workflow files
-  const ciWorkflowNames = ['ci.yml', 'ci.yaml', 'main.yml', 'main.yaml', 'build.yml', 'build.yaml', 'test.yml', 'test.yaml'];
-  const ciWorkflows = workflowFiles.filter(f => ciWorkflowNames.includes(f.toLowerCase()));
+  const ciWorkflowNames = [
+    "ci.yml",
+    "ci.yaml",
+    "main.yml",
+    "main.yaml",
+    "build.yml",
+    "build.yaml",
+    "test.yml",
+    "test.yaml",
+  ];
+  const ciWorkflows = workflowFiles.filter((f) =>
+    ciWorkflowNames.includes(f.toLowerCase()),
+  );
 
   if (ciWorkflows.length === 0) {
     result.valid = false;
-    result.errors.push('No CI workflow file found. Run: workflow github:setup');
+    result.errors.push("No CI workflow file found. Run: workflow github:setup");
     return result;
   }
 
@@ -173,12 +199,14 @@ export async function validateGitHubActionsSetup(
 
   // Parse the first CI workflow file and check for required checks
   const workflowPath = join(workflowsDir, ciWorkflows[0]);
-  let workflowContent = '';
-  
+  let workflowContent = "";
+
   try {
-    workflowContent = await readFile(workflowPath, 'utf-8');
+    workflowContent = await readFile(workflowPath, "utf-8");
   } catch (error) {
-    result.warnings.push(`Cannot read workflow file: ${error instanceof Error ? error.message : String(error)}`);
+    result.warnings.push(
+      `Cannot read workflow file: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return result;
   }
 
@@ -186,45 +214,55 @@ export async function validateGitHubActionsSetup(
   const contentLower = workflowContent.toLowerCase();
 
   // Check for lint
-  if (contentLower.includes('lint') || contentLower.includes('eslint')) {
+  if (contentLower.includes("lint") || contentLower.includes("eslint")) {
     result.hasLintCheck = true;
   } else {
-    result.warnings.push('CI workflow may be missing lint check');
+    result.warnings.push("CI workflow may be missing lint check");
   }
 
   // Check for typecheck
-  if (contentLower.includes('typecheck') || contentLower.includes('type-check') || contentLower.includes('tsc')) {
+  if (
+    contentLower.includes("typecheck") ||
+    contentLower.includes("type-check") ||
+    contentLower.includes("tsc")
+  ) {
     result.hasTypecheckCheck = true;
   } else {
-    result.warnings.push('CI workflow may be missing typecheck');
+    result.warnings.push("CI workflow may be missing typecheck");
   }
 
   // Check for format/prettier
-  if (contentLower.includes('format') || contentLower.includes('prettier')) {
+  if (contentLower.includes("format") || contentLower.includes("prettier")) {
     result.hasFormatCheck = true;
   } else {
-    result.warnings.push('CI workflow may be missing format check');
+    result.warnings.push("CI workflow may be missing format check");
   }
 
   // Check for build
-  if (contentLower.includes('build')) {
+  if (contentLower.includes("build")) {
     result.hasBuildCheck = true;
   } else {
-    result.warnings.push('CI workflow may be missing build step');
+    result.warnings.push("CI workflow may be missing build step");
   }
 
   // Check for test
-  if (contentLower.includes('test') && !contentLower.includes('typecheck')) {
+  if (contentLower.includes("test") && !contentLower.includes("typecheck")) {
     result.hasTestCheck = true;
   } else {
-    result.warnings.push('CI workflow may be missing test step');
+    result.warnings.push("CI workflow may be missing test step");
   }
 
   // Determine overall validity based on mandatory checks
-  const mandatoryChecks = [result.hasLintCheck, result.hasTypecheckCheck, result.hasFormatCheck];
+  const mandatoryChecks = [
+    result.hasLintCheck,
+    result.hasTypecheckCheck,
+    result.hasFormatCheck,
+  ];
   if (!mandatoryChecks.every(Boolean)) {
     result.valid = false;
-    result.errors.push('CI workflow is missing mandatory checks (lint, typecheck, format)');
+    result.errors.push(
+      "CI workflow is missing mandatory checks (lint, typecheck, format)",
+    );
   }
 
   return result;
@@ -235,16 +273,16 @@ export async function validateGitHubActionsSetup(
  */
 export async function quickGuidelinesCheck(
   projectPath: string = process.cwd(),
-  config?: WorkflowConfig
+  config?: WorkflowConfig,
 ): Promise<{ valid: boolean; message: string }> {
   const result = await validateGuidelinesExist(projectPath, config);
-  
+
   if (result.valid) {
-    return { valid: true, message: 'All mandatory guidelines present' };
+    return { valid: true, message: "All mandatory guidelines present" };
   }
 
   return {
     valid: false,
-    message: `Missing guidelines: ${result.missingMandatory.join(', ')}`,
+    message: `Missing guidelines: ${result.missingMandatory.join(", ")}`,
   };
 }

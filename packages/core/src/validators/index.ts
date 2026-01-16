@@ -1,7 +1,7 @@
-import didYouMean from 'didyoumean2';
-import type { WorkflowConfig, BranchType, Scope } from '../config/index.js';
-import { readdir } from 'fs/promises';
-import { join } from 'path';
+import didYouMean from "didyoumean2";
+import type { WorkflowConfig, BranchType, Scope } from "../config/index.js";
+import { readdir } from "fs/promises";
+import { join } from "path";
 
 export interface ValidationResult {
   valid: boolean;
@@ -19,10 +19,12 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
  * @param workspacePath Path to workspace root
  * @returns Array of discovered scopes
  */
-export async function discoverCustomScopes(workspacePath: string = process.cwd()): Promise<Scope[]> {
+export async function discoverCustomScopes(
+  workspacePath: string = process.cwd(),
+): Promise<Scope[]> {
   // Check cache validity
   const now = Date.now();
-  if (customScopesCache && (now - cacheTimestamp) < CACHE_TTL) {
+  if (customScopesCache && now - cacheTimestamp < CACHE_TTL) {
     return customScopesCache;
   }
 
@@ -30,22 +32,19 @@ export async function discoverCustomScopes(workspacePath: string = process.cwd()
 
   try {
     // Search for custom scope packages in workspace
-    const workspaceLocations = [
-      join(workspacePath, 'packages'),
-      workspacePath,
-    ];
+    const workspaceLocations = [join(workspacePath, "packages"), workspacePath];
 
     for (const location of workspaceLocations) {
       try {
         const entries = await readdir(location, { withFileTypes: true });
-        
+
         for (const entry of entries) {
-          if (entry.isDirectory() && entry.name.startsWith('scopes-')) {
-            const indexPath = join(location, entry.name, 'src', 'index.ts');
+          if (entry.isDirectory() && entry.name.startsWith("scopes-")) {
+            const indexPath = join(location, entry.name, "src", "index.ts");
             try {
               const module = await import(indexPath);
               const scopes = module.scopes || module.default?.scopes;
-              
+
               if (Array.isArray(scopes)) {
                 discoveredScopes.push(...scopes);
               }
@@ -62,10 +61,9 @@ export async function discoverCustomScopes(workspacePath: string = process.cwd()
     // Update cache
     customScopesCache = discoveredScopes;
     cacheTimestamp = now;
-
   } catch (error) {
     // Return empty array on error
-    console.warn('Warning: Error discovering custom scopes:', error);
+    console.warn("Warning: Error discovering custom scopes:", error);
   }
 
   return discoveredScopes;
@@ -85,34 +83,45 @@ export function invalidateCustomScopesCache(): void {
  * @param workspacePath Optional workspace path
  * @returns Combined array of scopes
  */
-export async function getAllScopes(config: WorkflowConfig, workspacePath?: string): Promise<Scope[]> {
+export async function getAllScopes(
+  config: WorkflowConfig,
+  workspacePath?: string,
+): Promise<Scope[]> {
   const configScopes = config.scopes;
   const customScopes = await discoverCustomScopes(workspacePath);
-  
+
   // Merge and deduplicate by name
   const scopeMap = new Map<string, Scope>();
-  
+
   // Config scopes take precedence
   for (const scope of configScopes) {
     scopeMap.set(scope.name, scope);
   }
-  
+
   // Add custom scopes that don't conflict
   for (const scope of customScopes) {
     if (!scopeMap.has(scope.name)) {
       scopeMap.set(scope.name, scope);
     }
   }
-  
+
   return Array.from(scopeMap.values());
 }
 
 export async function validateBranchName(
   branchName: string,
   config: WorkflowConfig,
-  workspacePath?: string
+  workspacePath?: string,
 ): Promise<ValidationResult> {
-  const branchTypes = config.branchTypes || ['feature', 'bugfix', 'hotfix', 'chore', 'refactor', 'docs', 'test'];
+  const branchTypes = config.branchTypes || [
+    "feature",
+    "bugfix",
+    "hotfix",
+    "chore",
+    "refactor",
+    "docs",
+    "test",
+  ];
   const allScopes = await getAllScopes(config, workspacePath);
   const scopes = allScopes.map((s) => s.name);
 
@@ -135,7 +144,7 @@ export async function validateBranchName(
     const suggestion = didYouMean(type, branchTypes);
     return {
       valid: false,
-      error: `Invalid branch type '${type}'. Must be one of: ${branchTypes.join(', ')}`,
+      error: `Invalid branch type '${type}'. Must be one of: ${branchTypes.join(", ")}`,
       suggestion: suggestion ? `Did you mean '${suggestion}'?` : undefined,
     };
   }
@@ -143,7 +152,8 @@ export async function validateBranchName(
   // Validate scope
   if (!scopes.includes(scope)) {
     const suggestion = didYouMean(scope, scopes);
-    const scopeList = scopes.slice(0, 5).join(', ') + (scopes.length > 5 ? '...' : '');
+    const scopeList =
+      scopes.slice(0, 5).join(", ") + (scopes.length > 5 ? "..." : "");
     return {
       valid: false,
       error: `Invalid scope '${scope}'. Must be one of: ${scopeList}`,
@@ -165,17 +175,17 @@ export async function validateBranchName(
 export async function validateCommitMessage(
   message: string,
   config: WorkflowConfig,
-  workspacePath?: string
+  workspacePath?: string,
 ): Promise<ValidationResult> {
   const conventionalTypes = config.conventionalTypes || [
-    'feat',
-    'fix',
-    'refactor',
-    'chore',
-    'docs',
-    'test',
-    'perf',
-    'style',
+    "feat",
+    "fix",
+    "refactor",
+    "chore",
+    "docs",
+    "test",
+    "perf",
+    "style",
   ];
   const allScopes = await getAllScopes(config, workspacePath);
   const scopes = allScopes.map((s) => s.name);
@@ -199,7 +209,7 @@ export async function validateCommitMessage(
     const suggestion = didYouMean(type, conventionalTypes);
     return {
       valid: false,
-      error: `Invalid commit type '${type}'. Must be one of: ${conventionalTypes.join(', ')}`,
+      error: `Invalid commit type '${type}'. Must be one of: ${conventionalTypes.join(", ")}`,
       suggestion: suggestion ? `Did you mean '${suggestion}'?` : undefined,
     };
   }
@@ -207,7 +217,8 @@ export async function validateCommitMessage(
   // Validate scope (optional but recommended)
   if (scope && !scopes.includes(scope)) {
     const suggestion = didYouMean(scope, scopes);
-    const scopeList = scopes.slice(0, 5).join(', ') + (scopes.length > 5 ? '...' : '');
+    const scopeList =
+      scopes.slice(0, 5).join(", ") + (scopes.length > 5 ? "..." : "");
     return {
       valid: false,
       error: `Invalid scope '${scope}'. Must be one of: ${scopeList}`,
@@ -238,7 +249,7 @@ export async function validateCommitMessage(
 export async function validatePRTitle(
   title: string,
   config: WorkflowConfig,
-  workspacePath?: string
+  workspacePath?: string,
 ): Promise<ValidationResult> {
   // PR titles follow same format as commit messages
   return validateCommitMessage(title, config, workspacePath);
