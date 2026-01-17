@@ -1,0 +1,56 @@
+# Docker Compose for local development
+# Usage: docker-compose up
+
+services:
+  # Main webhook server
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - DATABASE_PATH=/app/data/workflow-agent.db
+      - VISUAL_BASELINE_DIR=/app/visual-baselines
+      - GITHUB_APP_ID=${GITHUB_APP_ID}
+      - GITHUB_PRIVATE_KEY=${GITHUB_PRIVATE_KEY}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
+      - MAX_RETRIES=${MAX_RETRIES:-10}
+      - BACKOFF_BASE_MINUTES=${BACKOFF_BASE_MINUTES:-1}
+      - BACKOFF_MAX_MINUTES=${BACKOFF_MAX_MINUTES:-30}
+    volumes:
+      # Persist database
+      - ./data:/app/data
+      # Persist visual baselines
+      - ./visual-baselines:/app/visual-baselines
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Smee.io webhook proxy for local development
+  # This forwards GitHub webhooks to your local server
+  smee:
+    image: node:20-slim
+    command: npx smee-client --url ${SMEE_URL} --target http://app:3000/webhook
+    environment:
+      - SMEE_URL=${SMEE_URL}
+    depends_on:
+      - app
+    profiles:
+      - dev
+    restart: unless-stopped
+
+# Named volumes for persistence
+volumes:
+  data:
+  visual-baselines:

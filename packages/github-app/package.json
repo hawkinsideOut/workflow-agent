@@ -1,0 +1,65 @@
+{
+  "name": "@hawkinside_out/workflow-github-app",
+  "version": "1.0.0",
+  "description": "GitHub App for automated pipeline monitoring, self-healing, and visual UI testing",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    }
+  },
+  "bin": {
+    "workflow-github-app": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/cli.js serve",
+    "start:dev": "node dist/cli.js serve --dev",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "workflow",
+    "github-app",
+    "webhooks",
+    "ci-cd",
+    "auto-heal",
+    "visual-testing",
+    "playwright"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@hono/node-server": "^1.13.7",
+    "@octokit/auth-app": "^7.1.3",
+    "@octokit/rest": "^21.0.2",
+    "@octokit/webhooks": "^13.4.2",
+    "commander": "^12.1.0",
+    "sql.js": "^1.11.0",
+    "dotenv": "^16.4.7",
+    "hono": "^4.6.14",
+    "openai": "^4.77.0",
+    "picocolors": "^1.1.1",
+    "playwright": "^1.49.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "smee-client": "^2.0.4",
+    "tsup": "^8.5.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.6.1"
+  }
+}

@@ -1,0 +1,57 @@
+# Docker Compose for production deployment
+# Usage: docker-compose -f docker-compose.prod.yml up -d
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - DATABASE_PATH=/app/data/workflow-agent.db
+      - VISUAL_BASELINE_DIR=/app/visual-baselines
+      - GITHUB_APP_ID=${GITHUB_APP_ID}
+      - GITHUB_PRIVATE_KEY=${GITHUB_PRIVATE_KEY}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
+      - MAX_RETRIES=${MAX_RETRIES:-10}
+      - BACKOFF_BASE_MINUTES=${BACKOFF_BASE_MINUTES:-1}
+      - BACKOFF_MAX_MINUTES=${BACKOFF_MAX_MINUTES:-30}
+    volumes:
+      # Persist database
+      - workflow-data:/app/data
+      # Persist visual baselines
+      - workflow-baselines:/app/visual-baselines
+    restart: always
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Named volumes for production persistence
+volumes:
+  workflow-data:
+    driver: local
+  workflow-baselines:
+    driver: local

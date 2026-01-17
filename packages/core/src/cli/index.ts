@@ -11,6 +11,14 @@ import { scopeCreateCommand } from "./commands/scope-create.js";
 import { scopeMigrateCommand } from "./commands/scope-migrate.js";
 import { hooksCommand } from "./commands/hooks.js";
 import { githubCommand } from "./commands/github-actions.js";
+import { fixCommand } from "./commands/fix.js";
+import {
+  visualCaptureCommand,
+  visualCompareCommand,
+  visualListCommand,
+  visualUpdateCommand,
+  visualApproveCommand,
+} from "./commands/visual.js";
 
 const program = new Command();
 
@@ -108,5 +116,76 @@ program
   .option("--output-dir <dir>", "Output directory")
   .option("--keep-config", "Keep inline scopes in config after migration")
   .action(scopeMigrateCommand);
+
+// Auto-heal fix command (invoked by GitHub App)
+program
+  .command("fix")
+  .description("Auto-heal pipeline failures using LLM")
+  .option("--error <error>", "Error message to fix (required)")
+  .option("--context <context>", "Additional context JSON")
+  .option("--files <files>", "Comma-separated file paths to analyze")
+  .option("--auto", "Apply fix automatically without confirmation")
+  .option("--dry-run", "Show what would be changed without applying")
+  .action((options) => {
+    fixCommand({
+      error: options.error,
+      context: options.context,
+      files: options.files?.split(","),
+      auto: options.auto,
+      dryRun: options.dryRun,
+    });
+  });
+
+// Visual testing commands
+const visual = program.command("visual").description("Visual testing commands");
+
+visual
+  .command("capture")
+  .description("Capture a new baseline screenshot")
+  .argument("<name>", "Name for the baseline")
+  .argument("<url>", "URL to capture")
+  .option("-w, --width <width>", "Viewport width", "1280")
+  .option("-h, --height <height>", "Viewport height", "720")
+  .option("--full-page", "Capture full page")
+  .option("-o, --output <path>", "Output path")
+  .option("--wait-for <selector>", "Wait for selector before capture")
+  .option("--delay <ms>", "Additional delay in ms")
+  .action(visualCaptureCommand);
+
+visual
+  .command("compare")
+  .description("Compare a URL against a baseline")
+  .argument("<url>", "URL to compare")
+  .option("-b, --baseline <name>", "Baseline name to compare against (required)")
+  .option("-o, --output <path>", "Output path for comparison screenshot")
+  .option("-t, --threshold <percent>", "Difference threshold percentage")
+  .action((url, options) => {
+    if (!options.baseline) {
+      console.error("Error: --baseline is required");
+      process.exit(1);
+    }
+    visualCompareCommand(url, options);
+  });
+
+visual
+  .command("list")
+  .description("List all baselines")
+  .option("--json", "Output as JSON")
+  .action(visualListCommand);
+
+visual
+  .command("update")
+  .description("Update an existing baseline")
+  .argument("<name>", "Baseline name to update")
+  .option("-w, --width <width>", "Override viewport width")
+  .option("-h, --height <height>", "Override viewport height")
+  .option("--full-page", "Capture full page")
+  .action(visualUpdateCommand);
+
+visual
+  .command("approve")
+  .description("Approve a comparison as the new baseline")
+  .argument("<name>", "Baseline name to approve")
+  .action(visualApproveCommand);
 
 program.parse();

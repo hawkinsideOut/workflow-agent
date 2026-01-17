@@ -174,6 +174,58 @@ export const CIConfigSchema = z.object({
     .default(["lint", "typecheck", "format", "build", "test"]),
 });
 
+// LLM provider types
+export const LLMProviderSchema = z.enum(["anthropic", "openai"]);
+
+// Pipeline auto-heal configuration
+export const PipelineConfigSchema = z.object({
+  /** Whether auto-heal is enabled for pipeline failures */
+  autoHeal: z.boolean().default(false),
+  /** Maximum number of retry attempts before giving up */
+  maxRetries: z.number().min(1).max(100).default(10),
+  /** Base backoff time in minutes (exponential growth) */
+  backoffMinutes: z.number().min(1).default(1),
+  /** Maximum backoff time in minutes */
+  maxBackoffMinutes: z.number().min(1).default(30),
+  /** Minimum confidence level required to apply a fix (0-1) */
+  minConfidence: z.number().min(0).max(1).default(0.7),
+  /** Whether to create a PR for fixes instead of direct commits */
+  createPullRequest: z.boolean().default(true),
+  /** Branches to monitor for auto-heal (empty = all branches) */
+  branches: z.array(z.string()).optional(),
+  /** Workflow names to exclude from auto-heal */
+  excludeWorkflows: z.array(z.string()).optional(),
+});
+
+// Visual testing configuration
+export const VisualTestingConfigSchema = z.object({
+  /** Whether visual testing is enabled */
+  enabled: z.boolean().default(false),
+  /** LLM provider to use for visual comparison */
+  llmProvider: LLMProviderSchema.default("anthropic"),
+  /** Directory to store baseline screenshots */
+  baselineDir: z.string().default(".visual-baselines"),
+  /** Default viewport width */
+  viewportWidth: z.number().default(1280),
+  /** Default viewport height */
+  viewportHeight: z.number().default(720),
+  /** Whether to run visual tests on PRs */
+  runOnPullRequest: z.boolean().default(true),
+  /** Whether to block PR merge on visual differences */
+  blockOnDifference: z.boolean().default(false),
+  /** URLs to test (can include placeholders like {{baseUrl}}) */
+  urls: z
+    .array(
+      z.object({
+        name: z.string(),
+        url: z.string(),
+        viewportWidth: z.number().optional(),
+        viewportHeight: z.number().optional(),
+      }),
+    )
+    .optional(),
+});
+
 export const WorkflowConfigSchema = z
   .object({
     projectName: z.string().min(1),
@@ -192,6 +244,8 @@ export const WorkflowConfigSchema = z
       .optional()
       .default(DEFAULT_RESERVED_SCOPE_NAMES),
     ci: CIConfigSchema.optional(),
+    pipeline: PipelineConfigSchema.optional(),
+    visualTesting: VisualTestingConfigSchema.optional(),
   })
   .superRefine((config, ctx) => {
     // Validate scopes against reserved names
@@ -226,6 +280,9 @@ export type GuidelinesConfig = z.infer<typeof GuidelinesConfigSchema>;
 export type CIProvider = z.infer<typeof CIProviderSchema>;
 export type CICheck = z.infer<typeof CICheckSchema>;
 export type CIConfig = z.infer<typeof CIConfigSchema>;
+export type LLMProvider = z.infer<typeof LLMProviderSchema>;
+export type PipelineConfig = z.infer<typeof PipelineConfigSchema>;
+export type VisualTestingConfig = z.infer<typeof VisualTestingConfigSchema>;
 export type WorkflowConfig = z.infer<typeof WorkflowConfigSchema>;
 
 export const defaultBranchTypes: BranchType[] = [
