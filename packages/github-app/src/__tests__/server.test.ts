@@ -26,7 +26,7 @@ vi.mock("../db/queries", () => ({
   logWebhookEvent: vi.fn(() => ({ id: 1 })),
   markWebhookProcessed: vi.fn(),
   getRecentWebhookEvents: vi.fn(() => []),
-  getActiveRetryAttempts: vi.fn(() => []),
+  getActiveAttempts: vi.fn(() => []),
 }));
 
 vi.mock("../webhooks/index", () => ({

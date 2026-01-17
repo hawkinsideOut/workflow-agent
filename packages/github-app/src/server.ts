@@ -11,6 +11,8 @@ import { handleWebhook } from "./webhooks/index.js";
 import { initDatabase, getDatabase } from "./db/client.js";
 import { getRecentWebhookEvents, getActiveAttempts } from "./db/queries.js";
 
+const startTime = Date.now();
+
 const app = new Hono();
 
 // Middleware
@@ -26,6 +28,7 @@ app.get("/health", (c) => {
       status: "healthy",
       timestamp: new Date().toISOString(),
       env: getEnv().NODE_ENV,
+      uptime: Math.floor((Date.now() - startTime) / 1000),
     });
   } catch (error) {
     return c.json(

@@ -13,6 +13,11 @@ vi.mock("@octokit/rest", () => ({
           data: { id: 12345 },
         }),
       ),
+      getRepoInstallation: vi.fn(() =>
+        Promise.resolve({
+          data: { id: 12345 },
+        }),
+      ),
     },
     actions: {
       getWorkflowRun: vi.fn(() =>
@@ -88,11 +93,12 @@ vi.mock("../../config/env", () => ({
 describe("GitHub Client", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.resetModules();
+    // Note: We don't use vi.resetModules() here because it breaks the mock singleton
   });
 
   describe("getAppOctokit", () => {
     it("should create an Octokit instance", async () => {
+      vi.resetModules(); // Reset for this specific test
       const { getAppOctokit } = await import("../../github/client");
       const octokit = getAppOctokit();
 

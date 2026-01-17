@@ -67,6 +67,7 @@ vi.mock("../../config/env", () => ({
   getEnv: vi.fn(() => ({
     DATA_DIR: "/test/data",
     NODE_ENV: "test",
+    VISUAL_BASELINE_DIR: "./visual-baselines",
   })),
 }));
 

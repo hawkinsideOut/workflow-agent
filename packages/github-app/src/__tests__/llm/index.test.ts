@@ -16,19 +16,24 @@ vi.mock("../../config/env", () => ({
 // Mock the anthropic client
 vi.mock("../../llm/anthropic", () => ({
   anthropicClient: {
+    name: "anthropic",
     compareImages: vi.fn(() =>
       Promise.resolve({
-        areIdentical: true,
+        hasDifferences: false,
         confidence: 0.95,
         differences: [],
         summary: "Images are identical",
       }),
     ),
-    suggestFix: vi.fn(() =>
+    generateFix: vi.fn(() =>
       Promise.resolve({
         analysis: "Error analysis",
-        suggestedFix: "Fix suggestion",
-        files: [],
+        rootCause: "Missing module",
+        suggestedFix: {
+          description: "Install missing package",
+          files: [],
+        },
+        confidence: 0.9,
       }),
     ),
   },
@@ -38,19 +43,24 @@ vi.mock("../../llm/anthropic", () => ({
 // Mock the openai client
 vi.mock("../../llm/openai", () => ({
   openaiClient: {
+    name: "openai",
     compareImages: vi.fn(() =>
       Promise.resolve({
-        areIdentical: true,
+        hasDifferences: false,
         confidence: 0.95,
         differences: [],
         summary: "Images are identical",
       }),
     ),
-    suggestFix: vi.fn(() =>
+    generateFix: vi.fn(() =>
       Promise.resolve({
         analysis: "Error analysis",
-        suggestedFix: "Fix suggestion",
-        files: [],
+        rootCause: "Missing module",
+        suggestedFix: {
+          description: "Install missing package",
+          files: [],
+        },
+        confidence: 0.9,
       }),
     ),
   },
@@ -77,7 +87,7 @@ describe("LLM Index", () => {
 
       expect(client).toBeDefined();
       expect(typeof client.compareImages).toBe("function");
-      expect(typeof client.suggestFix).toBe("function");
+      expect(typeof client.generateFix).toBe("function");
     });
 
     it("should return openai client when LLM_PROVIDER is openai", async () => {
@@ -138,7 +148,7 @@ describe("LLM Index", () => {
       const result = await compareImages(beforeImage, afterImage);
 
       expect(result).toBeDefined();
-      expect(result.areIdentical).toBeDefined();
+      expect(typeof result.hasDifferences).toBe("boolean");
       expect(result.confidence).toBeDefined();
     });
 
@@ -171,9 +181,9 @@ describe("LLM Index", () => {
         })),
       }));
 
-      const { suggestFix } = await import("../../llm/index");
+      const { generateFix } = await import("../../llm/index");
 
-      const result = await suggestFix("Error: Module not found");
+      const result = await generateFix("Error: Module not found", {}, "");
 
       expect(result).toBeDefined();
       expect(result.analysis).toBeDefined();
