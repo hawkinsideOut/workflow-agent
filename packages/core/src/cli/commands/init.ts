@@ -10,6 +10,7 @@ import {
   renderTemplateDirectory,
   validateTemplateDirectory,
 } from "../../templates/renderer.js";
+import { runAllSetups, generateAuditReport } from "../../utils/auto-setup.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -203,6 +204,54 @@ export async function initCommand(options: {
     }
   }
 
+  // Offer auto-setup for development tools
+  const shouldAutoSetup = options.yes
+    ? true
+    : await p.confirm({
+        message: "Set up linting, formatting, testing, and CI automatically?",
+        initialValue: true,
+      });
+
+  if (p.isCancel(shouldAutoSetup)) {
+    p.cancel("Initialization cancelled");
+    process.exit(0);
+  }
+
+  if (shouldAutoSetup) {
+    const setupSpinner = p.spinner();
+    setupSpinner.start("Running auto-setup...");
+
+    try {
+      const report = await generateAuditReport(cwd);
+      setupSpinner.stop(
+        `✓ Found ${report.totalChanges} configurations to apply`,
+      );
+
+      if (report.totalChanges > 0 || report.allDevDependencies.length > 0) {
+        const autoSetupSpinner = p.spinner();
+        await runAllSetups(cwd, (step, status) => {
+          if (status === "start") {
+            autoSetupSpinner.start(step);
+          } else if (status === "done") {
+            autoSetupSpinner.stop(`✓ ${step}`);
+          } else {
+            autoSetupSpinner.stop(`✗ ${step}`);
+          }
+        });
+      }
+    } catch (error) {
+      setupSpinner.stop("⚠️  Auto-setup encountered issues");
+      console.log(
+        chalk.yellow(
+          `\nReason: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      );
+      console.log(
+        chalk.dim("You can run 'workflow auto-setup' later to retry."),
+      );
+    }
+  }
+
   p.outro(chalk.green("✓ Workflow Agent initialized successfully!"));
   console.log(chalk.dim("\nNext steps:"));
   console.log(
@@ -212,12 +261,12 @@ export async function initCommand(options: {
     console.log(
       chalk.dim("  2. Review generated guidelines in guidelines/ directory"),
     );
-    console.log(chalk.dim("  3. Run: workflow validate branch"));
+    console.log(chalk.dim("  3. Run: workflow verify (to check everything)"));
     console.log(
       chalk.dim("  4. Run: workflow doctor (for optimization suggestions)\n"),
     );
   } else {
-    console.log(chalk.dim("  2. Run: workflow validate branch"));
+    console.log(chalk.dim("  2. Run: workflow verify (to check everything)"));
     console.log(
       chalk.dim("  3. Run: workflow doctor (for optimization suggestions)\n"),
     );

@@ -10,6 +10,7 @@ import { setupCommand } from "./commands/setup.js";
 import { scopeCreateCommand } from "./commands/scope-create.js";
 import { scopeMigrateCommand } from "./commands/scope-migrate.js";
 import { verifyCommand } from "./commands/verify.js";
+import { autoSetupCommand } from "./commands/auto-setup-command.js";
 
 const program = new Command();
 
@@ -105,5 +106,12 @@ program
   .option("--commit", "Commit changes if all checks pass")
   .option("--dry-run", "Preview fixes without applying them")
   .action(verifyCommand);
+
+program
+  .command("auto-setup")
+  .description("Automatically configure linting, formatting, testing, and CI")
+  .option("-y, --yes", "Auto-approve all prompts")
+  .option("--audit", "Show audit report without applying changes")
+  .action(autoSetupCommand);
 
 program.parse();
