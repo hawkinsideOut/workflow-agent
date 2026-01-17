@@ -1,6 +1,6 @@
 /**
  * Fix command - Auto-heal pipeline failures
- * 
+ *
  * This command is invoked by the GitHub App's auto-heal orchestrator
  * to automatically fix pipeline errors using LLM assistance.
  */
@@ -173,11 +173,9 @@ async function commitAndPush(
     await execa("git", ["add", "-A"], { cwd });
 
     // Check if there are changes to commit
-    const { stdout: status } = await execa(
-      "git",
-      ["status", "--porcelain"],
-      { cwd },
-    );
+    const { stdout: status } = await execa("git", ["status", "--porcelain"], {
+      cwd,
+    });
 
     if (!status.trim()) {
       return { success: true }; // No changes to commit
@@ -268,7 +266,9 @@ export async function fixCommand(options: FixOptions): Promise<void> {
   // If no changes suggested or low confidence, exit
   if (fix.suggestedFix.files.length === 0) {
     console.log(
-      pc.yellow("⚠️  No automatic fix available. Manual intervention required."),
+      pc.yellow(
+        "⚠️  No automatic fix available. Manual intervention required.",
+      ),
     );
     process.exit(1);
   }
@@ -310,9 +310,10 @@ export async function fixCommand(options: FixOptions): Promise<void> {
     console.log(pc.bold("\nCommitting and Pushing...\n"));
 
     // Determine scope from error or files
-    const scope = filePaths.length > 0
-      ? dirname(relative(cwd, filePaths[0])).split("/")[0] || "core"
-      : "core";
+    const scope =
+      filePaths.length > 0
+        ? dirname(relative(cwd, filePaths[0])).split("/")[0] || "core"
+        : "core";
 
     const commitMessage = `fix(${scope}): auto-heal pipeline failure
 

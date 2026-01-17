@@ -25,7 +25,7 @@ declare module "sql.js" {
     Database: new (data?: ArrayLike<number>) => Database;
   }
 
-  export default function initSqlJs(
-    config?: { locateFile?: (file: string) => string }
-  ): Promise<SqlJsStatic>;
+  export default function initSqlJs(config?: {
+    locateFile?: (file: string) => string;
+  }): Promise<SqlJsStatic>;
 }

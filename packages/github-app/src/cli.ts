@@ -14,13 +14,19 @@ import {
   generateTerminalSummary,
 } from "./visual/index.js";
 import { initDatabase } from "./db/client.js";
-import { listBaselines, getRecentWebhookEvents, getActiveAttempts } from "./db/queries.js";
+import {
+  listBaselines,
+  getRecentWebhookEvents,
+  getActiveAttempts,
+} from "./db/queries.js";
 
 const program = new Command();
 
 program
   .name("workflow-github-app")
-  .description("GitHub App for automated pipeline monitoring and visual testing")
+  .description(
+    "GitHub App for automated pipeline monitoring and visual testing",
+  )
   .version("1.0.0");
 
 // Server command

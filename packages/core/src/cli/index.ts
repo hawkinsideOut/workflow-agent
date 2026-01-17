@@ -3,22 +3,13 @@
 import { Command } from "commander";
 import { initCommand } from "./commands/init.js";
 import { validateCommand } from "./commands/validate.js";
-import { createConfigCommand } from "./commands/config.js";
+import { configCommand } from "./commands/config.js";
 import { suggestCommand } from "./commands/suggest.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { setupCommand } from "./commands/setup.js";
 import { scopeCreateCommand } from "./commands/scope-create.js";
 import { scopeMigrateCommand } from "./commands/scope-migrate.js";
-import { hooksCommand } from "./commands/hooks.js";
-import { githubCommand } from "./commands/github-actions.js";
-import { fixCommand } from "./commands/fix.js";
-import {
-  visualCaptureCommand,
-  visualCompareCommand,
-  visualListCommand,
-  visualUpdateCommand,
-  visualApproveCommand,
-} from "./commands/visual.js";
+import { verifyCommand } from "./commands/verify.js";
 
 const program = new Command();
 
@@ -56,8 +47,13 @@ program
   )
   .action(validateCommand);
 
-// Register the new config command with subcommands
-program.addCommand(createConfigCommand());
+program
+  .command("config <action>")
+  .description("Manage workflow configuration")
+  .argument("<action>", "Action: get, set, add, remove")
+  .argument("[key]", "Config key")
+  .argument("[value]", "Config value")
+  .action(configCommand);
 
 program
   .command("suggest")
@@ -78,23 +74,7 @@ program
 program
   .command("doctor")
   .description("Run health check and get optimization suggestions")
-  .option(
-    "--check-guidelines-only",
-    "Only check mandatory guidelines exist (exits 0 or 1)",
-  )
   .action(doctorCommand);
-
-program
-  .command("hooks")
-  .description("Manage git hooks (install, uninstall, status)")
-  .argument("<action>", "Action: install, uninstall, status")
-  .action(hooksCommand);
-
-program
-  .command("github")
-  .description("Manage GitHub Actions CI (setup, check)")
-  .argument("<action>", "Action: setup, check")
-  .action(githubCommand);
 
 program
   .command("scope:create")
@@ -117,75 +97,13 @@ program
   .option("--keep-config", "Keep inline scopes in config after migration")
   .action(scopeMigrateCommand);
 
-// Auto-heal fix command (invoked by GitHub App)
 program
-  .command("fix")
-  .description("Auto-heal pipeline failures using LLM")
-  .option("--error <error>", "Error message to fix (required)")
-  .option("--context <context>", "Additional context JSON")
-  .option("--files <files>", "Comma-separated file paths to analyze")
-  .option("--auto", "Apply fix automatically without confirmation")
-  .option("--dry-run", "Show what would be changed without applying")
-  .action((options) => {
-    fixCommand({
-      error: options.error,
-      context: options.context,
-      files: options.files?.split(","),
-      auto: options.auto,
-      dryRun: options.dryRun,
-    });
-  });
-
-// Visual testing commands
-const visual = program.command("visual").description("Visual testing commands");
-
-visual
-  .command("capture")
-  .description("Capture a new baseline screenshot")
-  .argument("<name>", "Name for the baseline")
-  .argument("<url>", "URL to capture")
-  .option("-w, --width <width>", "Viewport width", "1280")
-  .option("-h, --height <height>", "Viewport height", "720")
-  .option("--full-page", "Capture full page")
-  .option("-o, --output <path>", "Output path")
-  .option("--wait-for <selector>", "Wait for selector before capture")
-  .option("--delay <ms>", "Additional delay in ms")
-  .action(visualCaptureCommand);
-
-visual
-  .command("compare")
-  .description("Compare a URL against a baseline")
-  .argument("<url>", "URL to compare")
-  .option("-b, --baseline <name>", "Baseline name to compare against (required)")
-  .option("-o, --output <path>", "Output path for comparison screenshot")
-  .option("-t, --threshold <percent>", "Difference threshold percentage")
-  .action((url, options) => {
-    if (!options.baseline) {
-      console.error("Error: --baseline is required");
-      process.exit(1);
-    }
-    visualCompareCommand(url, options);
-  });
-
-visual
-  .command("list")
-  .description("List all baselines")
-  .option("--json", "Output as JSON")
-  .action(visualListCommand);
-
-visual
-  .command("update")
-  .description("Update an existing baseline")
-  .argument("<name>", "Baseline name to update")
-  .option("-w, --width <width>", "Override viewport width")
-  .option("-h, --height <height>", "Override viewport height")
-  .option("--full-page", "Capture full page")
-  .action(visualUpdateCommand);
-
-visual
-  .command("approve")
-  .description("Approve a comparison as the new baseline")
-  .argument("<name>", "Baseline name to approve")
-  .action(visualApproveCommand);
+  .command("verify")
+  .description("Run all quality checks with fix-and-revalidate pattern")
+  .option("--fix", "Enable auto-fix for lint and format issues")
+  .option("--max-retries <n>", "Maximum retry cycles (default: 10)", "10")
+  .option("--commit", "Commit changes if all checks pass")
+  .option("--dry-run", "Preview fixes without applying them")
+  .action(verifyCommand);
 
 program.parse();

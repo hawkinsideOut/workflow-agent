@@ -11,7 +11,10 @@ import {
   markExhausted,
 } from "../db/queries.js";
 import { triggerAutoHeal } from "../orchestrator/auto-heal.js";
-import { getInstallationId, getFailedWorkflowDetails } from "../github/client.js";
+import {
+  getInstallationId,
+  getFailedWorkflowDetails,
+} from "../github/client.js";
 
 type WorkflowRunCompletedEvent = EmitterWebhookEvent<"workflow_run.completed">;
 
@@ -77,7 +80,10 @@ export async function handleWorkflowRunCompleted(
       runId,
     );
 
-    console.log(`📋 Failed jobs:`, failedDetails.failedJobs.map((j) => j.name));
+    console.log(
+      `📋 Failed jobs:`,
+      failedDetails.failedJobs.map((j) => j.name),
+    );
 
     // Trigger the auto-heal process
     await triggerAutoHeal({

@@ -52,7 +52,8 @@ app.get("/status", (c) => {
         id: e.id,
         type: e.event_type,
         action: e.action,
-        repo: e.repo_owner && e.repo_name ? `${e.repo_owner}/${e.repo_name}` : null,
+        repo:
+          e.repo_owner && e.repo_name ? `${e.repo_owner}/${e.repo_name}` : null,
         processed: !!e.processed,
         createdAt: e.created_at,
       })),
@@ -152,13 +153,19 @@ export async function startServer(): Promise<void> {
     },
     (info) => {
       console.log(`🚀 Server running at http://${info.address}:${info.port}`);
-      console.log(`📡 Webhook endpoint: http://${info.address}:${info.port}/webhook`);
-      console.log(`💊 Health check: http://${info.address}:${info.port}/health`);
+      console.log(
+        `📡 Webhook endpoint: http://${info.address}:${info.port}/webhook`,
+      );
+      console.log(
+        `💊 Health check: http://${info.address}:${info.port}/health`,
+      );
       console.log(`📊 Status: http://${info.address}:${info.port}/status`);
 
       if (env.SMEE_URL) {
         console.log(`\n🔗 Smee.io proxy: ${env.SMEE_URL}`);
-        console.log(`   Run: npx smee -u ${env.SMEE_URL} -t http://localhost:${env.PORT}/webhook`);
+        console.log(
+          `   Run: npx smee -u ${env.SMEE_URL} -t http://localhost:${env.PORT}/webhook`,
+        );
       }
 
       console.log(`\n✅ Ready to receive GitHub webhooks!\n`);

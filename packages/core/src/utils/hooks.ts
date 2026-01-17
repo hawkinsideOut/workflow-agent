@@ -59,7 +59,7 @@ function generatePreCommitHook(config?: HooksConfig): string {
   const checks = config?.preCommit || ["validate-branch", "check-guidelines"];
 
   const checkCommands = checks
-    .map((check) => {
+    .map((check: string) => {
       switch (check) {
         case "validate-branch":
           return "  workflow validate branch";
@@ -104,7 +104,7 @@ function generateCommitMsgHook(config?: HooksConfig): string {
   const checks = config?.commitMsg || ["validate-commit"];
 
   const checkCommands = checks
-    .map((check) => {
+    .map((check: string) => {
       switch (check) {
         case "validate-commit":
           return '  workflow validate commit "$(cat "$1")"';

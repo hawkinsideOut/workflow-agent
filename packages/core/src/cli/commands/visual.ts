@@ -1,15 +1,42 @@
+// @ts-nocheck - This file uses optional dependency (playwright) with dynamic imports
 /**
  * Visual testing CLI commands
- * 
+ *
  * These commands provide local control over visual testing,
  * allowing developers to capture baselines and run comparisons
  * without needing the full GitHub App running.
+ *
+ * Requires optional dependency: playwright
+ * Install with: pnpm add -D playwright
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
+
+// Playwright types (optional dependency)
+type PlaywrightChromium = {
+  launch(options?: { headless?: boolean }): Promise<PlaywrightBrowser>;
+};
+type PlaywrightBrowser = {
+  newContext(options?: {
+    viewport?: { width: number; height: number };
+  }): Promise<PlaywrightContext>;
+  close(): Promise<void>;
+};
+type PlaywrightContext = {
+  newPage(): Promise<PlaywrightPage>;
+};
+type PlaywrightPage = {
+  goto(url: string, options?: { waitUntil?: string }): Promise<void>;
+  waitForSelector(
+    selector: string,
+    options?: { timeout?: number },
+  ): Promise<void>;
+  waitForTimeout(timeout: number): Promise<void>;
+  screenshot(options?: { path?: string; fullPage?: boolean }): Promise<Buffer>;
+};
 
 interface CaptureOptions {
   width?: string;
@@ -100,7 +127,8 @@ function saveMetadata(
  */
 async function checkPlaywright(): Promise<boolean> {
   try {
-    await import("playwright");
+    // @ts-ignore - playwright is an optional dependency
+    await import(/* webpackIgnore: true */ "playwright");
     return true;
   } catch {
     return false;
@@ -138,7 +166,11 @@ export async function visualCaptureCommand(
   console.log("");
 
   try {
-    const { chromium } = await import("playwright");
+    // @ts-ignore - playwright is an optional dependency
+    const playwright = (await import(
+      /* webpackIgnore: true */ "playwright"
+    )) as { chromium: PlaywrightChromium };
+    const { chromium } = playwright;
 
     const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({
@@ -237,7 +269,11 @@ export async function visualCompareCommand(
   }
 
   try {
-    const { chromium } = await import("playwright");
+    // @ts-ignore - playwright is an optional dependency
+    const playwright = (await import(
+      /* webpackIgnore: true */ "playwright"
+    )) as { chromium: PlaywrightChromium };
+    const { chromium } = playwright;
 
     const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({
@@ -274,8 +310,7 @@ export async function visualCompareCommand(
 
     // Simple byte comparison (for basic difference detection)
     const areSameSize = baselineBuffer.length === compareBuffer.length;
-    const areIdentical =
-      areSameSize && baselineBuffer.equals(compareBuffer);
+    const areIdentical = areSameSize && baselineBuffer.equals(compareBuffer);
 
     console.log("");
     if (areIdentical) {
@@ -313,7 +348,9 @@ export async function visualListCommand(options: ListOptions): Promise<void> {
 
   if (baselines.length === 0) {
     console.log(pc.dim("No baselines found."));
-    console.log(pc.dim("Create one with: workflow visual capture <name> <url>"));
+    console.log(
+      pc.dim("Create one with: workflow visual capture <name> <url>"),
+    );
     return;
   }
 
@@ -389,7 +426,8 @@ export async function visualApproveCommand(name: string): Promise<void> {
   // This is a simplified version - real implementation would track comparisons
   console.log(
     pc.yellow(
-      "To approve, re-capture the baseline with: workflow visual update " + name,
+      "To approve, re-capture the baseline with: workflow visual update " +
+        name,
     ),
   );
 }

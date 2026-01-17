@@ -23,7 +23,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "pnpm --filter workflow-agent-cli run build && pnpm -r run build",
+    "build": "pnpm --filter workflow-agent-cli run build && pnpm -r --filter '!workflow-agent-cli' run build",
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
@@ -44,7 +44,10 @@
     "workflow:suggest": "workflow-agent suggest",
     "workflow:doctor": "workflow-agent doctor",
     "pre-commit": "./scripts/pre-commit-checks.sh",
-    "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test && pnpm build"
+    "verify": "workflow-agent verify",
+    "verify:fix": "workflow-agent verify --fix --max-retries=10",
+    "verify:dry": "workflow-agent verify --fix --dry-run",
+    "verify:all": "pnpm typecheck && pnpm lint && pnpm format && pnpm test && pnpm build"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",

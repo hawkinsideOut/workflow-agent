@@ -68,14 +68,14 @@ export const scopes: Scope[] = [
     category: "infrastructure",
   },
   {
-    name: "testing",
+    name: "test",
     description: "Testing, test content, automated tests",
     emoji: "🧪",
     category: "testing",
   },
   {
-    name: "packages",
-    description: "Package dependencies, plugins, extensions",
+    name: "deps",
+    description: "Dependencies, plugins, extensions",
     emoji: "📦",
     category: "infrastructure",
   },

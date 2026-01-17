@@ -126,7 +126,10 @@ function registerHandlers(webhooks: Webhooks): void {
   webhooks.on("installation.created", async (event) => {
     const { payload } = event;
     const account = payload.installation.account;
-    const accountName = account && "login" in account ? account.login : account?.name || "unknown";
+    const accountName =
+      account && "login" in account
+        ? account.login
+        : account?.name || "unknown";
 
     logWebhookEvent(
       "installation",
@@ -139,9 +142,7 @@ function registerHandlers(webhooks: Webhooks): void {
       }),
     );
 
-    console.log(
-      `✅ App installed for ${accountName}`,
-    );
+    console.log(`✅ App installed for ${accountName}`);
   });
 
   // Ping event - GitHub sends this when webhook is first configured

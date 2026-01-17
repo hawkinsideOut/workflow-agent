@@ -183,19 +183,19 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ### Environment Variables for Production
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `GITHUB_APP_ID` | GitHub App ID | Required |
-| `GITHUB_PRIVATE_KEY` | GitHub App private key (PEM) | Required |
-| `GITHUB_WEBHOOK_SECRET` | Webhook signature secret | Required |
-| `ANTHROPIC_API_KEY` | Anthropic API key | - |
-| `OPENAI_API_KEY` | OpenAI API key | - |
-| `LLM_PROVIDER` | Which LLM to use | `anthropic` |
-| `PORT` | Server port | `3000` |
-| `DATABASE_PATH` | SQLite database path | `./data/workflow-agent.db` |
-| `MAX_RETRIES` | Max auto-heal attempts | `10` |
-| `BACKOFF_BASE_MINUTES` | Initial backoff | `1` |
-| `BACKOFF_MAX_MINUTES` | Max backoff cap | `30` |
+| Variable                | Description                  | Default                    |
+| ----------------------- | ---------------------------- | -------------------------- |
+| `GITHUB_APP_ID`         | GitHub App ID                | Required                   |
+| `GITHUB_PRIVATE_KEY`    | GitHub App private key (PEM) | Required                   |
+| `GITHUB_WEBHOOK_SECRET` | Webhook signature secret     | Required                   |
+| `ANTHROPIC_API_KEY`     | Anthropic API key            | -                          |
+| `OPENAI_API_KEY`        | OpenAI API key               | -                          |
+| `LLM_PROVIDER`          | Which LLM to use             | `anthropic`                |
+| `PORT`                  | Server port                  | `3000`                     |
+| `DATABASE_PATH`         | SQLite database path         | `./data/workflow-agent.db` |
+| `MAX_RETRIES`           | Max auto-heal attempts       | `10`                       |
+| `BACKOFF_BASE_MINUTES`  | Initial backoff              | `1`                        |
+| `BACKOFF_MAX_MINUTES`   | Max backoff cap              | `30`                       |
 
 ### Deployment Platforms
 
@@ -245,11 +245,11 @@ packages/github-app/
 
 ## API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/status` | GET | Status dashboard |
-| `/webhook` | POST | GitHub webhook receiver |
+| Endpoint   | Method | Description             |
+| ---------- | ------ | ----------------------- |
+| `/health`  | GET    | Health check            |
+| `/status`  | GET    | Status dashboard        |
+| `/webhook` | POST   | GitHub webhook receiver |
 
 ## Database Schema
 

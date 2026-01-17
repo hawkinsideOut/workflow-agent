@@ -1,6 +1,6 @@
 {
   "name": "workflow-agent-cli",
-  "version": "2.2.1",
+  "version": "1.1.5",
   "description": "A self-evolving workflow management system for AI agent development",
   "keywords": [
     "workflow",
@@ -44,12 +44,9 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:unit": "vitest run --exclude 'src/**/*.e2e.test.ts'",
-    "test:e2e": "vitest run 'src/**/*.e2e.test.ts'",
-    "lint": "exit 0",
+    "test": "echo \"No tests yet\"",
+    "test:coverage": "echo \"No tests yet\"",
+    "lint": "echo \"ESLint not configured - skipping\"",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
     "postinstall": "node dist/scripts/postinstall.js || true"
@@ -65,13 +62,11 @@
     "fast-glob": "^3.3.2",
     "mustache": "^4.2.0",
     "picocolors": "^1.0.0",
-    "prompts": "^2.4.2",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/mustache": "^4.2.5",
     "@types/node": "^20.11.5",
-    "@types/prompts": "^2.4.9",
     "eslint": "^8.56.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",

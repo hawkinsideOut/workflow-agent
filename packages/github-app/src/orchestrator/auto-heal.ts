@@ -46,9 +46,7 @@ function calculateBackoff(attemptNumber: number): number {
 /**
  * Parse error messages from failed job information
  */
-function parseErrorMessage(
-  failedJobs: AutoHealContext["failedJobs"],
-): string {
+function parseErrorMessage(failedJobs: AutoHealContext["failedJobs"]): string {
   const errors: string[] = [];
 
   for (const job of failedJobs) {
@@ -57,7 +55,9 @@ function parseErrorMessage(
       .map((s) => s.name);
 
     if (failedSteps.length > 0) {
-      errors.push(`Job "${job.name}" failed at steps: ${failedSteps.join(", ")}`);
+      errors.push(
+        `Job "${job.name}" failed at steps: ${failedSteps.join(", ")}`,
+      );
     } else {
       errors.push(`Job "${job.name}" failed`);
     }
@@ -113,7 +113,9 @@ async function executeFixCommand(
 
     child.on("close", (code) => {
       const duration = Date.now() - startTime;
-      console.log(`🏁 Fix command completed in ${duration}ms with code ${code}`);
+      console.log(
+        `🏁 Fix command completed in ${duration}ms with code ${code}`,
+      );
 
       if (code === 0) {
         resolve({
@@ -302,7 +304,9 @@ export async function manualTrigger(
   commitSha: string,
   errorMessage: string,
 ): Promise<void> {
-  console.log(`🔧 Manual auto-heal trigger for ${owner}/${repo}@${commitSha.slice(0, 7)}`);
+  console.log(
+    `🔧 Manual auto-heal trigger for ${owner}/${repo}@${commitSha.slice(0, 7)}`,
+  );
 
   const repoPath = await prepareRepository(owner, repo, commitSha);
 

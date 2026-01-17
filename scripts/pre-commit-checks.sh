@@ -2,6 +2,10 @@
 # Pre-commit validation script - ALL checks must pass before commit
 # This script is part of the workflow-agent "one-and-done" service commitment
 # ZERO EXCEPTIONS - All checks must pass
+#
+# Uses the verify:fix command which implements fix-and-revalidate pattern:
+# - Run check → If fails, fix → Re-run ALL checks from start
+# - This ensures fixes don't introduce new issues in earlier checks
 
 set -e  # Exit on first error
 
@@ -16,6 +20,19 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔍 Running mandatory pre-commit checks..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Check if workflow-agent CLI is available
+if command -v workflow-agent &> /dev/null; then
+    # Use the verify:fix command with fix-and-revalidate pattern
+    echo -e "${BLUE}🔄 Using workflow-agent verify with auto-fix...${NC}"
+    echo ""
+    pnpm verify:fix
+    exit $?
+fi
+
+# Fallback: Run checks sequentially if CLI not available
+echo -e "${YELLOW}⚠️  workflow-agent CLI not found, using legacy checks...${NC}"
 echo ""
 
 # Track overall success

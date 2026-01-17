@@ -170,9 +170,15 @@ export function generateTerminalSummary(results: {
   const lines: string[] = [];
 
   lines.push("");
-  lines.push("╔══════════════════════════════════════════════════════════════╗");
-  lines.push("║                   VISUAL TEST RESULTS                        ║");
-  lines.push("╚══════════════════════════════════════════════════════════════╝");
+  lines.push(
+    "╔══════════════════════════════════════════════════════════════╗",
+  );
+  lines.push(
+    "║                   VISUAL TEST RESULTS                        ║",
+  );
+  lines.push(
+    "╚══════════════════════════════════════════════════════════════╝",
+  );
   lines.push("");
 
   if (failed.length === 0) {

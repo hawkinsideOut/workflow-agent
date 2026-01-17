@@ -6,21 +6,10 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { hasConfig } from "../../config/index.js";
 import {
-  type WorkflowConfig,
-  DEFAULT_RESERVED_SCOPE_NAMES,
-} from "../../config/schema.js";
-import {
   buildTemplateContext,
+  renderTemplateDirectory,
   validateTemplateDirectory,
-  renderTemplateFile,
 } from "../../templates/renderer.js";
-import {
-  getMandatoryTemplates,
-  getOptionalTemplates,
-} from "../../templates/metadata.js";
-import { installHooks, hasGitRepo } from "../../utils/hooks.js";
-import { getRepoInfo, getProjectInfo } from "../../utils/git-repo.js";
-import { createCIWorkflow, hasCIWorkflow } from "../../utils/github-actions.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -35,7 +24,7 @@ export async function initCommand(options: {
   console.log(chalk.bold.cyan("\n🚀 Workflow Agent Initialization\n"));
 
   const cwd = process.cwd();
-  const isNonInteractive = !!(options.preset && options.name) || !!options.yes;
+  const isNonInteractive = !!(options.preset && options.name);
 
   // Check if already initialized
   if (hasConfig(cwd) && !options.yes && !isNonInteractive) {
@@ -126,32 +115,16 @@ export async function initCommand(options: {
         ),
       );
       scopes = [
-        {
-          name: "feat",
-          description: "New features and enhancements",
-          emoji: "✨",
-        },
-        { name: "fix", description: "Bug fixes and patches", emoji: "🐛" },
-        {
-          name: "documentation",
-          description: "Documentation updates and improvements",
-          emoji: "📚",
-        },
+        { name: "feat", description: "New features", emoji: "✨" },
+        { name: "fix", description: "Bug fixes", emoji: "🐛" },
+        { name: "docs", description: "Documentation", emoji: "📚" },
       ];
     }
   } else {
     scopes = [
-      {
-        name: "feat",
-        description: "New features and enhancements",
-        emoji: "✨",
-      },
-      { name: "fix", description: "Bug fixes and patches", emoji: "🐛" },
-      {
-        name: "documentation",
-        description: "Documentation updates and improvements",
-        emoji: "📚",
-      },
+      { name: "feat", description: "New features", emoji: "✨" },
+      { name: "fix", description: "Bug fixes", emoji: "🐛" },
+      { name: "docs", description: "Documentation", emoji: "📚" },
     ];
     console.log(
       chalk.dim(
@@ -161,22 +134,11 @@ export async function initCommand(options: {
   }
 
   // Generate config
-  const config: WorkflowConfig = {
+  const config = {
     projectName: projectName as string,
     scopes: scopes,
     enforcement: "strict" as const,
     language: "en",
-    hooks: {
-      enabled: true,
-      preCommit: ["validate-branch", "check-guidelines"],
-      commitMsg: ["validate-commit"],
-    },
-    ci: {
-      enabled: true,
-      provider: "github",
-      checks: ["lint", "typecheck", "format", "build", "test"],
-    },
-    reservedScopeNames: DEFAULT_RESERVED_SCOPE_NAMES,
   };
 
   // Write config file
@@ -189,178 +151,55 @@ export async function initCommand(options: {
     await mkdir(workflowDir, { recursive: true });
   }
 
-  // Get repository and project info for CI setup
-  const repoInfo = await getRepoInfo(cwd);
-  const projectInfo = await getProjectInfo(cwd);
+  // Render guidelines from templates
+  const shouldGenerateGuidelines = await p.confirm({
+    message: "Generate workflow guidelines from templates?",
+    initialValue: true,
+  });
 
-  // Always generate mandatory guidelines (no prompt)
-  const mandatoryTemplates = getMandatoryTemplates();
-  const optionalTemplates = getOptionalTemplates();
-
-  console.log(
-    chalk.dim(
-      `\n📋 Generating ${mandatoryTemplates.length} mandatory guidelines...`,
-    ),
-  );
-
-  const guidelinesDir = join(cwd, "guidelines");
-  const templatesDir = join(__dirname, "../../templates");
-  let mandatoryGenerated = 0;
-  let optionalGenerated = 0;
-
-  try {
-    // Validate templates exist
-    await validateTemplateDirectory(templatesDir);
-
-    // Build context for template rendering
-    const context = await buildTemplateContext(config, cwd);
-
-    // Create guidelines directory
-    await mkdir(guidelinesDir, { recursive: true });
-
-    // Generate mandatory templates first (no prompt)
-    for (const template of mandatoryTemplates) {
-      try {
-        const templatePath = join(templatesDir, template.filename);
-        const outputPath = join(guidelinesDir, template.filename);
-        await renderTemplateFile(templatePath, outputPath, {
-          ...context,
-          reservedScopeNames: (config.reservedScopeNames || []).join(", "),
-        });
-        mandatoryGenerated++;
-      } catch (error) {
-        console.log(
-          chalk.yellow(`  ⚠️  Could not generate ${template.filename}`),
-        );
-      }
-    }
-    console.log(
-      chalk.green(`✓ Generated ${mandatoryGenerated} mandatory guidelines`),
-    );
-
-    // Prompt for optional guidelines (skip in non-interactive mode with defaults)
-    let shouldGenerateOptional = isNonInteractive;
-    if (!isNonInteractive) {
-      const response = await p.confirm({
-        message: `Generate ${optionalTemplates.length} optional guidelines (deployment, library inventory, etc.)?`,
-        initialValue: true,
-      });
-      shouldGenerateOptional = !p.isCancel(response) && response;
-    }
-
-    if (shouldGenerateOptional) {
-      for (const template of optionalTemplates) {
-        try {
-          const templatePath = join(templatesDir, template.filename);
-          const outputPath = join(guidelinesDir, template.filename);
-          await renderTemplateFile(templatePath, outputPath, context);
-          optionalGenerated++;
-        } catch {
-          // Silently skip optional templates that fail
-        }
-      }
-      console.log(
-        chalk.green(`✓ Generated ${optionalGenerated} optional guidelines`),
-      );
-    }
-  } catch (error) {
-    console.log(
-      chalk.yellow(
-        `\n⚠️  Could not generate guidelines: ${error instanceof Error ? error.message : String(error)}`,
-      ),
-    );
-    console.log(chalk.dim("You can manually copy guidelines later if needed."));
+  if (p.isCancel(shouldGenerateGuidelines)) {
+    p.cancel("Initialization cancelled");
+    process.exit(0);
   }
 
-  // Install git hooks (skip prompt in non-interactive mode, default to yes)
-  if (hasGitRepo(cwd)) {
-    let shouldInstallHooks = isNonInteractive;
-    if (!isNonInteractive) {
-      const response = await p.confirm({
-        message: "Install git hooks for pre-commit validation?",
-        initialValue: true,
-      });
-      shouldInstallHooks = !p.isCancel(response) && response;
-    }
+  if (shouldGenerateGuidelines) {
+    const spinner = p.spinner();
+    spinner.start("Generating guidelines...");
 
-    if (shouldInstallHooks) {
-      const hookSpinner = p.spinner();
-      hookSpinner.start("Installing git hooks...");
+    try {
+      // Find templates directory
+      // When built and installed: dist/cli/index.js -> ../../templates
+      // The templates are at the package root level
+      const templatesDir = join(__dirname, "../../templates");
 
-      const hookResults = await installHooks(
-        config.hooks || {
-          enabled: true,
-          preCommit: ["validate-branch", "check-guidelines"],
-          commitMsg: ["validate-commit"],
-        },
-        cwd,
+      // Validate templates exist
+      await validateTemplateDirectory(templatesDir);
+
+      // Build context for template rendering
+      const context = await buildTemplateContext(config, cwd);
+
+      // Create guidelines directory
+      const guidelinesDir = join(cwd, "guidelines");
+      await mkdir(guidelinesDir, { recursive: true });
+
+      // Render all templates
+      const renderedFiles = await renderTemplateDirectory(
+        templatesDir,
+        guidelinesDir,
+        context,
       );
-      const allSuccess = hookResults.every((r) => r.success);
 
-      if (allSuccess) {
-        hookSpinner.stop("✓ Installed git hooks");
-      } else {
-        hookSpinner.stop("⚠️  Some hooks could not be installed");
-      }
-    }
-  }
-
-  // Setup GitHub Actions CI (mandatory for GitHub repos)
-  if (repoInfo.isGitHub) {
-    const existingCI = hasCIWorkflow(cwd);
-
-    if (!existingCI) {
+      spinner.stop(`✓ Generated ${renderedFiles.length} guideline documents`);
+    } catch (error) {
+      spinner.stop("⚠️  Could not generate guidelines");
       console.log(
-        chalk.dim(
-          "\n🔧 Setting up GitHub Actions CI (mandatory for GitHub repos)...",
+        chalk.yellow(
+          `\nReason: ${error instanceof Error ? error.message : String(error)}`,
         ),
       );
-
-      const ciResult = await createCIWorkflow({
-        projectPath: cwd,
-        packageManager: projectInfo.packageManager,
-        isMonorepo: projectInfo.isMonorepo,
-        ciConfig: config.ci || {
-          enabled: true,
-          provider: "github" as const,
-          checks: ["lint", "typecheck", "format", "build", "test"],
-        },
-        defaultBranch: repoInfo.defaultBranch || "main",
-      });
-
-      if (ciResult.success) {
-        console.log(chalk.green("✓ Created GitHub Actions CI workflow"));
-        console.log(chalk.dim(`  File: .github/workflows/ci.yml`));
-      } else {
-        console.log(
-          chalk.yellow(`⚠️  Could not create CI workflow: ${ciResult.error}`),
-        );
-      }
-    } else {
-      console.log(chalk.dim("\n✓ GitHub Actions CI workflow already exists"));
-    }
-  } else if (repoInfo.isGitRepo) {
-    // Non-GitHub git repo - offer to create workflow anyway (skip in non-interactive mode)
-    let shouldSetupCI = false;
-    if (!isNonInteractive) {
-      const response = await p.confirm({
-        message: "No GitHub remote detected. Create CI workflow anyway?",
-        initialValue: false,
-      });
-      shouldSetupCI = !p.isCancel(response) && response;
-    }
-
-    if (shouldSetupCI) {
-      const ciResult = await createCIWorkflow({
-        projectPath: cwd,
-        packageManager: projectInfo.packageManager,
-        isMonorepo: projectInfo.isMonorepo,
-        defaultBranch: repoInfo.defaultBranch || "main",
-      });
-
-      if (ciResult.success) {
-        console.log(chalk.green("✓ Created CI workflow"));
-      }
+      console.log(
+        chalk.dim("You can manually copy guidelines later if needed."),
+      );
     }
   }
 
@@ -369,18 +208,18 @@ export async function initCommand(options: {
   console.log(
     chalk.dim("  1. Review your configuration in workflow.config.json"),
   );
-  console.log(
-    chalk.dim("  2. Review generated guidelines in guidelines/ directory"),
-  );
-  console.log(chalk.dim("  3. Run: workflow validate branch"));
-  console.log(chalk.dim("  4. Run: workflow doctor (for health check)\n"));
-
-  if (repoInfo.isGitHub) {
+  if (shouldGenerateGuidelines) {
     console.log(
-      chalk.cyan("💡 Recommended: Enable branch protection on GitHub"),
+      chalk.dim("  2. Review generated guidelines in guidelines/ directory"),
     );
+    console.log(chalk.dim("  3. Run: workflow validate branch"));
     console.log(
-      chalk.dim("   Settings → Branches → Add rule → Require status checks\n"),
+      chalk.dim("  4. Run: workflow doctor (for optimization suggestions)\n"),
+    );
+  } else {
+    console.log(chalk.dim("  2. Run: workflow validate branch"));
+    console.log(
+      chalk.dim("  3. Run: workflow doctor (for optimization suggestions)\n"),
     );
   }
 }

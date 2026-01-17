@@ -77,7 +77,11 @@ export async function compareWithBaseline(
 
   // Capture current screenshot
   const baselineDir = getBaselineDir(repo?.owner, repo?.name);
-  const afterPath = join(baselineDir, "comparisons", `${baselineName}-${Date.now()}.png`);
+  const afterPath = join(
+    baselineDir,
+    "comparisons",
+    `${baselineName}-${Date.now()}.png`,
+  );
 
   const currentScreenshot = await captureScreenshot(url, afterPath, {
     ...screenshot,

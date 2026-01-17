@@ -26,8 +26,11 @@
     "dev": "tsup --watch",
     "start": "node dist/cli.js serve",
     "start:dev": "node dist/cli.js serve --dev",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "simulate": "tsx scripts/simulate-developer-workflow.ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
@@ -57,8 +60,11 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.4",
+    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/ui": "^1.6.1",
     "smee-client": "^2.0.4",
     "tsup": "^8.5.1",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.3",
     "vitest": "^1.6.1"
   }
