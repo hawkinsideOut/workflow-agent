@@ -26,7 +26,7 @@
     "dev": "tsup --watch",
     "start": "node dist/cli.js serve",
     "start:dev": "node dist/cli.js serve --dev",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
