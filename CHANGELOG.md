@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-01-19
+
+### Added
+
+- **Advisory Board Analysis Command**: New `workflow advisory` command for generating comprehensive project analysis reports:
+  - 4 analysis depth levels: `executive`, `quick`, `standard`, `comprehensive`
+  - Generates markdown reports: Executive Summary, Technology Audit, Strategic Roadmap, Board Questions
+  - JSON output format for programmatic access
+  - Comparison feature (`--compare`) to track changes over time with diff reports
+  - CI mode (`--ci`) with exit codes based on risk thresholds
+  - Dry-run mode (`--dry-run`) to preview analysis without writing files
+  - Timestamp option (`--timestamp`) for versioned report output
+  - Interactive mode for guided analysis configuration
+  - Health metrics integration (`--include-health`)
+- **AdvisoryAnalyzer**: Core analysis engine with technology stack detection, package categorization, risk assessment, and opportunity identification
+- **QuestionGenerator**: Transforms technical findings into strategic board questions with priorities and recommendations
+- **ReportComparator**: Compares two analysis reports to identify changes in risks, opportunities, packages, and technology
+- **GitHub Actions Template**: `GITHUB_ACTIONS_ADVISORY.yml` workflow template for automated weekly advisory reports
+- **Config Schema**: New `advisory` section in workflow.config.json for customizing analysis settings
+
 ## [2.1.0] - 2026-01-15
 
 ### Added
