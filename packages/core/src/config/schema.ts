@@ -100,6 +100,46 @@ export const GuidelinesConfigSchema = z.object({
   optionalOverrides: z.array(z.string()).optional(),
 });
 
+export const AdvisoryDepthSchema = z.enum([
+  "executive",
+  "quick",
+  "standard",
+  "comprehensive",
+]);
+
+export const AdvisoryQuestionSchema = z.object({
+  category: z.string(),
+  question: z.string(),
+  context: z.string().optional(),
+  priority: z.enum(["high", "medium", "low"]).optional(),
+});
+
+export const AdvisoryConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  defaultDepth: AdvisoryDepthSchema.default("standard"),
+  outputDir: z.string().default("docs/advisory"),
+  customQuestions: z.array(AdvisoryQuestionSchema).optional(),
+  riskThresholds: z
+    .object({
+      high: z.number().default(0.7),
+      medium: z.number().default(0.4),
+      low: z.number().default(0.2),
+    })
+    .optional(),
+  categories: z
+    .array(z.string())
+    .default([
+      "Technology Decisions",
+      "Package Utilization",
+      "Platform Strategy",
+      "Business Alignment",
+      "Technical Debt",
+      "Growth Opportunities",
+    ]),
+  excludePatterns: z.array(z.string()).optional(),
+  includeHealthMetrics: z.boolean().default(false),
+});
+
 export const WorkflowConfigSchema = z.object({
   projectName: z.string().min(1),
   scopes: z.array(ScopeSchema).min(1),
@@ -113,6 +153,7 @@ export const WorkflowConfigSchema = z.object({
   ci: CIConfigSchema.optional(),
   hooks: HooksConfigSchema.optional(),
   guidelines: GuidelinesConfigSchema.optional(),
+  advisory: AdvisoryConfigSchema.optional(),
 });
 
 export type Scope = z.infer<typeof ScopeSchema>;
@@ -123,6 +164,9 @@ export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>;
 export type CIConfig = z.infer<typeof CIConfigSchema>;
 export type HooksConfig = z.infer<typeof HooksConfigSchema>;
 export type GuidelinesConfig = z.infer<typeof GuidelinesConfigSchema>;
+export type AdvisoryDepth = z.infer<typeof AdvisoryDepthSchema>;
+export type AdvisoryQuestion = z.infer<typeof AdvisoryQuestionSchema>;
+export type AdvisoryConfig = z.infer<typeof AdvisoryConfigSchema>;
 export type WorkflowConfig = z.infer<typeof WorkflowConfigSchema>;
 
 export const defaultBranchTypes: BranchType[] = [

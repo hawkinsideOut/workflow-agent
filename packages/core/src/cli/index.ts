@@ -11,6 +11,7 @@ import { scopeCreateCommand } from "./commands/scope-create.js";
 import { scopeMigrateCommand } from "./commands/scope-migrate.js";
 import { verifyCommand } from "./commands/verify.js";
 import { autoSetupCommand } from "./commands/auto-setup-command.js";
+import { advisoryCommand } from "./commands/advisory.js";
 import {
   learnRecordCommand,
   learnListCommand,
@@ -132,6 +133,26 @@ program
   .option("--audit", "Show audit report without applying changes")
   .action(autoSetupCommand);
 
+program
+  .command("advisory")
+  .description("Generate advisory board analysis and documentation")
+  .option(
+    "--depth <level>",
+    "Analysis depth: executive, quick, standard, comprehensive",
+  )
+  .option("--output <path>", "Output directory (default: docs/advisory)")
+  .option("--interactive", "Enable interactive mode")
+  .option("--dry-run", "Preview analysis without writing files")
+  .option(
+    "--format <type>",
+    "Output format: markdown, json (default: markdown)",
+  )
+  .option("--timestamp", "Append timestamp to filenames")
+  .option("--include-health", "Include code health metrics from verify/doctor")
+  .option("--ci", "CI mode with exit codes on high-risk findings")
+  .option("--compare <path>", "Compare with previous report")
+  .action(advisoryCommand);
+
 // ============================================
 // Learning System Commands
 // ============================================
@@ -141,7 +162,10 @@ program
   .description("Record a new pattern from a successful implementation")
   .option("--name <name>", "Pattern name")
   .option("--description <desc>", "Pattern description")
-  .option("--category <cat>", "Category (migration, security, performance, etc.)")
+  .option(
+    "--category <cat>",
+    "Category (migration, security, performance, etc.)",
+  )
   .option("--framework <fw>", "Framework (next, react, vue, etc.)")
   .option("--version <ver>", "Framework version range")
   .option("--tags <tags>", "Comma-separated tags (category:value)")
@@ -206,7 +230,10 @@ program
   .description("Capture a solution pattern from working code")
   .option("--name <name>", "Solution name")
   .option("--description <desc>", "Solution description")
-  .option("--category <cat>", "Category (auth, api, database, ui, testing, deployment, integration, performance, security, other)")
+  .option(
+    "--category <cat>",
+    "Category (auth, api, database, ui, testing, deployment, integration, performance, security, other)",
+  )
   .option("--keywords <kw>", "Comma-separated keywords")
   .option("--path <path>", "Path to the solution directory")
   .option("--anonymize", "Anonymize sensitive data in code")

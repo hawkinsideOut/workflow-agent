@@ -1,0 +1,645 @@
+---
+title: Advisory Board Analysis
+description: Comprehensive application audits for strategic decision-making
+---
+
+# Advisory Board Analysis
+
+The Advisory Board Analysis feature provides comprehensive audits of your application, simulating the strategic questions and insights that would be presented to an executive advisory board. It analyzes technologies, packages, platforms, and business alignment to help stakeholders make informed decisions.
+
+## Overview
+
+This feature performs a deep analysis of your codebase to:
+
+- **Identify technologies, packages, and platforms** in use across your application
+- **Assess business value** and how each technology meets organizational needs
+- **Generate strategic questions** that an advisory board would ask
+- **Track changes over time** with quarterly comparison reports
+- **Provide risk assessments** for technical debt and security concerns
+- **Recommend growth opportunities** for optimization and modernization
+
+## Depth Levels
+
+The analyzer offers four depth levels to suit different audiences and use cases:
+
+| Depth Level | Audience | Analysis Time | Focus |
+|------------|----------|---------------|-------|
+| **Executive** | Non-technical stakeholders, C-suite | < 30s | High-level business metrics, ROI, strategic recommendations |
+| **Quick** | Managers, team leads | ~1 min | Technology overview, package summary, key risks |
+| **Standard** | Engineers, architects | ~2-3 min | Detailed package analysis, architecture patterns, technical debt |
+| **Comprehensive** | Deep audits, compliance reviews | ~5-10 min | Full codebase analysis, security audits, dependency graphs, code quality metrics |
+
+## CLI Usage
+
+### Basic Command
+
+```bash
+# Generate a standard analysis report
+pnpm workflow advisory
+
+# Or with npx
+npx workflow-agent advisory
+```
+
+### Command Options
+
+```bash
+pnpm workflow advisory [options]
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--depth <level>` | `executive\|quick\|standard\|comprehensive` | `standard` | Analysis depth level |
+| `--output <dir>` | `string` | `docs/advisory` | Output directory for reports |
+| `--interactive` | `boolean` | `false` | Launch interactive mode with prompts |
+| `--dry-run` | `boolean` | `false` | Preview analysis without writing files |
+| `--format <type>` | `markdown\|json\|both` | `markdown` | Output format |
+| `--timestamp` | `boolean` | `false` | Append timestamp to filenames |
+| `--include-health` | `boolean` | `false` | Include health metrics from improvement tracker |
+| `--ci` | `boolean` | `false` | CI mode with exit codes for quality gates |
+| `--compare <path>` | `string` | - | Compare with previous report for diff analysis |
+
+### Usage Examples
+
+#### Executive Summary for Board Meeting
+
+```bash
+# Non-technical overview for leadership
+pnpm workflow advisory --depth executive --output reports/q4-2024
+```
+
+**Output:** `reports/q4-2024/executive-summary.md`
+
+Includes:
+- Project overview with business context
+- High-level technology decisions and justifications
+- Risk summary with severity ratings
+- Growth opportunities with ROI estimates
+- Recommended next steps
+
+#### Standard Technical Audit
+
+```bash
+# Default analysis for engineering teams
+pnpm workflow advisory
+```
+
+**Output:** `docs/advisory/` directory with:
+- `executive-summary.md` - Leadership overview
+- `technology-audit.md` - Detailed technology inventory
+- `strategic-roadmap.md` - Risks, opportunities, recommendations
+- `board-questions.md` - Strategic questions for discussion
+- `analysis.json` - Machine-readable data
+
+#### Comprehensive Security Review
+
+```bash
+# Deep dive for compliance/security audits
+pnpm workflow advisory --depth comprehensive --include-health --format both
+```
+
+**Output:** Full analysis including:
+- Dependency security audits
+- Outdated package detection
+- Code complexity metrics
+- Health score integration
+- Architecture pattern analysis
+- Build performance analysis
+
+#### Interactive Mode
+
+```bash
+# Guided prompts for all options
+pnpm workflow advisory --interactive
+```
+
+Prompts you to select:
+1. Analysis depth level
+2. Output directory
+3. Whether to include health metrics
+4. Output format preference
+
+#### Quarterly Comparison
+
+```bash
+# Compare Q3 vs Q4 reports to track progress
+pnpm workflow advisory --compare docs/advisory/analysis-2024-q3.json --timestamp
+```
+
+**Output:** `comparison-report-YYYY-MM-DD.md` showing:
+- New risks introduced
+- Resolved risks since last report
+- Risk score changes (trending up/down)
+- New opportunities identified
+- Package additions/removals/updates
+- Technology stack changes
+
+#### CI/CD Integration
+
+```bash
+# Run in CI with quality gates
+pnpm workflow advisory --ci --depth quick
+
+# Exit codes:
+# 0 = Success (no critical risks)
+# 1 = Critical risks detected (>= 0.8 severity)
+# 2 = High risks detected (>= 0.6 severity)
+```
+
+Use in GitHub Actions, GitLab CI, or other pipelines to enforce quality thresholds.
+
+## Configuration
+
+### Schema
+
+Add an `advisory` section to your `workflow.config.json`:
+
+```json
+{
+  "advisory": {
+    "defaultDepth": "standard",
+    "outputDir": "docs/advisory",
+    "customQuestions": [
+      {
+        "category": "Business Alignment",
+        "question": "How does our testing strategy align with our SLA commitments?",
+        "priority": "high",
+        "context": "98.5% uptime SLA"
+      },
+      {
+        "category": "Technology Decisions",
+        "question": "What is our long-term strategy for migrating from REST to GraphQL?",
+        "priority": "medium"
+      }
+    ],
+    "riskThresholds": {
+      "critical": 0.8,
+      "high": 0.6,
+      "medium": 0.4
+    },
+    "categories": [
+      "UI Framework",
+      "State Management",
+      "API/Data Fetching",
+      "Testing",
+      "Database ORM",
+      "Authentication",
+      "Infrastructure"
+    ],
+    "excludePatterns": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.next/**"
+    ],
+    "includeHealthMetrics": true
+  }
+}
+```
+
+### Configuration Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `defaultDepth` | `string` | Default analysis depth (`executive`, `quick`, `standard`, `comprehensive`) |
+| `outputDir` | `string` | Directory for generated reports |
+| `customQuestions` | `array` | Additional advisory questions specific to your organization |
+| `riskThresholds` | `object` | Severity thresholds for risk classification |
+| `categories` | `array` | Package categories to analyze (15+ built-in categories) |
+| `excludePatterns` | `array` | Glob patterns for files/folders to exclude |
+| `includeHealthMetrics` | `boolean` | Enable health score integration from improvement tracker |
+
+### Custom Questions
+
+Custom questions are merged with the 6 built-in question categories:
+
+1. **Technology Decisions** - Framework choices, build tools, monorepo strategy
+2. **Package Utilization** - Dependency management, security, licensing
+3. **Platform Strategy** - Infrastructure, deployment, scalability
+4. **Business Alignment** - Analytics, authentication, testing coverage
+5. **Technical Debt** - High-risk packages, outdated dependencies, complexity
+6. **Growth Opportunities** - Performance optimization, modernization paths
+
+Each custom question should include:
+- `category` - One of the 6 categories above
+- `question` - The strategic question to address
+- `priority` - `high`, `medium`, or `low`
+- `context` (optional) - Additional business context or constraints
+
+## GitHub Actions Integration
+
+### Setup
+
+1. Copy the workflow template to your repository:
+
+```bash
+cp templates/GITHUB_ACTIONS_ADVISORY.yml .github/workflows/advisory-analysis.yml
+```
+
+2. Commit and push:
+
+```bash
+git add .github/workflows/advisory-analysis.yml
+git commit -m "ci: add advisory board analysis workflow"
+git push
+```
+
+### Workflow Features
+
+The GitHub Actions workflow provides:
+
+#### Automated Schedules
+- **Weekly reports** every Monday at 9:00 AM UTC
+- Configurable cron schedule in workflow file
+
+#### Manual Triggers
+- Run on-demand via GitHub Actions UI
+- Select depth level: `quick`, `standard`, or `comprehensive`
+- Option to create pull request with results
+
+#### Pull Request Analysis
+- Triggers on PRs to `main` or `develop` branches
+- Comments analysis summary directly on the PR
+- Uploads reports as downloadable artifacts (90-day retention)
+
+#### CI Quality Gates
+- Uses `--ci` flag to enforce risk thresholds
+- Fails pipeline if critical risks detected (exit code 1)
+- Warns on high risks (exit code 2)
+- Success when risks are below thresholds (exit code 0)
+
+#### Auto-PR Creation
+- Commits timestamped reports to repository
+- Creates PR with `advisory-analysis` label
+- Includes summary in PR description
+- Reviewers can track quarterly changes
+
+### Workflow Customization
+
+Edit `.github/workflows/advisory-analysis.yml`:
+
+```yaml
+# Change schedule
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Weekly Monday 9am UTC
+    # Change to: '0 9 1 * *' for monthly (1st of month)
+
+# Change default depth
+jobs:
+  advisory:
+    steps:
+      - name: Run Advisory Analysis
+        run: pnpm workflow advisory --depth comprehensive  # or quick, standard
+
+# Change risk thresholds in workflow.config.json
+# Or override in workflow:
+        run: pnpm workflow advisory --ci
+        env:
+          ADVISORY_CRITICAL_THRESHOLD: 0.9
+          ADVISORY_HIGH_THRESHOLD: 0.7
+```
+
+## Output Reports
+
+### Executive Summary (`executive-summary.md`)
+
+**Purpose:** Non-technical overview for leadership and advisory boards
+
+**Includes:**
+- Project overview with business context
+- Key technology decisions and rationale
+- Risk summary with business impact
+- Opportunity highlights with ROI potential
+- Strategic recommendations
+
+**Sample:**
+```markdown
+# Executive Summary: Workflow Agent
+
+**Generated:** December 14, 2024
+**Analysis Depth:** Executive
+
+## Project Overview
+Workflow Agent is a TypeScript-based development productivity platform
+serving 10+ enterprise clients with 99.2% uptime SLA...
+
+## Key Technologies
+- **Next.js 14** - Modern web framework enabling SSR/SSG for optimal performance
+- **TypeScript** - Type safety reduces production bugs by ~40%
+- **Vitest** - 3x faster test execution vs Jest...
+
+## Risk Assessment
+**Overall Risk Score:** 0.35 (Low-Medium)
+- 2 high-priority risks requiring attention in Q1 2025
+- 8 medium-priority items for ongoing monitoring...
+```
+
+### Technology Audit (`technology-audit.md`)
+
+**Purpose:** Detailed inventory for engineering teams
+
+**Includes:**
+- Framework analysis (Next.js, React, etc.)
+- Build tools and toolchains (TypeScript, tsup, Vite)
+- Infrastructure (Docker, GitHub Actions)
+- Package categorization by function
+- Business value for each technology
+
+### Strategic Roadmap (`strategic-roadmap.md`)
+
+**Purpose:** Risk/opportunity planning for architects and managers
+
+**Includes:**
+- Detailed risk assessments with severity scores
+- Mitigation strategies for each risk
+- Growth opportunities ranked by impact
+- Technical debt prioritization
+- Modernization recommendations
+
+### Board Questions (`board-questions.md`)
+
+**Purpose:** Discussion guide for advisory meetings
+
+**Includes:**
+- Strategic questions across 6 categories
+- Custom questions from config
+- Priority ranking (high/medium/low)
+- Context and background for each question
+
+**Sample:**
+```markdown
+## Technology Decisions (Priority: High)
+
+1. **What is our long-term strategy for the Next.js framework?**
+   - Current: Using Next.js 14 with App Router
+   - Consideration: Next.js 15 introduces React Compiler and improved performance
+   - Business Impact: 20-30% faster page loads, improved SEO
+
+2. **Should we continue our monorepo strategy as we scale?**
+   - Current: pnpm workspaces with 12 packages
+   - Consideration: Turborepo or Nx for build caching
+   - Business Impact: 50%+ faster CI/CD pipelines...
+```
+
+### Analysis JSON (`analysis.json`)
+
+**Purpose:** Machine-readable data for integrations and automation
+
+**Includes:**
+- Full analysis results in JSON format
+- Risks and opportunities with structured metadata
+- Package dependency graph
+- Technology stack inventory
+- Metrics and scores
+
+**Use Cases:**
+- Custom dashboards and visualizations
+- Integration with BI tools (Tableau, Power BI)
+- Historical tracking in data warehouses
+- Automated alerting systems
+
+## Best Practices
+
+### Quarterly Reviews
+
+Run comprehensive analyses quarterly to track:
+- Technology stack evolution
+- Risk trend analysis (improving vs degrading)
+- Opportunity realization (what was implemented)
+- Package update hygiene
+
+```bash
+# Q4 2024 analysis
+pnpm workflow advisory --depth comprehensive --timestamp --format both
+
+# Q1 2025 comparison
+pnpm workflow advisory --compare docs/advisory/analysis-2024-12-14.json --timestamp
+```
+
+### Pre-Board Meetings
+
+Generate executive summaries 1-2 days before advisory board meetings:
+
+```bash
+pnpm workflow advisory --depth executive --output board-materials/2024-q4
+```
+
+Distribute `executive-summary.md` and `board-questions.md` to board members in advance.
+
+### CI/CD Quality Gates
+
+Add to your deployment pipeline:
+
+```yaml
+# .github/workflows/deploy.yml
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: pnpm install
+      - name: Advisory Analysis
+        run: pnpm workflow advisory --ci --depth quick
+```
+
+Block deployments if critical risks are detected.
+
+### Health Integration
+
+Combine with improvement tracker for holistic quality metrics:
+
+```bash
+# Generate health report first
+pnpm workflow improvement-tracker analyze
+
+# Include health scores in advisory
+pnpm workflow advisory --include-health
+```
+
+This correlates technical decisions with codebase health trends.
+
+## Advanced Usage
+
+### Custom Risk Thresholds
+
+Override default thresholds for specific compliance requirements:
+
+```json
+{
+  "advisory": {
+    "riskThresholds": {
+      "critical": 0.9,    // Only P0 security issues
+      "high": 0.7,        // P1 + major tech debt
+      "medium": 0.5       // P2 + minor issues
+    }
+  }
+}
+```
+
+### Filtered Analysis
+
+Analyze specific package categories:
+
+```json
+{
+  "advisory": {
+    "categories": [
+      "Authentication",
+      "Database ORM",
+      "API/Data Fetching"
+    ]
+  }
+}
+```
+
+This focuses the analysis on security-critical or data-handling packages.
+
+### Exclude Irrelevant Code
+
+Skip generated files and vendor code:
+
+```json
+{
+  "advisory": {
+    "excludePatterns": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/.next/**",
+      "**/vendor/**",
+      "**/__generated__/**"
+    ]
+  }
+}
+```
+
+### JSON-Only Output
+
+For programmatic processing:
+
+```bash
+pnpm workflow advisory --format json --output data/advisory.json
+```
+
+Parse with `jq`, Python scripts, or dashboard tools.
+
+## Troubleshooting
+
+### "No package.json found"
+
+**Cause:** Analyzer cannot locate `package.json` in current directory or parent directories.
+
+**Solution:** Run from project root or specify path:
+```bash
+cd /path/to/project-root
+pnpm workflow advisory
+```
+
+### High Analysis Time (>10 minutes)
+
+**Cause:** Very large monorepo with 100+ packages.
+
+**Solution:** Use `quick` depth or add exclusion patterns:
+```bash
+pnpm workflow advisory --depth quick
+```
+
+Or exclude large directories:
+```json
+{
+  "advisory": {
+    "excludePatterns": [
+      "**/node_modules/**",
+      "**/test-fixtures/**",
+      "**/examples/**"
+    ]
+  }
+}
+```
+
+### Missing Health Metrics
+
+**Cause:** Improvement tracker not configured or no analysis run yet.
+
+**Solution:** Run improvement tracker first:
+```bash
+pnpm workflow improvement-tracker analyze
+pnpm workflow advisory --include-health
+```
+
+### CI Mode Not Failing
+
+**Cause:** No risks exceed configured thresholds.
+
+**Solution:** Check risk scores in `analysis.json`:
+```bash
+jq '.risks[] | select(.severity >= 0.8)' docs/advisory/analysis.json
+```
+
+If no critical risks exist, CI passes with exit code 0.
+
+### Comparison Report Empty
+
+**Cause:** Comparing identical analyses or incorrect path to baseline report.
+
+**Solution:** Verify baseline path and ensure it's from a different time period:
+```bash
+ls -la docs/advisory/analysis-*.json
+pnpm workflow advisory --compare docs/advisory/analysis-2024-10-01.json
+```
+
+## FAQ
+
+**Q: How often should we run advisory analysis?**
+
+A: Quarterly for standard projects, monthly for high-velocity teams, weekly for compliance-critical applications.
+
+**Q: Can I customize the question categories?**
+
+A: Yes, add custom questions to `workflow.config.json` under `advisory.customQuestions`. They'll be merged with built-in categories.
+
+**Q: What's the difference between `quick` and `executive` depth?**
+
+A: `quick` provides technical overview for engineers, `executive` is non-technical business summary for leadership.
+
+**Q: How do risk scores get calculated?**
+
+A: Scores (0.0-1.0) combine factors like package age, security vulnerabilities, large dependency counts, outdated versions, and usage patterns.
+
+**Q: Can I run this on private/monorepo projects?**
+
+A: Yes, the analyzer detects monorepos automatically and analyzes all workspace packages. Use `excludePatterns` to skip private packages if needed.
+
+**Q: Does this send data to external services?**
+
+A: No, all analysis is local. No data leaves your machine unless you commit reports to git or integrate with external tools.
+
+**Q: Can I use this for compliance audits (SOC2, ISO)?**
+
+A: Yes, `comprehensive` depth provides detailed dependency audits, security scanning, and documentation suitable for compliance reviews.
+
+## Related Commands
+
+- **`pnpm workflow improvement-tracker`** - Analyze codebase health metrics
+- **`pnpm workflow auto-setup`** - Detect project technologies (used internally by advisory)
+- **`pnpm workflow create-scope`** - Create custom scopes for domain-specific patterns
+
+## Next Steps
+
+1. **Run your first analysis:**
+   ```bash
+   pnpm workflow advisory --interactive
+   ```
+
+2. **Configure custom questions** in `workflow.config.json`
+
+3. **Set up GitHub Actions workflow** for automated quarterly reports
+
+4. **Schedule board meeting** and distribute executive summary
+
+5. **Track progress** by running comparison reports each quarter
+
+---
+
+**Need help?** Open an issue at [github.com/hawkinside_out/workflow-agent](https://github.com/hawkinside_out/workflow-agent)
