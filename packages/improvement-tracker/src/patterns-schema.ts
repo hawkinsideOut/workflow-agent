@@ -395,6 +395,198 @@ export const BlueprintSchema = z.object({
 });
 
 // ============================================
+// Solution Pattern Schema
+// ============================================
+
+/** Solution categories for classification */
+export const SolutionCategoryEnum = z.enum([
+  "auth",
+  "database",
+  "api",
+  "state",
+  "forms",
+  "ui",
+  "testing",
+  "deployment",
+  "error-handling",
+  "caching",
+  "security",
+  "performance",
+  "integrations",
+  "other",
+]);
+
+/** File role in solution */
+export const FileRoleEnum = z.enum([
+  "entry",
+  "config",
+  "util",
+  "component",
+  "hook",
+  "middleware",
+  "model",
+  "service",
+  "test",
+  "type",
+]);
+
+/**
+ * A file that's part of a solution
+ */
+export const SolutionFileSchema = z.object({
+  /** Relative path in solution */
+  path: z.string().min(1),
+  /** Purpose of this file */
+  purpose: z.string().min(1).max(200),
+  /** Role in the solution */
+  role: FileRoleEnum,
+  /** Anonymized file content */
+  content: z.string(),
+  /** Exported symbols (functions, classes, etc.) */
+  exports: z.array(z.string()),
+  /** Imported dependencies */
+  imports: z.array(z.string()),
+  /** Line count */
+  lineCount: z.number().int().min(1),
+});
+
+/**
+ * Problem this solution addresses
+ */
+export const ProblemDefinitionSchema = z.object({
+  /** Keywords for search matching */
+  keywords: z.array(z.string().min(1)).min(1),
+  /** Human-readable problem description */
+  description: z.string().min(10).max(500),
+  /** Common error messages this solves */
+  errorPatterns: z.array(z.string()).optional(),
+});
+
+/**
+ * Environment variable definition
+ */
+export const EnvVarSchema = z.object({
+  /** Variable name */
+  name: z.string().min(1),
+  /** Description of what it's for */
+  description: z.string(),
+  /** Whether this variable is required */
+  required: z.boolean(),
+  /** Example value (anonymized) */
+  example: z.string().optional(),
+});
+
+/**
+ * Data model definition
+ */
+export const DataModelSchema = z.object({
+  /** Model name */
+  name: z.string().min(1),
+  /** Description of the model */
+  description: z.string(),
+  /** Schema snippet (Prisma/SQL, anonymized) */
+  schema: z.string().optional(),
+});
+
+/**
+ * Implementation details
+ */
+export const ImplementationSchema = z.object({
+  /** Files that make up this solution */
+  files: z.array(SolutionFileSchema).min(1),
+  /** NPM dependencies required */
+  dependencies: z.array(DependencyVersionSchema),
+  /** Dev dependencies required */
+  devDependencies: z.array(DependencyVersionSchema),
+  /** Environment variables needed */
+  envVars: z.array(EnvVarSchema),
+  /** Database models/tables if applicable */
+  dataModels: z.array(DataModelSchema).optional(),
+});
+
+/**
+ * Architecture notes for understanding the solution
+ */
+export const ArchitectureSchema = z.object({
+  /** Files to start reading */
+  entryPoints: z.array(z.string()),
+  /** How data flows through the system */
+  dataFlow: z.string().max(1000),
+  /** Key architectural decisions and why */
+  keyDecisions: z.array(z.string()),
+  /** Diagram in mermaid format (optional) */
+  diagram: z.string().optional(),
+});
+
+/**
+ * Solution-level pattern for complete implementations
+ */
+export const SolutionPatternSchema = z.object({
+  /** Unique identifier (UUID) */
+  id: z.string().uuid(),
+  /** Human-readable name */
+  name: z.string().min(3).max(100),
+  /** Description of what this solution does */
+  description: z.string().min(10).max(1000),
+
+  /** Category of solution */
+  category: SolutionCategoryEnum,
+
+  /** Tags for classification */
+  tags: z.array(PatternTagSchema),
+
+  /** What problem does this solve? */
+  problem: ProblemDefinitionSchema,
+
+  /** How is it implemented? */
+  implementation: ImplementationSchema,
+
+  /** Architecture notes */
+  architecture: ArchitectureSchema,
+
+  /** Framework/runtime compatibility */
+  compatibility: CompatibilitySchema,
+
+  /** Usage metrics */
+  metrics: PatternMetricsSchema,
+
+  /** Source project (anonymized) */
+  sourceProject: z.string().optional(),
+
+  /** Related fix patterns */
+  relatedPatterns: z.array(z.string().uuid()),
+
+  /** Where this pattern originated */
+  source: PatternSourceEnum,
+
+  // Privacy and sync
+  /** Whether this solution should be synced */
+  isPrivate: z.boolean().default(true),
+  /** When this solution was last synced */
+  syncedAt: z.string().datetime().optional(),
+  /** Anonymous contributor identifier */
+  contributorId: z.string().optional(),
+
+  // Conflict resolution
+  /** Version number for conflict resolution */
+  conflictVersion: z.number().int().min(1).optional(),
+  /** Original solution ID if this is a conflict copy */
+  originalId: z.string().uuid().optional(),
+
+  // Deprecation
+  /** When this solution was deprecated */
+  deprecatedAt: z.string().datetime().optional(),
+  /** Reason for deprecation */
+  deprecationReason: z.string().optional(),
+
+  // Metadata
+  /** When this solution was created */
+  createdAt: z.string().datetime(),
+  /** When this solution was last updated */
+  updatedAt: z.string().datetime(),
+});
+
+// ============================================
 // Telemetry Schema (Anonymized)
 // ============================================
 
@@ -474,6 +666,15 @@ export type Setup = z.infer<typeof SetupSchema>;
 export type Blueprint = z.infer<typeof BlueprintSchema>;
 export type TelemetryEvent = z.infer<typeof TelemetryEventSchema>;
 
+// Solution Pattern Types
+export type SolutionPattern = z.infer<typeof SolutionPatternSchema>;
+export type SolutionFile = z.infer<typeof SolutionFileSchema>;
+export type ProblemDefinition = z.infer<typeof ProblemDefinitionSchema>;
+export type Implementation = z.infer<typeof ImplementationSchema>;
+export type Architecture = z.infer<typeof ArchitectureSchema>;
+export type EnvVar = z.infer<typeof EnvVarSchema>;
+export type DataModel = z.infer<typeof DataModelSchema>;
+
 export type FixCategory = z.infer<typeof FixCategoryEnum>;
 export type SolutionType = z.infer<typeof SolutionTypeEnum>;
 export type StepAction = z.infer<typeof StepActionEnum>;
@@ -482,6 +683,8 @@ export type Language = z.infer<typeof LanguageEnum>;
 export type PackageManager = z.infer<typeof PackageManagerEnum>;
 export type TelemetryEventType = z.infer<typeof TelemetryEventTypeEnum>;
 export type PatternType = z.infer<typeof PatternTypeEnum>;
+export type SolutionCategory = z.infer<typeof SolutionCategoryEnum>;
+export type FileRole = z.infer<typeof FileRoleEnum>;
 
 // ============================================
 // Utility Functions
@@ -512,18 +715,42 @@ export function isPatternDeprecated(
 /**
  * Generate a content hash for conflict detection
  */
-export function generatePatternHash(pattern: FixPattern | Blueprint): string {
+export function generatePatternHash(pattern: FixPattern | Blueprint | SolutionPattern): string {
   // Create a hash from the essential content (excluding metadata)
-  const contentToHash = {
-    name: pattern.name,
-    description: pattern.description,
-    tags: pattern.tags,
-    compatibility: pattern.compatibility,
-    // Include type-specific content
-    ...("trigger" in pattern
-      ? { trigger: pattern.trigger, solution: pattern.solution }
-      : { stack: pattern.stack, structure: pattern.structure }),
-  };
+  let contentToHash: Record<string, unknown>;
+
+  if ("trigger" in pattern) {
+    // FixPattern
+    contentToHash = {
+      name: pattern.name,
+      description: pattern.description,
+      tags: pattern.tags,
+      compatibility: pattern.compatibility,
+      trigger: pattern.trigger,
+      solution: pattern.solution,
+    };
+  } else if ("stack" in pattern) {
+    // Blueprint
+    contentToHash = {
+      name: pattern.name,
+      description: pattern.description,
+      tags: pattern.tags,
+      compatibility: pattern.compatibility,
+      stack: pattern.stack,
+      structure: pattern.structure,
+    };
+  } else {
+    // SolutionPattern
+    contentToHash = {
+      name: pattern.name,
+      description: pattern.description,
+      tags: pattern.tags,
+      compatibility: pattern.compatibility,
+      problem: pattern.problem,
+      implementation: pattern.implementation,
+      category: pattern.category,
+    };
+  }
 
   // Simple hash using JSON string
   const jsonString = JSON.stringify(contentToHash, Object.keys(contentToHash).sort());

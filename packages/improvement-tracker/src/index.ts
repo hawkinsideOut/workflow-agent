@@ -50,6 +50,16 @@ export {
   TelemetryEventTypeEnum,
   PatternTypeEnum,
   TelemetryEventSchema,
+  // Solution Pattern Schemas
+  SolutionCategoryEnum,
+  FileRoleEnum,
+  SolutionFileSchema,
+  ProblemDefinitionSchema,
+  EnvVarSchema,
+  DataModelSchema,
+  ImplementationSchema,
+  ArchitectureSchema,
+  SolutionPatternSchema,
   // Utility Functions
   isPatternDeprecated,
   generatePatternHash,
@@ -81,6 +91,16 @@ export {
   type PackageManager,
   type TelemetryEventType,
   type PatternType,
+  // Solution Pattern Types
+  type SolutionPattern,
+  type SolutionFile,
+  type SolutionCategory,
+  type FileRole,
+  type ProblemDefinition,
+  type Implementation,
+  type Architecture,
+  type EnvVar,
+  type DataModel,
 } from "./patterns-schema.js";
 
 // Agent Learning System - Pattern Store
@@ -88,6 +108,7 @@ export {
   PatternStore,
   createPatternStore,
   type PatternQuery,
+  type SolutionQuery,
   type PatternResult,
   type ConflictResult,
   type PatternStats,
@@ -121,3 +142,14 @@ export {
   type TelemetryResult,
   type TelemetrySender,
 } from "./telemetry.js";
+
+// Agent Learning System - Code Analyzer
+export {
+  CodeAnalyzer,
+  createCodeAnalyzer,
+  DEFAULT_ANALYZER_OPTIONS,
+  type AnalyzerOptions,
+  type FileAnalysis,
+  type SolutionAnalysis,
+  type ArchitectureAnalysis,
+} from "./code-analyzer.js";

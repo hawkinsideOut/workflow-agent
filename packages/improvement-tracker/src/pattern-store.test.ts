@@ -5,6 +5,7 @@ import { PatternStore, createPatternStore } from "./pattern-store";
 import {
   type FixPattern,
   type Blueprint,
+  type SolutionPattern,
   createDefaultMetrics,
   PATTERNS_DIR,
 } from "./patterns-schema";
@@ -83,6 +84,56 @@ const createTestBlueprint = (overrides: Partial<Blueprint> = {}): Blueprint => {
     },
     metrics: createDefaultMetrics(),
     relatedPatterns: [],
+    isPrivate: true,
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+};
+
+const createTestSolution = (overrides: Partial<SolutionPattern> = {}): SolutionPattern => {
+  const now = new Date().toISOString();
+  return {
+    id: crypto.randomUUID(),
+    name: "Test Solution Pattern",
+    description: "A test solution pattern for unit tests",
+    category: "auth",
+    tags: [{ name: "authentication", category: "custom" }],
+    problem: {
+      description: "Implement user authentication for web applications",
+      keywords: ["auth", "login", "jwt", "session"],
+      errorPatterns: [],
+    },
+    implementation: {
+      files: [
+        {
+          path: "src/auth/login.ts",
+          purpose: "Handles user login authentication",
+          role: "service",
+          content: "export async function login(email: string, password: string) { return true; }",
+          exports: ["login"],
+          imports: [],
+          lineCount: 5,
+        },
+      ],
+      dependencies: [{ name: "jsonwebtoken", version: "9.0.0", compatibleRange: "^9.0.0" }],
+      devDependencies: [],
+      envVars: [],
+    },
+    architecture: {
+      entryPoints: ["src/auth/login.ts"],
+      dataFlow: "Controller -> Service -> Repository",
+      keyDecisions: ["Use JWT for stateless auth"],
+    },
+    compatibility: {
+      framework: "next",
+      frameworkVersion: "^14.0.0",
+      dependencies: [],
+    },
+    metrics: createDefaultMetrics(),
+    relatedPatterns: [],
+    source: "manual",
+    sourceProject: "test-project",
     isPrivate: true,
     createdAt: now,
     updatedAt: now,
@@ -1020,6 +1071,567 @@ describe("PatternStore", () => {
 
         const updated = await store.getBlueprint(blueprint.id);
         expect(updated.data?.syncedAt).toBeDefined();
+      });
+    });
+  });
+
+  // ============================================
+  // Solution Pattern CRUD Tests
+  // ============================================
+
+  describe("solution pattern CRUD", () => {
+    beforeEach(async () => {
+      await store.initialize();
+    });
+
+    describe("saveSolution", () => {
+      it("should save a valid solution pattern", async () => {
+        const solution = createTestSolution();
+        const result = await store.saveSolution(solution);
+
+        expect(result.success).toBe(true);
+        expect(result.data).toBeDefined();
+        expect(result.data?.id).toBe(solution.id);
+      });
+
+      it("should reject invalid solution pattern", async () => {
+        const invalid = { id: "not-a-uuid", name: "x" } as SolutionPattern;
+        const result = await store.saveSolution(invalid);
+
+        expect(result.success).toBe(false);
+        expect(result.error).toContain("Validation failed");
+      });
+
+      it("should persist solution to disk", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+
+        const filePath = path.join(
+          TEST_WORKSPACE,
+          PATTERNS_DIR,
+          "solutions",
+          `${solution.id}.json`,
+        );
+        const content = await fs.promises.readFile(filePath, "utf-8");
+        const saved = JSON.parse(content);
+
+        expect(saved.id).toBe(solution.id);
+        expect(saved.name).toBe(solution.name);
+      });
+
+      it("should detect conflicts with same name", async () => {
+        const solution1 = createTestSolution({ name: "Auth Solution" });
+        const solution2 = createTestSolution({ name: "Auth Solution" });
+
+        await store.saveSolution(solution1);
+        const result = await store.saveSolution(solution2);
+
+        expect(result.success).toBe(true);
+        expect(result.data?.conflictVersion).toBe(2);
+        expect(result.data?.originalId).toBe(solution1.id);
+      });
+    });
+
+    describe("getSolution", () => {
+      it("should retrieve a saved solution", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+
+        const result = await store.getSolution(solution.id);
+
+        expect(result.success).toBe(true);
+        expect(result.data?.id).toBe(solution.id);
+        expect(result.data?.name).toBe(solution.name);
+      });
+
+      it("should return error for non-existent solution", async () => {
+        const result = await store.getSolution("non-existent-id");
+
+        expect(result.success).toBe(false);
+        expect(result.error).toBe("Solution not found");
+      });
+
+      it("should return all solution properties", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+
+        const result = await store.getSolution(solution.id);
+
+        expect(result.data?.category).toBe("auth");
+        expect(result.data?.problem.keywords).toContain("jwt");
+        expect(result.data?.implementation.files.length).toBe(1);
+        expect(result.data?.architecture.entryPoints).toContain("src/auth/login.ts");
+      });
+    });
+
+    describe("deleteSolution", () => {
+      it("should delete an existing solution", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+
+        const deleteResult = await store.deleteSolution(solution.id);
+        expect(deleteResult.success).toBe(true);
+
+        const getResult = await store.getSolution(solution.id);
+        expect(getResult.success).toBe(false);
+        expect(getResult.error).toBe("Solution not found");
+      });
+
+      it("should return error for non-existent solution", async () => {
+        const result = await store.deleteSolution("non-existent-id");
+
+        expect(result.success).toBe(false);
+        expect(result.error).toBe("Solution not found");
+      });
+    });
+
+    describe("listSolutions", () => {
+      it("should return empty array when no solutions exist", async () => {
+        const result = await store.listSolutions();
+
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual([]);
+      });
+
+      it("should return all saved solutions", async () => {
+        const solution1 = createTestSolution({ name: "Solution 1" });
+        const solution2 = createTestSolution({ name: "Solution 2" });
+
+        await store.saveSolution(solution1);
+        await store.saveSolution(solution2);
+
+        const result = await store.listSolutions();
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(2);
+      });
+
+      it("should filter by framework", async () => {
+        const nextSolution = createTestSolution({
+          compatibility: {
+            framework: "next",
+            frameworkVersion: "^14.0.0",
+            dependencies: [],
+          },
+        });
+        const reactSolution = createTestSolution({
+          compatibility: {
+            framework: "react",
+            frameworkVersion: "^18.0.0",
+            dependencies: [],
+          },
+        });
+
+        await store.saveSolution(nextSolution);
+        await store.saveSolution(reactSolution);
+
+        const result = await store.listSolutions({ framework: "next" });
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(1);
+        expect(result.data?.[0].compatibility.framework).toBe("next");
+      });
+
+      it("should filter by solution category", async () => {
+        const authSolution = createTestSolution({ category: "auth" });
+        const dbSolution = createTestSolution({ category: "database" });
+
+        await store.saveSolution(authSolution);
+        await store.saveSolution(dbSolution);
+
+        const result = await store.listSolutions({ solutionCategory: "auth" });
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(1);
+        expect(result.data?.[0].category).toBe("auth");
+      });
+
+      it("should filter by source project", async () => {
+        const proj1 = createTestSolution({ sourceProject: "project-a" });
+        const proj2 = createTestSolution({ sourceProject: "project-b" });
+
+        await store.saveSolution(proj1);
+        await store.saveSolution(proj2);
+
+        const result = await store.listSolutions({ sourceProject: "project-a" });
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(1);
+        expect(result.data?.[0].sourceProject).toBe("project-a");
+      });
+
+      it("should filter by keywords", async () => {
+        const jwtSolution = createTestSolution({
+          problem: {
+            description: "JWT Auth implementation for secure tokens",
+            keywords: ["jwt", "token"],
+            errorPatterns: [],
+          },
+        });
+        const oauthSolution = createTestSolution({
+          problem: {
+            description: "OAuth integration with third-party providers",
+            keywords: ["oauth", "google"],
+            errorPatterns: [],
+          },
+        });
+
+        await store.saveSolution(jwtSolution);
+        await store.saveSolution(oauthSolution);
+
+        const result = await store.listSolutions({ keywords: ["jwt"] });
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(1);
+        expect(result.data?.[0].problem.keywords).toContain("jwt");
+      });
+
+      it("should filter by tags", async () => {
+        const reactTag = { name: "react", category: "framework" as const };
+        const vueTag = { name: "vue", category: "framework" as const };
+
+        const reactSolution = createTestSolution({ tags: [reactTag] });
+        const vueSolution = createTestSolution({ tags: [vueTag] });
+
+        await store.saveSolution(reactSolution);
+        await store.saveSolution(vueSolution);
+
+        const result = await store.listSolutions({ tags: [reactTag] });
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(1);
+        expect(result.data?.[0].tags[0].name).toBe("react");
+      });
+
+      it("should search in name and description", async () => {
+        const solution1 = createTestSolution({
+          name: "JWT Authentication",
+          description: "Handles JWT tokens",
+        });
+        const solution2 = createTestSolution({
+          name: "Database Connection",
+          description: "PostgreSQL setup",
+        });
+
+        await store.saveSolution(solution1);
+        await store.saveSolution(solution2);
+
+        const result = await store.listSolutions({ search: "jwt" });
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(1);
+        expect(result.data?.[0].name).toBe("JWT Authentication");
+      });
+
+      it("should apply pagination", async () => {
+        for (let i = 0; i < 5; i++) {
+          await store.saveSolution(createTestSolution({ name: `Solution ${i}` }));
+        }
+
+        const result = await store.listSolutions({ limit: 2, offset: 1 });
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(2);
+      });
+
+      it("should exclude deprecated solutions by default", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+        await store.deprecateSolution(solution.id, "Outdated");
+
+        const result = await store.listSolutions();
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(0);
+      });
+
+      it("should include deprecated solutions when requested", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+        await store.deprecateSolution(solution.id, "Outdated");
+
+        const result = await store.listSolutions({ includeDeprecated: true });
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(1);
+      });
+    });
+
+    describe("searchSolutions", () => {
+      it("should search by keywords with scoring", async () => {
+        const authSolution = createTestSolution({
+          name: "Auth Service",
+          description: "An authentication service for apps",
+          problem: {
+            description: "Authentication service for user login",
+            keywords: ["authentication-test", "login-test"],
+            errorPatterns: [],
+          },
+        });
+        const dbSolution = createTestSolution({
+          name: "Database Setup",
+          description: "A database configuration utility",
+          problem: {
+            description: "Database configuration and connection",
+            keywords: ["postgres-test", "database-test"],
+            errorPatterns: [],
+          },
+        });
+
+        await store.saveSolution(authSolution);
+        await store.saveSolution(dbSolution);
+
+        const result = await store.searchSolutions(["authentication-test", "login-test"]);
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(1);
+        expect(result.data?.[0].name).toBe("Auth Service");
+      });
+
+      it("should score problem keywords higher than name matches", async () => {
+        const keywordMatch = createTestSolution({
+          name: "Other Service",
+          description: "Some other service implementation",
+          problem: {
+            description: "Has target keyword for authentication",
+            keywords: ["xyzauthentication"],
+            errorPatterns: [],
+          },
+        });
+        const nameMatch = createTestSolution({
+          name: "XYZAuthentication Helper",
+          description: "Helper utilities for various tasks",
+          problem: {
+            description: "Helper utilities for various tasks",
+            keywords: ["xyzhelper", "xyzutility"],
+            errorPatterns: [],
+          },
+        });
+
+        await store.saveSolution(keywordMatch);
+        await store.saveSolution(nameMatch);
+
+        const result = await store.searchSolutions(["xyzauthentication"]);
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(2);
+        // Keyword match should be first (higher score)
+        expect(result.data?.[0].name).toBe("Other Service");
+      });
+
+      it("should filter out zero score results", async () => {
+        const solution = createTestSolution({
+          name: "Postgres DB",
+          description: "A postgres database setup",
+          problem: {
+            description: "Database configuration and setup",
+            keywords: ["xyzpostgres", "xyzdb"],
+            errorPatterns: [],
+          },
+        });
+
+        await store.saveSolution(solution);
+
+        const result = await store.searchSolutions(["xyznonexistent"]);
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(0);
+      });
+
+      it("should respect limit option", async () => {
+        for (let i = 0; i < 5; i++) {
+          await store.saveSolution(
+            createTestSolution({
+              name: `Auth Solution ${i}`,
+              problem: {
+                description: "Authentication solution implementation",
+                keywords: ["auth"],
+                errorPatterns: [],
+              },
+            }),
+          );
+        }
+
+        const result = await store.searchSolutions(["auth"], { limit: 2 });
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(2);
+      });
+
+      it("should combine with other query options", async () => {
+        const nextAuth = createTestSolution({
+          name: "Next Auth",
+          problem: {
+            description: "Authentication for Next.js apps",
+            keywords: ["auth"],
+            errorPatterns: [],
+          },
+          compatibility: {
+            framework: "next",
+            frameworkVersion: "^14.0.0",
+            dependencies: [],
+          },
+        });
+        const reactAuth = createTestSolution({
+          name: "React Auth",
+          problem: {
+            description: "Authentication for React apps",
+            keywords: ["auth"],
+            errorPatterns: [],
+          },
+          compatibility: {
+            framework: "react",
+            frameworkVersion: "^18.0.0",
+            dependencies: [],
+          },
+        });
+
+        await store.saveSolution(nextAuth);
+        await store.saveSolution(reactAuth);
+
+        const result = await store.searchSolutions(["auth"], { framework: "next" });
+
+        expect(result.success).toBe(true);
+        expect(result.data?.length).toBe(1);
+        expect(result.data?.[0].name).toBe("Next Auth");
+      });
+    });
+
+    describe("updateSolutionMetrics", () => {
+      it("should update metrics on success", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+
+        const result = await store.updateSolutionMetrics(solution.id, true);
+
+        expect(result.success).toBe(true);
+        expect(result.data?.metrics.applications).toBe(1);
+        expect(result.data?.metrics.successes).toBe(1);
+        expect(result.data?.metrics.failures).toBe(0);
+        expect(result.data?.metrics.successRate).toBe(100);
+      });
+
+      it("should update metrics on failure", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+
+        const result = await store.updateSolutionMetrics(solution.id, false);
+
+        expect(result.success).toBe(true);
+        expect(result.data?.metrics.applications).toBe(1);
+        expect(result.data?.metrics.successes).toBe(0);
+        expect(result.data?.metrics.failures).toBe(1);
+        expect(result.data?.metrics.successRate).toBe(0);
+      });
+
+      it("should accumulate multiple updates", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+
+        await store.updateSolutionMetrics(solution.id, true);
+        await store.updateSolutionMetrics(solution.id, true);
+        const result = await store.updateSolutionMetrics(solution.id, false);
+
+        expect(result.success).toBe(true);
+        expect(result.data?.metrics.applications).toBe(3);
+        expect(result.data?.metrics.successes).toBe(2);
+        expect(result.data?.metrics.failures).toBe(1);
+      });
+
+      it("should return error for non-existent solution", async () => {
+        const result = await store.updateSolutionMetrics("non-existent", true);
+
+        expect(result.success).toBe(false);
+      });
+    });
+
+    describe("deprecateSolution", () => {
+      it("should deprecate a solution", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+
+        const result = await store.deprecateSolution(
+          solution.id,
+          "No longer needed",
+        );
+
+        expect(result.success).toBe(true);
+        expect(result.data?.deprecatedAt).toBeDefined();
+        expect(result.data?.deprecationReason).toBe("No longer needed");
+      });
+
+      it("should return error for non-existent solution", async () => {
+        const result = await store.deprecateSolution(
+          "non-existent",
+          "Some reason",
+        );
+
+        expect(result.success).toBe(false);
+      });
+    });
+
+    describe("detectSolutionConflict", () => {
+      it("should detect no conflict for new solution", async () => {
+        const solution = createTestSolution({ name: "Unique Name" });
+        const conflict = await store.detectSolutionConflict(solution);
+
+        expect(conflict.hasConflict).toBe(false);
+      });
+
+      it("should detect conflict with same name", async () => {
+        const existing = createTestSolution({ name: "Conflict Name" });
+        await store.saveSolution(existing);
+
+        const newSolution = createTestSolution({ name: "Conflict Name" });
+        const conflict = await store.detectSolutionConflict(newSolution);
+
+        expect(conflict.hasConflict).toBe(true);
+        expect(conflict.suggestedVersion).toBe(2);
+        expect(conflict.existingPattern?.id).toBe(existing.id);
+      });
+
+      it("should skip self when checking for conflicts", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+
+        const conflict = await store.detectSolutionConflict(solution);
+
+        expect(conflict.hasConflict).toBe(false);
+      });
+    });
+
+    describe("getStats with solutions", () => {
+      it("should include solution counts in stats", async () => {
+        const solution1 = createTestSolution({ isPrivate: true });
+        const solution2 = createTestSolution({ isPrivate: false });
+
+        await store.saveSolution(solution1);
+        await store.saveSolution(solution2);
+
+        const stats = await store.getStats();
+
+        expect(stats.totalSolutions).toBe(2);
+        expect(stats.privateSolutions).toBe(1);
+        expect(stats.deprecatedSolutions).toBe(0);
+      });
+
+      it("should count deprecated solutions", async () => {
+        const solution = createTestSolution();
+        await store.saveSolution(solution);
+        await store.deprecateSolution(solution.id, "Outdated");
+
+        const stats = await store.getStats();
+
+        expect(stats.deprecatedSolutions).toBe(1);
+      });
+
+      it("should count synced solutions", async () => {
+        const solution = createTestSolution({ syncedAt: new Date().toISOString() });
+        await store.saveSolution(solution);
+
+        const stats = await store.getStats();
+
+        expect(stats.syncedSolutions).toBe(1);
       });
     });
   });

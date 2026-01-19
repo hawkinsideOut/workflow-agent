@@ -26,6 +26,16 @@ import {
   TelemetryEventTypeEnum,
   PatternTypeEnum,
   TelemetryEventSchema,
+  // Solution Pattern Schemas
+  SolutionCategoryEnum,
+  FileRoleEnum,
+  SolutionFileSchema,
+  ProblemDefinitionSchema,
+  EnvVarSchema,
+  DataModelSchema,
+  ImplementationSchema,
+  ArchitectureSchema,
+  SolutionPatternSchema,
   // Constants
   DEPRECATION_THRESHOLD_DAYS,
   PATTERNS_DIR,
@@ -40,6 +50,7 @@ import {
   type FixPattern,
   type Blueprint,
   type PatternMetrics,
+  type SolutionPattern,
 } from "./patterns-schema";
 
 // ============================================
@@ -1195,5 +1206,819 @@ describe("Integration: Pattern validation flow", () => {
 
     const result = BlueprintSchema.safeParse(blueprint);
     expect(result.success).toBe(true);
+  });
+});
+
+// ============================================
+// Solution Pattern Schema Tests
+// ============================================
+
+// Test Fixtures for Solution Patterns (matching actual schema)
+const createValidSolutionEnvVar = () => ({
+  name: "DATABASE_URL",
+  description: "PostgreSQL connection string",
+  required: true,
+  example: "postgresql://user:pass@localhost:5432/db",
+});
+
+const createValidSolutionDataModel = () => ({
+  name: "User",
+  description: "User account model",
+  schema: "model User { id String @id email String @unique }",
+});
+
+const createValidSolutionFile = () => ({
+  path: "src/auth/login.ts",
+  purpose: "Login handler with password verification",
+  role: "service" as const,
+  content: `export async function login(email: string, password: string) {
+  const user = await findUserByEmail(email);
+  if (!user || !await verifyPassword(password, user.passwordHash)) {
+    throw new Error('Invalid credentials');
+  }
+  return createSession(user.id);
+}`,
+  exports: ["login"],
+  imports: ["bcrypt", "@prisma/client"],
+  lineCount: 8,
+});
+
+const createValidSolutionProblem = () => ({
+  keywords: ["authentication", "login", "password", "session"],
+  description: "User authentication with email and password for secure login",
+  errorPatterns: ["Invalid credentials", "User not found"],
+});
+
+const createValidSolutionImplementation = () => ({
+  files: [createValidSolutionFile()],
+  dependencies: [{ name: "bcrypt", version: "5.1.0", compatibleRange: "^5.0.0" }],
+  devDependencies: [{ name: "@types/bcrypt", version: "5.0.0", compatibleRange: "^5.0.0" }],
+  envVars: [createValidSolutionEnvVar()],
+  dataModels: [createValidSolutionDataModel()],
+});
+
+const createValidSolutionArchitecture = () => ({
+  entryPoints: ["src/auth/login.ts"],
+  dataFlow: "Request → Controller → Service → Repository → Database",
+  keyDecisions: [
+    "Separate auth logic from user management",
+    "Use repository pattern for database access",
+  ],
+  diagram: "graph LR; A[Request] --> B[Auth]; B --> C[DB]",
+});
+
+const createValidSolutionPattern = (): SolutionPattern => ({
+  id: "550e8400-e29b-41d4-a716-446655440001",
+  name: "Email/Password Authentication",
+  description: "Complete authentication flow with email and password using bcrypt and sessions",
+  category: "auth",
+  tags: [
+    { name: "authentication", category: "custom" },
+    { name: "typescript", category: "tool" },
+  ],
+  problem: createValidSolutionProblem(),
+  implementation: createValidSolutionImplementation(),
+  architecture: createValidSolutionArchitecture(),
+  compatibility: {
+    framework: "next",
+    frameworkVersion: "^14.0.0",
+    runtime: "node",
+    runtimeVersion: "^20.0.0",
+    dependencies: [{ name: "bcrypt", version: "5.0.0", compatibleRange: "^5.0.0" }],
+  },
+  metrics: createValidMetrics(),
+  relatedPatterns: [],
+  source: "community",
+  sourceProject: "project-123",
+  isPrivate: true,
+  createdAt: "2024-01-01T00:00:00.000Z",
+  updatedAt: "2024-01-15T00:00:00.000Z",
+});
+
+describe("SolutionCategoryEnum", () => {
+  const validCategories = [
+    "auth",
+    "database",
+    "api",
+    "state",
+    "forms",
+    "ui",
+    "testing",
+    "deployment",
+    "error-handling",
+    "caching",
+    "security",
+    "performance",
+    "integrations",
+    "other",
+  ];
+
+  it.each(validCategories)("should accept valid category: %s", (category) => {
+    const result = SolutionCategoryEnum.safeParse(category);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject invalid category", () => {
+    const result = SolutionCategoryEnum.safeParse("invalid-category");
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject empty string", () => {
+    const result = SolutionCategoryEnum.safeParse("");
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("FileRoleEnum", () => {
+  const validRoles = [
+    "entry",
+    "config",
+    "util",
+    "component",
+    "hook",
+    "middleware",
+    "model",
+    "service",
+    "test",
+    "type",
+  ];
+
+  it.each(validRoles)("should accept valid role: %s", (role) => {
+    const result = FileRoleEnum.safeParse(role);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject invalid role", () => {
+    const result = FileRoleEnum.safeParse("invalid-role");
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("EnvVarSchema (Solution)", () => {
+  it("should validate a complete env var", () => {
+    const result = EnvVarSchema.safeParse(createValidSolutionEnvVar());
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept env var without optional example", () => {
+    const { example, ...envVar } = createValidSolutionEnvVar();
+    const result = EnvVarSchema.safeParse(envVar);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject env var without name", () => {
+    const { name, ...envVar } = createValidSolutionEnvVar();
+    const result = EnvVarSchema.safeParse(envVar);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject env var without description", () => {
+    const { description, ...envVar } = createValidSolutionEnvVar();
+    const result = EnvVarSchema.safeParse(envVar);
+    expect(result.success).toBe(false);
+  });
+
+  it("should accept env var with required=false", () => {
+    const envVar = { ...createValidSolutionEnvVar(), required: false };
+    const result = EnvVarSchema.safeParse(envVar);
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("DataModelSchema (Solution)", () => {
+  it("should validate a complete data model", () => {
+    const result = DataModelSchema.safeParse(createValidSolutionDataModel());
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept data model without optional schema", () => {
+    const { schema, ...model } = createValidSolutionDataModel();
+    const result = DataModelSchema.safeParse(model);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject data model without name", () => {
+    const { name, ...model } = createValidSolutionDataModel();
+    const result = DataModelSchema.safeParse(model);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject data model without description", () => {
+    const { description, ...model } = createValidSolutionDataModel();
+    const result = DataModelSchema.safeParse(model);
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("SolutionFileSchema", () => {
+  it("should validate a complete solution file", () => {
+    const result = SolutionFileSchema.safeParse(createValidSolutionFile());
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject file without path", () => {
+    const { path, ...file } = createValidSolutionFile();
+    const result = SolutionFileSchema.safeParse(file);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject file with invalid role", () => {
+    const file = { ...createValidSolutionFile(), role: "invalid-role" };
+    const result = SolutionFileSchema.safeParse(file);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject file without content", () => {
+    const { content, ...file } = createValidSolutionFile();
+    const result = SolutionFileSchema.safeParse(file);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject file without purpose", () => {
+    const { purpose, ...file } = createValidSolutionFile();
+    const result = SolutionFileSchema.safeParse(file);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject file with purpose exceeding max length", () => {
+    const file = { ...createValidSolutionFile(), purpose: "x".repeat(201) };
+    const result = SolutionFileSchema.safeParse(file);
+    expect(result.success).toBe(false);
+  });
+
+  it("should validate lineCount as positive integer", () => {
+    const file = { ...createValidSolutionFile(), lineCount: 1 };
+    const result = SolutionFileSchema.safeParse(file);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject lineCount of 0", () => {
+    const file = { ...createValidSolutionFile(), lineCount: 0 };
+    const result = SolutionFileSchema.safeParse(file);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject negative lineCount", () => {
+    const file = { ...createValidSolutionFile(), lineCount: -1 };
+    const result = SolutionFileSchema.safeParse(file);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject non-integer lineCount", () => {
+    const file = { ...createValidSolutionFile(), lineCount: 5.5 };
+    const result = SolutionFileSchema.safeParse(file);
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("ProblemDefinitionSchema (Solution)", () => {
+  it("should validate a complete problem definition", () => {
+    const result = ProblemDefinitionSchema.safeParse(createValidSolutionProblem());
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject problem without description", () => {
+    const { description, ...problem } = createValidSolutionProblem();
+    const result = ProblemDefinitionSchema.safeParse(problem);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject problem with short description", () => {
+    const problem = { ...createValidSolutionProblem(), description: "short" };
+    const result = ProblemDefinitionSchema.safeParse(problem);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject problem with description exceeding max", () => {
+    const problem = { ...createValidSolutionProblem(), description: "x".repeat(501) };
+    const result = ProblemDefinitionSchema.safeParse(problem);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject problem with empty keywords", () => {
+    const problem = { ...createValidSolutionProblem(), keywords: [] };
+    const result = ProblemDefinitionSchema.safeParse(problem);
+    expect(result.success).toBe(false);
+  });
+
+  it("should accept problem without optional errorPatterns", () => {
+    const { errorPatterns, ...problem } = createValidSolutionProblem();
+    const result = ProblemDefinitionSchema.safeParse(problem);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept problem with empty errorPatterns", () => {
+    const problem = { ...createValidSolutionProblem(), errorPatterns: [] };
+    const result = ProblemDefinitionSchema.safeParse(problem);
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("ImplementationSchema (Solution)", () => {
+  it("should validate a complete implementation", () => {
+    const result = ImplementationSchema.safeParse(createValidSolutionImplementation());
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject implementation with empty files", () => {
+    const impl = { ...createValidSolutionImplementation(), files: [] };
+    const result = ImplementationSchema.safeParse(impl);
+    expect(result.success).toBe(false);
+  });
+
+  it("should accept implementation without optional dataModels", () => {
+    const { dataModels, ...impl } = createValidSolutionImplementation();
+    const result = ImplementationSchema.safeParse(impl);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept implementation with empty dependencies", () => {
+    const impl = { ...createValidSolutionImplementation(), dependencies: [] };
+    const result = ImplementationSchema.safeParse(impl);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept implementation with empty devDependencies", () => {
+    const impl = { ...createValidSolutionImplementation(), devDependencies: [] };
+    const result = ImplementationSchema.safeParse(impl);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept implementation with empty envVars", () => {
+    const impl = { ...createValidSolutionImplementation(), envVars: [] };
+    const result = ImplementationSchema.safeParse(impl);
+    expect(result.success).toBe(true);
+  });
+
+  it("should validate multiple files", () => {
+    const impl = {
+      ...createValidSolutionImplementation(),
+      files: [
+        createValidSolutionFile(),
+        {
+          path: "src/auth/session.ts",
+          purpose: "Session management service",
+          role: "service" as const,
+          content: "export function createSession() {}",
+          exports: ["createSession"],
+          imports: [],
+          lineCount: 1,
+        },
+      ],
+    };
+    const result = ImplementationSchema.safeParse(impl);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.files).toHaveLength(2);
+    }
+  });
+});
+
+describe("ArchitectureSchema (Solution)", () => {
+  it("should validate a complete architecture", () => {
+    const result = ArchitectureSchema.safeParse(createValidSolutionArchitecture());
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject architecture without entryPoints", () => {
+    const { entryPoints, ...arch } = createValidSolutionArchitecture();
+    const result = ArchitectureSchema.safeParse(arch);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject architecture without dataFlow", () => {
+    const { dataFlow, ...arch } = createValidSolutionArchitecture();
+    const result = ArchitectureSchema.safeParse(arch);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject architecture with dataFlow exceeding max", () => {
+    const arch = { ...createValidSolutionArchitecture(), dataFlow: "x".repeat(1001) };
+    const result = ArchitectureSchema.safeParse(arch);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject architecture without keyDecisions", () => {
+    const { keyDecisions, ...arch } = createValidSolutionArchitecture();
+    const result = ArchitectureSchema.safeParse(arch);
+    expect(result.success).toBe(false);
+  });
+
+  it("should accept architecture without optional diagram", () => {
+    const { diagram, ...arch } = createValidSolutionArchitecture();
+    const result = ArchitectureSchema.safeParse(arch);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept architecture with empty keyDecisions", () => {
+    const arch = { ...createValidSolutionArchitecture(), keyDecisions: [] };
+    const result = ArchitectureSchema.safeParse(arch);
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("SolutionPatternSchema", () => {
+  it("should validate a complete solution pattern", () => {
+    const result = SolutionPatternSchema.safeParse(createValidSolutionPattern());
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject solution pattern without id", () => {
+    const { id, ...pattern } = createValidSolutionPattern();
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject solution pattern with invalid uuid", () => {
+    const pattern = { ...createValidSolutionPattern(), id: "not-a-uuid" };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject solution pattern without name", () => {
+    const { name, ...pattern } = createValidSolutionPattern();
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject solution pattern with short name", () => {
+    const pattern = { ...createValidSolutionPattern(), name: "ab" };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject solution pattern with name exceeding max", () => {
+    const pattern = { ...createValidSolutionPattern(), name: "x".repeat(101) };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject solution pattern with invalid category", () => {
+    const pattern = { ...createValidSolutionPattern(), category: "invalid-category" };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject solution pattern without problem", () => {
+    const { problem, ...pattern } = createValidSolutionPattern();
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject solution pattern without implementation", () => {
+    const { implementation, ...pattern } = createValidSolutionPattern();
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject solution pattern without architecture", () => {
+    const { architecture, ...pattern } = createValidSolutionPattern();
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should accept solution pattern without optional sourceProject", () => {
+    const { sourceProject, ...pattern } = createValidSolutionPattern();
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(true);
+  });
+
+  it("should validate related patterns as uuid array", () => {
+    const pattern = {
+      ...createValidSolutionPattern(),
+      relatedPatterns: [
+        "550e8400-e29b-41d4-a716-446655440002",
+        "550e8400-e29b-41d4-a716-446655440003",
+      ],
+    };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject invalid uuid in relatedPatterns", () => {
+    const pattern = {
+      ...createValidSolutionPattern(),
+      relatedPatterns: ["not-a-uuid"],
+    };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should validate deprecatedAt as ISO datetime", () => {
+    const pattern = {
+      ...createValidSolutionPattern(),
+      deprecatedAt: "2024-06-01T00:00:00.000Z",
+    };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept solution pattern with all valid sources", () => {
+    const sources = ["manual", "auto-heal", "verify-fix", "community"];
+    for (const source of sources) {
+      const pattern = { ...createValidSolutionPattern(), source };
+      const result = SolutionPatternSchema.safeParse(pattern);
+      expect(result.success).toBe(true);
+    }
+  });
+
+  it("should validate isPrivate as boolean", () => {
+    const patternPrivate = { ...createValidSolutionPattern(), isPrivate: true };
+    const patternPublic = { ...createValidSolutionPattern(), isPrivate: false };
+    expect(SolutionPatternSchema.safeParse(patternPrivate).success).toBe(true);
+    expect(SolutionPatternSchema.safeParse(patternPublic).success).toBe(true);
+  });
+
+  it("should accept optional syncedAt datetime", () => {
+    const pattern = {
+      ...createValidSolutionPattern(),
+      syncedAt: "2024-03-01T12:00:00.000Z",
+    };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept optional contributorId", () => {
+    const pattern = {
+      ...createValidSolutionPattern(),
+      contributorId: "contributor-abc123",
+    };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept optional conflictVersion", () => {
+    const pattern = {
+      ...createValidSolutionPattern(),
+      conflictVersion: 2,
+    };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject conflictVersion less than 1", () => {
+    const pattern = {
+      ...createValidSolutionPattern(),
+      conflictVersion: 0,
+    };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should accept optional originalId as uuid", () => {
+    const pattern = {
+      ...createValidSolutionPattern(),
+      originalId: "550e8400-e29b-41d4-a716-446655440099",
+    };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject invalid originalId", () => {
+    const pattern = {
+      ...createValidSolutionPattern(),
+      originalId: "not-a-uuid",
+    };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(false);
+  });
+
+  it("should accept optional deprecationReason", () => {
+    const pattern = {
+      ...createValidSolutionPattern(),
+      deprecatedAt: "2024-06-01T00:00:00.000Z",
+      deprecationReason: "Replaced by new implementation",
+    };
+    const result = SolutionPatternSchema.safeParse(pattern);
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("Solution Pattern Integration Tests", () => {
+  it("should create and validate a complete authentication solution", () => {
+    const authSolution: SolutionPattern = {
+      id: crypto.randomUUID(),
+      name: "JWT Authentication with Refresh Tokens",
+      description: "Complete JWT auth implementation with access and refresh token rotation",
+      category: "auth",
+      tags: [
+        { name: "jwt", category: "custom" },
+        { name: "security", category: "custom" },
+        { name: "typescript", category: "tool" },
+      ],
+      problem: {
+        keywords: ["jwt", "authentication", "refresh-token", "security"],
+        description: "Implement secure token-based authentication with automatic refresh capability",
+        errorPatterns: ["Token expired", "Invalid token"],
+      },
+      implementation: {
+        files: [
+          {
+            path: "src/auth/jwt.ts",
+            purpose: "JWT token generation service",
+            role: "service",
+            content: `import jwt from 'jsonwebtoken';
+export function generateTokens(userId: string) {
+  const accessToken = jwt.sign({ userId }, process.env.JWT_SECRET!, { expiresIn: '15m' });
+  const refreshToken = jwt.sign({ userId }, process.env.REFRESH_SECRET!, { expiresIn: '7d' });
+  return { accessToken, refreshToken };
+}`,
+            exports: ["generateTokens"],
+            imports: ["jsonwebtoken"],
+            lineCount: 7,
+          },
+        ],
+        dependencies: [{ name: "jsonwebtoken", version: "9.0.0", compatibleRange: "^9.0.0" }],
+        devDependencies: [{ name: "@types/jsonwebtoken", version: "9.0.0", compatibleRange: "^9.0.0" }],
+        envVars: [
+          { name: "JWT_SECRET", description: "Secret for access tokens", required: true, example: "your-secret-key" },
+          { name: "REFRESH_SECRET", description: "Secret for refresh tokens", required: true, example: "refresh-secret" },
+        ],
+      },
+      architecture: {
+        entryPoints: ["src/auth/jwt.ts"],
+        dataFlow: "Request → Verify Token → Controller → Response with new tokens",
+        keyDecisions: ["Separate secrets for access and refresh tokens", "Short-lived access tokens"],
+      },
+      compatibility: {
+        framework: "express",
+        frameworkVersion: "^4.18.0",
+        runtime: "node",
+        runtimeVersion: "^20.0.0",
+        dependencies: [],
+      },
+      metrics: createDefaultMetrics(),
+      relatedPatterns: [],
+      source: "community",
+      isPrivate: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = SolutionPatternSchema.safeParse(authSolution);
+    expect(result.success).toBe(true);
+  });
+
+  it("should create and validate a database pattern with multiple files", () => {
+    const dbPattern: SolutionPattern = {
+      id: crypto.randomUUID(),
+      name: "Prisma Repository Pattern",
+      description: "Database access layer using Prisma with repository pattern",
+      category: "database",
+      tags: [
+        { name: "prisma", category: "tool" },
+        { name: "repository", category: "custom" },
+      ],
+      problem: {
+        keywords: ["database", "prisma", "repository", "orm"],
+        description: "Abstract database operations using repository pattern for clean architecture",
+      },
+      implementation: {
+        files: [
+          {
+            path: "src/repositories/base.repository.ts",
+            purpose: "Base repository interface",
+            role: "model",
+            content: "export abstract class BaseRepository<T> { abstract findById(id: string): Promise<T | null>; }",
+            exports: ["BaseRepository"],
+            imports: [],
+            lineCount: 3,
+          },
+          {
+            path: "src/repositories/user.repository.ts",
+            purpose: "User repository implementation",
+            role: "service",
+            content: "export class UserRepository extends BaseRepository<User> { async findById(id: string) { return prisma.user.findUnique({ where: { id } }); } }",
+            exports: ["UserRepository"],
+            imports: ["@prisma/client"],
+            lineCount: 5,
+          },
+        ],
+        dependencies: [{ name: "@prisma/client", version: "5.0.0", compatibleRange: "^5.0.0" }],
+        devDependencies: [{ name: "prisma", version: "5.0.0", compatibleRange: "^5.0.0" }],
+        envVars: [],
+        dataModels: [
+          { name: "User", description: "User entity model" },
+        ],
+      },
+      architecture: {
+        entryPoints: ["src/repositories/user.repository.ts"],
+        dataFlow: "Controller → Repository → Prisma → Database",
+        keyDecisions: ["Abstract CRUD operations", "Type-safe queries"],
+      },
+      compatibility: {
+        framework: "next",
+        frameworkVersion: "^14.0.0",
+        runtime: "node",
+        runtimeVersion: "^20.0.0",
+        dependencies: [],
+      },
+      metrics: createDefaultMetrics(),
+      relatedPatterns: [],
+      source: "manual",
+      isPrivate: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = SolutionPatternSchema.safeParse(dbPattern);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.implementation.files).toHaveLength(2);
+      expect(result.data.implementation.dataModels).toHaveLength(1);
+    }
+  });
+
+  it("should validate UI component solution pattern", () => {
+    const uiPattern: SolutionPattern = {
+      id: crypto.randomUUID(),
+      name: "Accessible Modal Component",
+      description: "ARIA-compliant modal dialog with focus trap for accessibility",
+      category: "ui",
+      tags: [
+        { name: "react", category: "framework" },
+        { name: "accessibility", category: "custom" },
+      ],
+      problem: {
+        keywords: ["modal", "dialog", "accessibility", "focus-trap"],
+        description: "Create accessible modal component with proper focus management and ARIA attributes",
+      },
+      implementation: {
+        files: [
+          {
+            path: "src/components/Modal.tsx",
+            purpose: "Accessible modal component",
+            role: "component",
+            content: `import { useEffect, useRef } from 'react';
+export function Modal({ isOpen, onClose, children }) {
+  const modalRef = useRef(null);
+  useEffect(() => { if (isOpen) modalRef.current?.focus(); }, [isOpen]);
+  return isOpen ? <div role="dialog" ref={modalRef}>{children}</div> : null;
+}`,
+            exports: ["Modal"],
+            imports: ["react"],
+            lineCount: 7,
+          },
+        ],
+        dependencies: [],
+        devDependencies: [],
+        envVars: [],
+      },
+      architecture: {
+        entryPoints: ["src/components/Modal.tsx"],
+        dataFlow: "Parent → Modal → Focus trap → Child content",
+        keyDecisions: ["Use ref for focus management", "ARIA role attribute"],
+      },
+      compatibility: {
+        framework: "react",
+        frameworkVersion: "^18.0.0",
+        runtime: "browser",
+        runtimeVersion: "*",
+        dependencies: [],
+      },
+      metrics: createDefaultMetrics(),
+      relatedPatterns: [],
+      source: "auto-heal",
+      isPrivate: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = SolutionPatternSchema.safeParse(uiPattern);
+    expect(result.success).toBe(true);
+  });
+
+  it("should validate solution pattern with all sync-related fields", () => {
+    const syncPattern: SolutionPattern = {
+      ...createValidSolutionPattern(),
+      syncedAt: new Date().toISOString(),
+      contributorId: "contrib-123",
+      conflictVersion: 3,
+      originalId: "550e8400-e29b-41d4-a716-446655440099",
+    };
+
+    const result = SolutionPatternSchema.safeParse(syncPattern);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.syncedAt).toBeDefined();
+      expect(result.data.contributorId).toBe("contrib-123");
+      expect(result.data.conflictVersion).toBe(3);
+      expect(result.data.originalId).toBe("550e8400-e29b-41d4-a716-446655440099");
+    }
+  });
+
+  it("should validate deprecated solution pattern", () => {
+    const deprecatedPattern: SolutionPattern = {
+      ...createValidSolutionPattern(),
+      deprecatedAt: new Date().toISOString(),
+      deprecationReason: "Replaced by improved implementation with better performance",
+    };
+
+    const result = SolutionPatternSchema.safeParse(deprecatedPattern);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.deprecatedAt).toBeDefined();
+      expect(result.data.deprecationReason).toContain("Replaced");
+    }
   });
 });

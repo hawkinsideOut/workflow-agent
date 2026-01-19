@@ -3,6 +3,7 @@ import * as path from "node:path";
 import {
   FixPatternSchema,
   BlueprintSchema,
+  SolutionPatternSchema,
   PATTERNS_DIR,
   DEPRECATION_THRESHOLD_DAYS,
   isPatternDeprecated,
@@ -10,6 +11,7 @@ import {
   updateMetrics,
   type FixPattern,
   type Blueprint,
+  type SolutionPattern,
   type PatternTag,
 } from "./patterns-schema";
 
@@ -35,6 +37,16 @@ export interface PatternQuery {
   offset?: number;
 }
 
+/** Query options for searching solution patterns */
+export interface SolutionQuery extends PatternQuery {
+  /** Filter by solution category */
+  solutionCategory?: string;
+  /** Search in problem keywords */
+  keywords?: string[];
+  /** Filter by source project */
+  sourceProject?: string;
+}
+
 /** Result of a pattern operation */
 export interface PatternResult<T> {
   success: boolean;
@@ -45,7 +57,7 @@ export interface PatternResult<T> {
 /** Result of conflict detection */
 export interface ConflictResult {
   hasConflict: boolean;
-  existingPattern?: FixPattern | Blueprint;
+  existingPattern?: FixPattern | Blueprint | SolutionPattern;
   suggestedVersion?: number;
 }
 
@@ -53,12 +65,16 @@ export interface ConflictResult {
 export interface PatternStats {
   totalFixes: number;
   totalBlueprints: number;
+  totalSolutions: number;
   deprecatedFixes: number;
   deprecatedBlueprints: number;
+  deprecatedSolutions: number;
   privateFixes: number;
   privateBlueprints: number;
+  privateSolutions: number;
   syncedFixes: number;
   syncedBlueprints: number;
+  syncedSolutions: number;
 }
 
 // ============================================
@@ -66,18 +82,20 @@ export interface PatternStats {
 // ============================================
 
 /**
- * File-based store for fix patterns and blueprints.
+ * File-based store for fix patterns, blueprints, and solution patterns.
  * Supports CRUD operations, conflict resolution, and deprecation handling.
  */
 export class PatternStore {
   private readonly basePath: string;
   private readonly fixesPath: string;
   private readonly blueprintsPath: string;
+  private readonly solutionsPath: string;
 
   constructor(workspacePath: string) {
     this.basePath = path.join(workspacePath, PATTERNS_DIR);
     this.fixesPath = path.join(this.basePath, "fixes");
     this.blueprintsPath = path.join(this.basePath, "blueprints");
+    this.solutionsPath = path.join(this.basePath, "solutions");
   }
 
   // ============================================
@@ -90,6 +108,7 @@ export class PatternStore {
   async initialize(): Promise<void> {
     await fs.promises.mkdir(this.fixesPath, { recursive: true });
     await fs.promises.mkdir(this.blueprintsPath, { recursive: true });
+    await fs.promises.mkdir(this.solutionsPath, { recursive: true });
   }
 
   /**
@@ -400,6 +419,216 @@ export class PatternStore {
   }
 
   // ============================================
+  // Solution Pattern CRUD
+  // ============================================
+
+  /**
+   * Save a solution pattern to the store
+   */
+  async saveSolution(pattern: SolutionPattern): Promise<PatternResult<SolutionPattern>> {
+    try {
+      const validation = SolutionPatternSchema.safeParse(pattern);
+      if (!validation.success) {
+        return {
+          success: false,
+          error: `Validation failed: ${validation.error.message}`,
+        };
+      }
+
+      // Check for conflicts
+      const conflict = await this.detectSolutionConflict(pattern);
+      if (conflict.hasConflict && !pattern.conflictVersion) {
+        // Auto-assign version if conflict detected
+        pattern = {
+          ...pattern,
+          conflictVersion: conflict.suggestedVersion,
+          originalId: conflict.existingPattern?.id,
+        };
+      }
+
+      const filePath = this.getSolutionFilePath(pattern.id);
+      await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.promises.writeFile(filePath, JSON.stringify(pattern, null, 2));
+
+      return { success: true, data: pattern };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Get a solution pattern by ID
+   */
+  async getSolution(id: string): Promise<PatternResult<SolutionPattern>> {
+    try {
+      const filePath = this.getSolutionFilePath(id);
+      const content = await fs.promises.readFile(filePath, "utf-8");
+      const pattern = JSON.parse(content);
+      const validation = SolutionPatternSchema.safeParse(pattern);
+
+      if (!validation.success) {
+        return {
+          success: false,
+          error: `Invalid solution data: ${validation.error.message}`,
+        };
+      }
+
+      return { success: true, data: validation.data };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return { success: false, error: "Solution not found" };
+      }
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Delete a solution pattern by ID
+   */
+  async deleteSolution(id: string): Promise<PatternResult<void>> {
+    try {
+      const filePath = this.getSolutionFilePath(id);
+      await fs.promises.unlink(filePath);
+      return { success: true };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return { success: false, error: "Solution not found" };
+      }
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * List all solution patterns with optional filtering
+   */
+  async listSolutions(query: SolutionQuery = {}): Promise<PatternResult<SolutionPattern[]>> {
+    try {
+      const solutions = await this.loadAllSolutions();
+      const filtered = this.filterSolutions(solutions, query);
+      return { success: true, data: filtered };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Search for solutions by keywords (problem matching)
+   */
+  async searchSolutions(keywords: string[], options: SolutionQuery = {}): Promise<PatternResult<SolutionPattern[]>> {
+    try {
+      const result = await this.listSolutions({
+        ...options,
+        includeDeprecated: options.includeDeprecated ?? false,
+      });
+
+      if (!result.success || !result.data) {
+        return result;
+      }
+
+      // Score each solution by keyword matches
+      const scored = result.data.map((solution) => {
+        let score = 0;
+        const searchTerms = keywords.map((k) => k.toLowerCase());
+
+        // Check problem keywords (highest weight)
+        for (const term of searchTerms) {
+          const keywordMatch = solution.problem.keywords.some(
+            (k) => k.toLowerCase().includes(term) || term.includes(k.toLowerCase())
+          );
+          if (keywordMatch) score += 10;
+        }
+
+        // Check name and description (medium weight)
+        for (const term of searchTerms) {
+          if (solution.name.toLowerCase().includes(term)) score += 5;
+          if (solution.description.toLowerCase().includes(term)) score += 3;
+        }
+
+        // Check tags (medium weight)
+        for (const term of searchTerms) {
+          const tagMatch = solution.tags.some(
+            (t) => t.name.toLowerCase().includes(term)
+          );
+          if (tagMatch) score += 5;
+        }
+
+        return { solution, score };
+      });
+
+      // Filter out zero scores and sort by score descending
+      const matches = scored
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map(({ solution }) => solution);
+
+      // Apply limit if specified
+      const limited = options.limit ? matches.slice(0, options.limit) : matches;
+
+      return { success: true, data: limited };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Update metrics for a solution pattern
+   */
+  async updateSolutionMetrics(
+    id: string,
+    success: boolean,
+  ): Promise<PatternResult<SolutionPattern>> {
+    const result = await this.getSolution(id);
+    if (!result.success || !result.data) {
+      return result;
+    }
+
+    const updatedSolution = {
+      ...result.data,
+      metrics: updateMetrics(result.data.metrics, success),
+      updatedAt: new Date().toISOString(),
+    };
+
+    return this.saveSolution(updatedSolution);
+  }
+
+  /**
+   * Deprecate a solution pattern
+   */
+  async deprecateSolution(
+    id: string,
+    reason: string,
+  ): Promise<PatternResult<SolutionPattern>> {
+    const result = await this.getSolution(id);
+    if (!result.success || !result.data) {
+      return result;
+    }
+
+    const deprecatedSolution = {
+      ...result.data,
+      deprecatedAt: new Date().toISOString(),
+      deprecationReason: reason,
+      updatedAt: new Date().toISOString(),
+    };
+
+    return this.saveSolution(deprecatedSolution);
+  }
+
+  // ============================================
   // Search and Match
   // ============================================
 
@@ -527,6 +756,35 @@ export class PatternStore {
     };
   }
 
+  /**
+   * Detect if a solution pattern conflicts with existing solutions
+   */
+  async detectSolutionConflict(solution: SolutionPattern): Promise<ConflictResult> {
+    const existing = await this.loadAllSolutions();
+    const hash = generatePatternHash(solution);
+
+    const conflicts = existing.filter((s) => {
+      if (s.id === solution.id) return false;
+      const existingHash = generatePatternHash(s);
+      return existingHash === hash || s.name === solution.name;
+    });
+
+    if (conflicts.length === 0) {
+      return { hasConflict: false };
+    }
+
+    const maxVersion = Math.max(
+      ...conflicts.map((c) => c.conflictVersion ?? 1),
+      solution.conflictVersion ?? 0,
+    );
+
+    return {
+      hasConflict: true,
+      existingPattern: conflicts[0],
+      suggestedVersion: maxVersion + 1,
+    };
+  }
+
   // ============================================
   // Deprecation Management
   // ============================================
@@ -594,17 +852,22 @@ export class PatternStore {
   async getStats(): Promise<PatternStats> {
     const fixes = await this.loadAllFixPatterns();
     const blueprints = await this.loadAllBlueprints();
+    const solutions = await this.loadAllSolutions();
 
     return {
       totalFixes: fixes.length,
       totalBlueprints: blueprints.length,
+      totalSolutions: solutions.length,
       deprecatedFixes: fixes.filter((p) => isPatternDeprecated(p)).length,
       deprecatedBlueprints: blueprints.filter((b) => isPatternDeprecated(b))
         .length,
+      deprecatedSolutions: solutions.filter((s) => !!s.deprecatedAt).length,
       privateFixes: fixes.filter((p) => p.isPrivate).length,
       privateBlueprints: blueprints.filter((b) => b.isPrivate).length,
+      privateSolutions: solutions.filter((s) => s.isPrivate).length,
       syncedFixes: fixes.filter((p) => p.syncedAt).length,
       syncedBlueprints: blueprints.filter((b) => b.syncedAt).length,
+      syncedSolutions: solutions.filter((s) => s.syncedAt).length,
     };
   }
 
@@ -707,6 +970,10 @@ export class PatternStore {
     return path.join(this.blueprintsPath, `${id}.json`);
   }
 
+  private getSolutionFilePath(id: string): string {
+    return path.join(this.solutionsPath, `${id}.json`);
+  }
+
   private async loadAllFixPatterns(): Promise<FixPattern[]> {
     try {
       const files = await fs.promises.readdir(this.fixesPath);
@@ -770,6 +1037,114 @@ export class PatternStore {
       }
       throw error;
     }
+  }
+
+  private async loadAllSolutions(): Promise<SolutionPattern[]> {
+    try {
+      const files = await fs.promises.readdir(this.solutionsPath);
+      const solutions: SolutionPattern[] = [];
+
+      for (const file of files) {
+        if (!file.endsWith(".json")) continue;
+
+        try {
+          const content = await fs.promises.readFile(
+            path.join(this.solutionsPath, file),
+            "utf-8",
+          );
+          const data = JSON.parse(content);
+          const validation = SolutionPatternSchema.safeParse(data);
+          if (validation.success) {
+            solutions.push(validation.data);
+          }
+        } catch {
+          continue;
+        }
+      }
+
+      return solutions;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  private filterSolutions(
+    solutions: SolutionPattern[],
+    query: SolutionQuery,
+  ): SolutionPattern[] {
+    let filtered = [...solutions];
+
+    // Filter out deprecated unless explicitly requested
+    if (!query.includeDeprecated) {
+      filtered = filtered.filter((s) => !s.deprecatedAt);
+    }
+
+    // Filter by tags
+    if (query.tags && query.tags.length > 0) {
+      filtered = filtered.filter((s) =>
+        query.tags!.some((queryTag) =>
+          s.tags.some(
+            (sTag) =>
+              sTag.name.toLowerCase() === queryTag.name.toLowerCase() &&
+              sTag.category === queryTag.category,
+          ),
+        ),
+      );
+    }
+
+    // Filter by framework
+    if (query.framework) {
+      filtered = filtered.filter(
+        (s) =>
+          s.compatibility.framework.toLowerCase() ===
+          query.framework!.toLowerCase(),
+      );
+    }
+
+    // Filter by solution category
+    if (query.solutionCategory) {
+      filtered = filtered.filter(
+        (s) => s.category === query.solutionCategory,
+      );
+    }
+
+    // Filter by source project
+    if (query.sourceProject) {
+      filtered = filtered.filter(
+        (s) => s.sourceProject === query.sourceProject,
+      );
+    }
+
+    // Filter by keywords
+    if (query.keywords && query.keywords.length > 0) {
+      filtered = filtered.filter((s) =>
+        query.keywords!.some((keyword) =>
+          s.problem.keywords.some(
+            (k) => k.toLowerCase().includes(keyword.toLowerCase()),
+          ),
+        ),
+      );
+    }
+
+    // Search in name and description
+    if (query.search) {
+      const searchLower = query.search.toLowerCase();
+      filtered = filtered.filter(
+        (s) =>
+          s.name.toLowerCase().includes(searchLower) ||
+          s.description.toLowerCase().includes(searchLower),
+      );
+    }
+
+    // Apply pagination
+    const offset = query.offset ?? 0;
+    const limit = query.limit ?? filtered.length;
+    filtered = filtered.slice(offset, offset + limit);
+
+    return filtered;
   }
 
   private filterPatterns<T extends FixPattern | Blueprint>(

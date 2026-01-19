@@ -45,7 +45,10 @@
 ### Agent Learning System
 
 - 🧠 **Pattern recording** - Capture successful fixes and project setups
-- 🔒 **Privacy-first** - PII automatically anonymized before sharing
+- � **Solution patterns** - Learn from working code examples across projects
+- 🔍 **Code analysis** - Automatic detection of dependencies, env vars, and architecture
+- 📦 **Pattern library** - Search, apply, and share reusable implementations
+- �🔒 **Privacy-first** - PII automatically anonymized before sharing
 - 📈 **Telemetry** - Track pattern success rates (opt-in)
 - 🔄 **Community sync** - Share patterns with the ecosystem
 - ⏰ **Auto-deprecation** - Unused patterns deprecate after 1 year
@@ -267,6 +270,60 @@ Analyzes your project for:
 - Configuration issues
 - Optimization opportunities
 - Best practice violations
+
+### Solution Patterns
+
+Capture and reuse working code implementations across projects:
+
+#### Capture a Solution
+
+```bash
+# Interactive mode
+workflow-agent solution:capture
+
+# With options
+workflow-agent solution:capture \
+  --path ./src/auth \
+  --name "JWT Authentication" \
+  --category auth \
+  --tags "jwt,security"
+```
+
+#### Search for Solutions
+
+```bash
+# Search by keyword
+workflow-agent solution:search "authentication"
+
+# With category filter
+workflow-agent solution:search "user login" --category auth
+```
+
+#### List All Solutions
+
+```bash
+# List all patterns
+workflow-agent solution:list
+
+# Filter by category
+workflow-agent solution:list --category auth
+```
+
+#### Apply a Solution
+
+```bash
+# Apply to current project
+workflow-agent solution:apply sol_abc123
+
+# Dry run (preview only)
+workflow-agent solution:apply sol_abc123 --dry-run
+```
+
+#### View Statistics
+
+```bash
+workflow-agent solution:stats
+```
 
 ---
 

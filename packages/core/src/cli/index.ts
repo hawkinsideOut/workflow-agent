@@ -20,6 +20,14 @@ import {
   learnDeprecateCommand,
   learnStatsCommand,
 } from "./commands/learn.js";
+import {
+  solutionCaptureCommand,
+  solutionSearchCommand,
+  solutionListCommand,
+  solutionApplyCommand,
+  solutionDeprecateCommand,
+  solutionStatsCommand,
+} from "./commands/solution.js";
 
 const program = new Command();
 
@@ -188,5 +196,59 @@ program
   .command("learn:stats")
   .description("Show learning statistics")
   .action(learnStatsCommand);
+
+// ============================================
+// Solution Pattern Commands
+// ============================================
+
+program
+  .command("solution:capture")
+  .description("Capture a solution pattern from working code")
+  .option("--name <name>", "Solution name")
+  .option("--description <desc>", "Solution description")
+  .option("--category <cat>", "Category (auth, api, database, ui, testing, deployment, integration, performance, security, other)")
+  .option("--keywords <kw>", "Comma-separated keywords")
+  .option("--path <path>", "Path to the solution directory")
+  .option("--anonymize", "Anonymize sensitive data in code")
+  .action(solutionCaptureCommand);
+
+program
+  .command("solution:search <query>")
+  .description("Search for solution patterns")
+  .argument("<query>", "Search query (keywords, problem description)")
+  .option("--category <cat>", "Filter by category")
+  .option("--framework <fw>", "Filter by framework")
+  .option("--limit <n>", "Maximum results", "10")
+  .action(solutionSearchCommand);
+
+program
+  .command("solution:list")
+  .description("List all solution patterns")
+  .option("--category <cat>", "Filter by category")
+  .option("--framework <fw>", "Filter by framework")
+  .option("--deprecated", "Include deprecated solutions")
+  .option("--limit <n>", "Maximum results", "20")
+  .action(solutionListCommand);
+
+program
+  .command("solution:apply <solutionId>")
+  .description("Apply a solution pattern to the current project")
+  .argument("<solutionId>", "Solution ID to apply")
+  .option("--output <dir>", "Output directory")
+  .option("--dry-run", "Preview without applying")
+  .option("--include-tests", "Include test files")
+  .action(solutionApplyCommand);
+
+program
+  .command("solution:deprecate <solutionId> <reason>")
+  .description("Deprecate a solution pattern")
+  .argument("<solutionId>", "Solution ID to deprecate")
+  .argument("<reason>", "Reason for deprecation")
+  .action(solutionDeprecateCommand);
+
+program
+  .command("solution:stats")
+  .description("Show solution pattern statistics")
+  .action(solutionStatsCommand);
 
 program.parse();
