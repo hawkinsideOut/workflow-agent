@@ -2,13 +2,11 @@ import * as p from "@clack/prompts";
 import chalk from "chalk";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
-
-const WORKFLOW_SCRIPTS = {
-  "workflow:init": "workflow-agent init",
-  "workflow:validate": "workflow-agent validate",
-  "workflow:suggest": "workflow-agent suggest",
-  "workflow:doctor": "workflow-agent doctor",
-};
+import {
+  WORKFLOW_SCRIPTS,
+  SCRIPT_CATEGORIES,
+  TOTAL_SCRIPTS,
+} from "../../scripts/workflow-scripts.js";
 
 export async function setupCommand(): Promise<void> {
   p.intro(chalk.bgBlue(" workflow-agent setup "));
@@ -30,49 +28,33 @@ export async function setupCommand(): Promise<void> {
     packageJson.scripts = {};
   }
 
-  // Check which scripts already exist
-  const existingScripts: string[] = [];
-  const scriptsToAdd: Record<string, string> = {};
+  // Track added and updated scripts separately
+  const addedScripts: string[] = [];
+  const updatedScripts: string[] = [];
 
+  // Always add/update all workflow scripts (ensures updates get new scripts)
   for (const [scriptName, scriptCommand] of Object.entries(WORKFLOW_SCRIPTS)) {
-    if (packageJson.scripts[scriptName]) {
-      existingScripts.push(scriptName);
-    } else {
-      scriptsToAdd[scriptName] = scriptCommand;
+    if (!packageJson.scripts[scriptName]) {
+      // Script doesn't exist - add it
+      packageJson.scripts[scriptName] = scriptCommand;
+      addedScripts.push(scriptName);
+    } else if (packageJson.scripts[scriptName] !== scriptCommand) {
+      // Script exists but has different value - update it
+      packageJson.scripts[scriptName] = scriptCommand;
+      updatedScripts.push(scriptName);
     }
+    // If script exists with same value, do nothing (already up to date)
   }
 
-  if (Object.keys(scriptsToAdd).length === 0) {
-    p.outro(chalk.green("✓ All workflow scripts are already configured!"));
+  const totalChanges = addedScripts.length + updatedScripts.length;
+
+  if (totalChanges === 0) {
+    p.outro(
+      chalk.green(
+        `✓ All ${TOTAL_SCRIPTS} workflow scripts are already configured!`,
+      ),
+    );
     return;
-  }
-
-  // Show what will be added
-  console.log(chalk.dim("\nScripts to add:"));
-  for (const [scriptName, scriptCommand] of Object.entries(scriptsToAdd)) {
-    console.log(chalk.dim(`  ${scriptName}: ${scriptCommand}`));
-  }
-
-  if (existingScripts.length > 0) {
-    console.log(chalk.yellow("\nExisting scripts (will be skipped):"));
-    existingScripts.forEach((name) => {
-      console.log(chalk.yellow(`  ${name}`));
-    });
-  }
-
-  const shouldAdd = await p.confirm({
-    message: "Add these scripts to package.json?",
-    initialValue: true,
-  });
-
-  if (p.isCancel(shouldAdd) || !shouldAdd) {
-    p.cancel("Setup cancelled");
-    process.exit(0);
-  }
-
-  // Add scripts
-  for (const [scriptName, scriptCommand] of Object.entries(scriptsToAdd)) {
-    packageJson.scripts[scriptName] = scriptCommand;
   }
 
   // Write back to package.json
@@ -82,9 +64,39 @@ export async function setupCommand(): Promise<void> {
     "utf-8",
   );
 
+  // Build summary message
+  const summaryParts: string[] = [];
+  if (addedScripts.length > 0) {
+    summaryParts.push(`${addedScripts.length} new`);
+  }
+  if (updatedScripts.length > 0) {
+    summaryParts.push(`${updatedScripts.length} updated`);
+  }
+
+  console.log(
+    chalk.green(
+      `\n✓ Workflow scripts configured (${summaryParts.join(", ")}):\n`,
+    ),
+  );
+
+  // Display scripts by category
+  for (const [category, scripts] of Object.entries(SCRIPT_CATEGORIES)) {
+    console.log(chalk.cyan(`  ${category}:`));
+    for (const script of scripts) {
+      const isNew = addedScripts.includes(script);
+      const isUpdated = updatedScripts.includes(script);
+      const marker = isNew
+        ? chalk.green(" (new)")
+        : isUpdated
+          ? chalk.yellow(" (updated)")
+          : "";
+      console.log(chalk.dim(`    - ${script}`) + marker);
+    }
+  }
+
   p.outro(
     chalk.green(
-      `✓ Added ${Object.keys(scriptsToAdd).length} workflow scripts to package.json!`,
+      `✓ ${TOTAL_SCRIPTS} workflow scripts available in package.json!`,
     ),
   );
   console.log(chalk.dim("\nRun them with:"));

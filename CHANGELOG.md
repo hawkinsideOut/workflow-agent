@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-01-19
+
+### Added
+
+- **Automatic Script Injection**: On package install or update, **31 workflow scripts** are automatically added to your project's `package.json`:
+  - Core Commands: `workflow:init`, `workflow:validate`, `workflow:config`, `workflow:suggest`, `workflow:setup`, `workflow:doctor`
+  - Scope Commands: `workflow:scope:create`, `workflow:scope:migrate`
+  - Verification: `workflow:verify`, `workflow:verify:fix`, `workflow:auto-setup`
+  - Learning System: `workflow:learn`, `workflow:learn:record`, `workflow:learn:list`, `workflow:learn:apply`, `workflow:learn:sync`, `workflow:learn:config`, `workflow:learn:deprecate`, `workflow:learn:stats`
+  - Solution Patterns: `workflow:solution`, `workflow:solution:capture`, `workflow:solution:search`, `workflow:solution:list`, `workflow:solution:apply`, `workflow:solution:deprecate`, `workflow:solution:stats`
+  - Advisory Board: `workflow:advisory`, `workflow:advisory:quick`, `workflow:advisory:standard`, `workflow:advisory:comprehensive`, `workflow:advisory:executive`, `workflow:advisory:ci`
+- **Script Update on Package Upgrade**: When updating workflow-agent-cli, any new scripts from newer versions are automatically added to your project
+- **Added/Updated Tracking**: Postinstall and setup commands now distinguish between newly added and updated scripts in their output
+- **Shared Script Definitions**: New `workflow-scripts.ts` module ensures postinstall and setup commands stay synchronized
+
+### Changed
+
+- **Setup Command**: Now non-interactive and always overwrites/updates all scripts (previously only added 4 scripts with confirmation prompt)
+- **Postinstall Behavior**: Now always updates scripts to latest definitions instead of skipping when any workflow script exists
+
+### Documentation
+
+- Added prominent pnpm warning callout in all installation documentation
+- Updated all READMEs and getting-started guide with complete list of 31 scripts
+- Added note about automatic script updates on package upgrade
+
 ## [2.5.0] - 2026-01-19
 
 ### Added

@@ -103,34 +103,67 @@ npm install -D @hawkinside_out/workflow-agent
 pnpm add -D @hawkinside_out/workflow-agent
 ```
 
-**Setup Scripts (Recommended):**
+> ⚠️ **pnpm users:** pnpm blocks postinstall scripts by default. After installation, run the setup command to add workflow scripts to your package.json:
+>
+> ```bash
+> pnpm workflow-agent setup
+> ```
 
-pnpm blocks postinstall scripts by default, so run the setup command after installation:
-
-```bash
-# If using pnpm or npm locally:
-pnpm workflow-agent setup
-# or
-npx workflow-agent setup
-
-# If installed globally:
-workflow-agent setup
-```
-
-This adds these scripts to your `package.json`:
+On install (npm/yarn) or after running setup (pnpm), **31 workflow scripts** are automatically added to your `package.json`:
 
 ```json
 {
   "scripts": {
+    // Core Commands
     "workflow:init": "workflow-agent init",
     "workflow:validate": "workflow-agent validate",
+    "workflow:config": "workflow-agent config",
     "workflow:suggest": "workflow-agent suggest",
-    "workflow:doctor": "workflow-agent doctor"
+    "workflow:setup": "workflow-agent setup",
+    "workflow:doctor": "workflow-agent doctor",
+
+    // Scope Commands
+    "workflow:scope:create": "workflow-agent scope:create",
+    "workflow:scope:migrate": "workflow-agent scope:migrate",
+
+    // Verification
+    "workflow:verify": "workflow-agent verify",
+    "workflow:verify:fix": "workflow-agent verify --fix",
+    "workflow:auto-setup": "workflow-agent auto-setup",
+
+    // Learning System
+    "workflow:learn": "workflow-agent learn:list",
+    "workflow:learn:record": "workflow-agent learn:record",
+    "workflow:learn:list": "workflow-agent learn:list",
+    "workflow:learn:apply": "workflow-agent learn:apply",
+    "workflow:learn:sync": "workflow-agent learn:sync",
+    "workflow:learn:config": "workflow-agent learn:config",
+    "workflow:learn:deprecate": "workflow-agent learn:deprecate",
+    "workflow:learn:stats": "workflow-agent learn:stats",
+
+    // Solution Patterns
+    "workflow:solution": "workflow-agent solution:list",
+    "workflow:solution:capture": "workflow-agent solution:capture",
+    "workflow:solution:search": "workflow-agent solution:search",
+    "workflow:solution:list": "workflow-agent solution:list",
+    "workflow:solution:apply": "workflow-agent solution:apply",
+    "workflow:solution:deprecate": "workflow-agent solution:deprecate",
+    "workflow:solution:stats": "workflow-agent solution:stats",
+
+    // Advisory Board
+    "workflow:advisory": "workflow-agent advisory",
+    "workflow:advisory:quick": "workflow-agent advisory --depth quick",
+    "workflow:advisory:standard": "workflow-agent advisory --depth standard",
+    "workflow:advisory:comprehensive": "workflow-agent advisory --depth comprehensive",
+    "workflow:advisory:executive": "workflow-agent advisory --depth executive",
+    "workflow:advisory:ci": "workflow-agent advisory --ci"
   }
 }
 ```
 
-Then run commands via:
+**Note:** When you update the package, any new scripts from newer versions are automatically added.
+
+Run commands via:
 
 ```bash
 pnpm run workflow:init
