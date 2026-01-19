@@ -557,6 +557,538 @@ cat .workflow/patterns/fixes/<pattern-id>.json | jq '.trigger'
 
 ---
 
+## Solution Patterns
+
+> **New in v2.4** - Learn from complete, working implementations across your projects.
+
+While Fix Patterns capture single-issue solutions and Blueprints define project templates, **Solution Patterns** capture the **actual working code** from your implementations. When you ask "How do I implement user authentication?", the agent can show you real code from projects where you've already solved that problem.
+
+### What Makes Solutions Different?
+
+| Aspect | Fix Patterns | Blueprints | Solution Patterns |
+|--------|-------------|------------|-------------------|
+| Scope | Single error | Project setup | Complete feature |
+| Content | Steps to fix | Directory structure | Actual source code |
+| Use case | "Fix this error" | "Start new project" | "How do I implement X?" |
+| Learning | Auto-detected | Manual capture | Code analysis |
+
+### Solution Pattern Structure
+
+```typescript
+interface SolutionPattern {
+  id: string;
+  name: string;                    // "JWT Authentication with Refresh Tokens"
+  description: string;             // Detailed explanation
+  category: SolutionCategory;      // auth, api, database, ui, etc.
+  
+  problem: {
+    keywords: string[];            // ["authentication", "jwt", "login"]
+    description: string;           // What problem this solves
+    errorPatterns?: string[];      // Common errors this prevents
+  };
+  
+  implementation: {
+    files: SolutionFile[];         // Actual code files
+    dependencies: Dependency[];    // Required packages
+    devDependencies: Dependency[]; // Dev packages
+    envVars: EnvVar[];             // Required environment variables
+  };
+  
+  architecture: {
+    entryPoints: string[];         // Where to start reading
+    dataFlow: string;              // How data moves through the system
+    keyDecisions: string[];        // Architectural choices made
+  };
+  
+  compatibility: {
+    framework: string;             // "next", "express", etc.
+    frameworkVersion: string;      // "^14.0.0"
+  };
+  
+  metrics: {
+    applications: number;          // Times applied
+    successRate: number;           // Effectiveness score
+  };
+}
+```
+
+---
+
+## Step-by-Step: Using Solution Patterns
+
+### Step 1: Capture a Working Solution
+
+After you've successfully implemented a feature, capture it as a reusable pattern:
+
+```bash
+# Navigate to your project
+cd my-project
+
+# Capture the auth implementation
+workflow-agent solution:capture \
+  --path ./src/auth \
+  --name "JWT Authentication" \
+  --category auth \
+  --tags "jwt,authentication,security"
+```
+
+**What happens:**
+
+1. **File Analysis** - The CodeAnalyzer scans all files in `./src/auth`
+2. **Dependency Detection** - Extracts `jsonwebtoken`, `bcrypt`, etc. from imports
+3. **Environment Variables** - Finds `JWT_SECRET`, `REFRESH_TOKEN_SECRET`, etc.
+4. **Architecture Detection** - Identifies patterns like middleware, services, etc.
+5. **Pattern Creation** - Stores the complete solution in `.workflow/patterns/solutions/`
+
+**Interactive Mode:**
+
+```bash
+workflow-agent solution:capture
+
+# Prompts:
+# ? Path to the solution directory: ./src/auth
+# ? Solution name: JWT Authentication
+# ? Solution description: Complete JWT auth with access and refresh tokens
+# ? Solution category: 🔐 Authentication
+# ? Keywords (comma-separated): jwt, authentication, login, refresh-token
+
+# Output:
+# ✓ Solution analyzed
+# 
+# ─────────────────────────────────────────────────────
+# Name: JWT Authentication
+# Category: 🔐 auth
+# Files: 4
+# Dependencies: 3
+# Framework: next
+# ─────────────────────────────────────────────────────
+# 
+# ? Save this solution pattern? Yes
+# ✓ Solution saved with ID: 550e8400-e29b-41d4-a716-446655440001
+```
+
+---
+
+### Step 2: Search for Solutions
+
+When starting a new feature, search your pattern library:
+
+```bash
+# Search by keywords
+workflow-agent solution:search "authentication jwt"
+
+# Output:
+# 🔍 Search Solution Patterns
+# 
+# Found 2 solution(s):
+# ──────────────────────────────────────────────────────────────────────
+# JWT Authentication (550e8400)
+#   🔐 auth
+#   Complete JWT auth with access and refresh tokens
+#   Files: 4 | Framework: next | Uses: 12
+# ──────────────────────────────────────────────────────────────────────
+# OAuth2 Google Login (660e8400)
+#   🔐 auth
+#   Google OAuth2 integration with session management
+#   Files: 3 | Framework: next | Uses: 5
+# ──────────────────────────────────────────────────────────────────────
+# 
+# Use 'workflow solution:apply <id>' to apply a solution.
+```
+
+**Filter by category or framework:**
+
+```bash
+# Only auth patterns
+workflow-agent solution:search "login" --category auth
+
+# Only Next.js patterns
+workflow-agent solution:search "api routes" --framework next
+
+# Limit results
+workflow-agent solution:search "database" --limit 5
+```
+
+---
+
+### Step 3: View Your Pattern Library
+
+List all captured solutions:
+
+```bash
+workflow-agent solution:list
+
+# Output:
+# 📋 Solution Patterns
+# 
+# 8 solution(s):
+# 
+# 🔐 auth
+# ──────────────────────────────────────────────────────
+#   550e8400 JWT Authentication
+#     Complete JWT auth with access and refresh tokens
+#     Created: Jan 15, 2026 | Files: 4
+#   660e8400 OAuth2 Google Login
+#     Google OAuth2 integration with session management
+#     Created: Jan 10, 2026 | Files: 3
+# 
+# 💾 database
+# ──────────────────────────────────────────────────────
+#   770e8400 Prisma Repository Pattern
+#     Type-safe database access with repository pattern
+#     Created: Dec 20, 2025 | Files: 6
+# 
+# 🌐 api
+# ──────────────────────────────────────────────────────
+#   880e8400 REST API with Validation
+#     Express API with Zod validation and error handling
+#     Created: Nov 15, 2025 | Files: 5
+```
+
+**Filter options:**
+
+```bash
+# Filter by category
+workflow-agent solution:list --category database
+
+# Include deprecated patterns
+workflow-agent solution:list --deprecated
+
+# Limit output
+workflow-agent solution:list --limit 10
+```
+
+---
+
+### Step 4: Apply a Solution
+
+Apply a captured pattern to your current project:
+
+```bash
+workflow-agent solution:apply 550e8400
+
+# Output:
+# 🚀 Apply Solution Pattern
+# 
+# Solution: JWT Authentication
+# Complete JWT auth with access and refresh tokens
+# 
+# Files to create:
+#   • src/auth/jwt.service.ts (service)
+#   • src/auth/middleware.ts (middleware)
+#   • src/auth/types.ts (type)
+#   • src/auth/index.ts (entry)
+# 
+# Dependencies to install:
+#   • jsonwebtoken@9.0.0
+#   • bcrypt@5.1.0
+# 
+# Environment variables needed:
+#   • JWT_SECRET*
+#   • JWT_REFRESH_SECRET*
+#   • JWT_EXPIRY
+# 
+# ? Apply this solution? Yes
+# 
+# ✓ Solution applied successfully!
+# Created 4 file(s).
+# 
+# Next step: Install dependencies with:
+#   npm install jsonwebtoken@9.0.0 bcrypt@5.1.0
+```
+
+**Apply options:**
+
+```bash
+# Preview without making changes
+workflow-agent solution:apply 550e8400 --dry-run
+
+# Include test files
+workflow-agent solution:apply 550e8400 --include-tests
+
+# Specify output directory
+workflow-agent solution:apply 550e8400 --output ./src/features/auth
+```
+
+---
+
+### Step 5: View Statistics
+
+See insights about your pattern library:
+
+```bash
+workflow-agent solution:stats
+
+# Output:
+# 📊 Solution Pattern Statistics
+# 
+# ────────────────────────────────────
+# Solutions: 15
+#   Active: 12
+#   Deprecated: 3
+#   Private: 10
+#   Synced: 5
+# ────────────────────────────────────
+# Fixes: 38
+# Blueprints: 7
+# ────────────────────────────────────
+# 
+# By Category:
+#   🔐 auth: 4
+#   💾 database: 3
+#   🌐 api: 3
+#   🎨 ui: 2
+#   🧪 testing: 2
+#   📦 other: 1
+```
+
+---
+
+### Step 6: Deprecate Outdated Solutions
+
+Mark a pattern as deprecated when it's superseded:
+
+```bash
+workflow-agent solution:deprecate 550e8400 "Replaced by OAuth2 implementation"
+
+# Output:
+# ⚠️  Deprecate Solution Pattern
+# 
+# Solution: JWT Authentication
+# Reason: Replaced by OAuth2 implementation
+# 
+# ? Deprecate this solution? Yes
+# 
+# ✓ Solution deprecated.
+```
+
+Deprecated solutions:
+- Are hidden from `solution:list` by default
+- Show a warning when applied
+- Won't be synced to community registry
+
+---
+
+## Solution Categories
+
+| Category | Icon | Use Case |
+|----------|------|----------|
+| `auth` | 🔐 | Authentication, authorization, session management |
+| `api` | 🌐 | API endpoints, REST/GraphQL, routing |
+| `database` | 💾 | Database schemas, queries, migrations |
+| `ui` | 🎨 | Components, layouts, styling |
+| `testing` | 🧪 | Test utilities, fixtures, mocks |
+| `deployment` | 🚀 | CI/CD, Docker, infrastructure |
+| `integrations` | 🔗 | Third-party services, webhooks |
+| `performance` | ⚡ | Caching, optimization, lazy loading |
+| `security` | 🛡️ | Encryption, validation, sanitization |
+| `state` | 🔄 | State management, data flow |
+| `forms` | 📝 | Form handling, validation |
+| `error-handling` | ⚠️ | Error boundaries, logging |
+| `caching` | 💨 | Cache strategies, memoization |
+| `other` | 📦 | Miscellaneous patterns |
+
+---
+
+## CodeAnalyzer: How It Works
+
+The CodeAnalyzer powers the `solution:capture` command:
+
+### File Analysis
+
+For each file, it extracts:
+
+```typescript
+interface FileAnalysis {
+  path: string;              // "src/auth/jwt.service.ts"
+  role: FileRole;            // "service", "middleware", "component", etc.
+  purpose: string;           // Auto-generated description
+  exports: string[];         // ["generateToken", "verifyToken"]
+  imports: string[];         // ["jsonwebtoken", "./config"]
+  dependencies: string[];    // External packages only
+  lineCount: number;
+  content: string;           // Anonymized source code
+}
+```
+
+### Architecture Detection
+
+The analyzer identifies architectural patterns:
+
+```typescript
+// Detected patterns
+"Request -> Middleware -> Handler -> Response"  // API with middleware
+"Controller -> Service -> Model -> Database"    // Layered architecture
+"Component -> Hook -> State -> Render"          // React component pattern
+```
+
+### Key Decisions Extraction
+
+Based on dependencies and patterns:
+
+```typescript
+// Automatically detected
+[
+  "Uses Next.js framework",
+  "TypeScript for type safety",
+  "Prisma ORM for database access",
+  "Zod for runtime validation"
+]
+```
+
+---
+
+## Programmatic API
+
+Use Solution Patterns in your own tools:
+
+```typescript
+import {
+  PatternStore,
+  CodeAnalyzer,
+  createCodeAnalyzer,
+  type SolutionPattern,
+  type SolutionCategory,
+} from "@hawkinside_out/workflow-improvement-tracker";
+
+// Initialize store
+const store = new PatternStore(process.cwd());
+
+// Create analyzer
+const analyzer = createCodeAnalyzer({
+  maxFiles: 50,
+  extensions: [".ts", ".tsx"],
+  ignoreDirs: ["node_modules", "dist"],
+  anonymize: true,  // Strip PII
+});
+
+// Analyze a directory
+const analysis = await analyzer.analyzeDirectory("./src/auth");
+console.log(analysis.files);        // Analyzed files
+console.log(analysis.dependencies); // Detected dependencies
+console.log(analysis.envVars);      // Environment variables
+
+// Detect architecture
+const architecture = analyzer.detectArchitecture(analysis);
+console.log(architecture.dataFlow);      // "Request -> Middleware -> ..."
+console.log(architecture.keyDecisions);  // ["Uses Zod", "TypeScript", ...]
+
+// Create a solution pattern
+const pattern = await analyzer.createSolutionPattern(
+  "./src/auth",
+  "JWT Authentication",
+  "Complete JWT auth with refresh tokens",
+  "auth" as SolutionCategory,
+  ["jwt", "authentication", "login"]
+);
+
+// Save the pattern
+await store.saveSolution(pattern);
+
+// Search for solutions
+const results = await store.searchSolutions(
+  ["authentication", "jwt"],
+  { category: "auth", limit: 10 }
+);
+
+// Get a specific solution
+const solution = await store.getSolution("550e8400-...");
+
+// Update metrics after applying
+await store.updateSolutionMetrics(solution.data.id, true); // success
+
+// Get statistics
+const stats = await store.getStats();
+console.log(stats.totalSolutions);
+console.log(stats.deprecatedSolutions);
+```
+
+---
+
+## Real-World Example: Full Workflow
+
+### Scenario: Building an E-commerce Checkout
+
+You've just finished implementing a checkout flow in your main project. Here's how to capture and reuse it:
+
+#### 1. Capture the Implementation
+
+```bash
+cd my-ecommerce-app
+
+workflow-agent solution:capture \
+  --path ./src/checkout \
+  --name "Stripe Checkout Flow" \
+  --category integrations \
+  --tags "stripe,payments,checkout,e-commerce"
+
+# ✓ Solution analyzed
+# Files: 6
+# Dependencies: @stripe/stripe-js, stripe
+# Env vars: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+# ✓ Solution saved: abc123
+```
+
+#### 2. Start a New Project
+
+```bash
+mkdir new-ecommerce && cd new-ecommerce
+workflow-agent init --preset saas
+```
+
+#### 3. Search for Your Checkout Solution
+
+```bash
+workflow-agent solution:search "stripe checkout payments"
+
+# Found 1 solution(s):
+# Stripe Checkout Flow (abc123)
+#   🔗 integrations
+#   Complete Stripe checkout with webhooks
+```
+
+#### 4. Apply the Solution
+
+```bash
+workflow-agent solution:apply abc123
+
+# Files to create:
+#   • src/checkout/stripe.service.ts
+#   • src/checkout/webhook.handler.ts
+#   • src/checkout/types.ts
+#   • src/api/checkout/route.ts
+#   • src/api/webhooks/stripe/route.ts
+#   • src/checkout/index.ts
+#
+# Dependencies to install:
+#   • @stripe/stripe-js@2.0.0
+#   • stripe@14.0.0
+#
+# Environment variables needed:
+#   • STRIPE_SECRET_KEY*
+#   • STRIPE_WEBHOOK_SECRET*
+#   • NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY*
+#
+# ? Apply this solution? Yes
+# ✓ Solution applied successfully!
+```
+
+#### 5. Install Dependencies & Configure
+
+```bash
+# Install packages
+npm install @stripe/stripe-js stripe
+
+# Add to .env
+echo "STRIPE_SECRET_KEY=sk_test_..." >> .env
+echo "STRIPE_WEBHOOK_SECRET=whsec_..." >> .env
+echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_..." >> .env
+```
+
+You now have a fully working checkout flow in minutes instead of hours!
+
+---
+
 ## Related Documentation
 
 - [Getting Started](/docs/getting-started) - Initial setup
