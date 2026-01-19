@@ -11,6 +11,7 @@ import {
   validateTemplateDirectory,
 } from "../../templates/renderer.js";
 import { runAllSetups, generateAuditReport } from "../../utils/auto-setup.js";
+import { generateCopilotInstructions } from "../../scripts/copilot-instructions-generator.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -191,6 +192,16 @@ export async function initCommand(options: {
       );
 
       spinner.stop(`✓ Generated ${renderedFiles.length} guideline documents`);
+
+      // Generate .github/copilot-instructions.md from guidelines
+      const instructionsSpinner = p.spinner();
+      instructionsSpinner.start("Generating AI agent instructions...");
+      const result = generateCopilotInstructions(cwd, { silent: true });
+      if (result.success) {
+        instructionsSpinner.stop(`✓ Generated .github/copilot-instructions.md`);
+      } else {
+        instructionsSpinner.stop("⚠️  Could not generate copilot instructions");
+      }
     } catch (error) {
       spinner.stop("⚠️  Could not generate guidelines");
       console.log(

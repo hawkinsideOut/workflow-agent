@@ -48,6 +48,9 @@ export const WORKFLOW_SCRIPTS = {
     "workflow-agent advisory --depth comprehensive",
   "workflow:advisory:executive": "workflow-agent advisory --depth executive",
   "workflow:advisory:ci": "workflow-agent advisory --ci",
+
+  // AI Agent Instructions
+  "workflow:generate-instructions": "workflow-agent generate-instructions",
 } as const;
 
 export type WorkflowScriptName = keyof typeof WORKFLOW_SCRIPTS;
@@ -96,6 +99,9 @@ export const SCRIPT_CATEGORIES = {
     "workflow:advisory:comprehensive",
     "workflow:advisory:executive",
     "workflow:advisory:ci",
+  ],
+  "AI Agent Instructions": [
+    "workflow:generate-instructions",
   ],
 } as const;
 

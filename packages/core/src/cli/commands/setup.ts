@@ -7,6 +7,7 @@ import {
   SCRIPT_CATEGORIES,
   TOTAL_SCRIPTS,
 } from "../../scripts/workflow-scripts.js";
+import { generateCopilotInstructions } from "../../scripts/copilot-instructions-generator.js";
 
 export async function setupCommand(): Promise<void> {
   p.intro(chalk.bgBlue(" workflow-agent setup "));
@@ -102,4 +103,21 @@ export async function setupCommand(): Promise<void> {
   console.log(chalk.dim("\nRun them with:"));
   console.log(chalk.dim("  pnpm run workflow:init"));
   console.log(chalk.dim("  npm run workflow:init\n"));
+
+  // Generate .github/copilot-instructions.md if guidelines exist
+  const guidelinesDir = join(cwd, "guidelines");
+  if (existsSync(guidelinesDir)) {
+    const result = generateCopilotInstructions(cwd, { silent: false });
+    if (result.success) {
+      const status = result.isNew ? "Generated" : "Updated";
+      console.log(
+        chalk.green(
+          `✓ ${status} .github/copilot-instructions.md from ${result.guidelinesCount} guidelines`,
+        ),
+      );
+      if (result.preservedCustomContent) {
+        console.log(chalk.dim("  (Custom content preserved)"));
+      }
+    }
+  }
 }

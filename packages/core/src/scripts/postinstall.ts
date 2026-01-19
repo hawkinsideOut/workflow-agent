@@ -14,6 +14,7 @@ import {
   SCRIPT_CATEGORIES,
   TOTAL_SCRIPTS,
 } from "./workflow-scripts.js";
+import { generateCopilotInstructions } from "./copilot-instructions-generator.js";
 
 function isGlobalInstall(): boolean {
   // Check if we're being installed globally
@@ -129,6 +130,21 @@ function addScriptsToPackageJson(): void {
       console.log(
         "\nRun them with: npm run workflow:init (or pnpm run workflow:init)\n",
       );
+    }
+
+    // Generate .github/copilot-instructions.md if guidelines exist
+    const guidelinesDir = join(projectRoot, "guidelines");
+    if (existsSync(guidelinesDir)) {
+      const result = generateCopilotInstructions(projectRoot, { silent: true });
+      if (result.success) {
+        const status = result.isNew ? "Generated" : "Updated";
+        console.log(
+          `✓ ${status} .github/copilot-instructions.md from ${result.guidelinesCount} guidelines`,
+        );
+        if (result.preservedCustomContent) {
+          console.log("  (Custom content preserved)");
+        }
+      }
     }
   } catch (error) {
     // Silently fail - this is a nice-to-have feature

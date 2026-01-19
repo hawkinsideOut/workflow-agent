@@ -12,6 +12,7 @@ import { scopeMigrateCommand } from "./commands/scope-migrate.js";
 import { verifyCommand } from "./commands/verify.js";
 import { autoSetupCommand } from "./commands/auto-setup-command.js";
 import { advisoryCommand } from "./commands/advisory.js";
+import { generateInstructionsCommand } from "./commands/generate-instructions.js";
 import {
   learnRecordCommand,
   learnListCommand,
@@ -152,6 +153,12 @@ program
   .option("--ci", "CI mode with exit codes on high-risk findings")
   .option("--compare <path>", "Compare with previous report")
   .action(advisoryCommand);
+
+program
+  .command("generate-instructions")
+  .description("Generate .github/copilot-instructions.md from guidelines")
+  .option("--force", "Regenerate without confirmation")
+  .action(generateInstructionsCommand);
 
 // ============================================
 // Learning System Commands
