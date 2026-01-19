@@ -22,6 +22,16 @@ echo "🔍 Running mandatory pre-commit checks..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
+# Auto-detect export changes and bump versions
+echo -e "${BLUE}🔄 Checking for export changes...${NC}"
+for PKG in packages/*/package.json; do
+  PKG_DIR=$(dirname "$PKG")
+  if [ -f "$PKG_DIR/src/index.ts" ]; then
+    bash scripts/detect-export-changes.sh "$PKG_DIR" || true
+  fi
+done
+echo ""
+
 # Check if workflow-agent CLI is available
 if command -v workflow-agent &> /dev/null; then
     # Use the verify:fix command with fix-and-revalidate pattern

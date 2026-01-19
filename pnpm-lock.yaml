@@ -30,7 +30,7 @@ importers:
         specifier: ^0.7.0
         version: 0.7.0
       '@hawkinside_out/workflow-improvement-tracker':
-        specifier: ^1.0.0
+        specifier: ^1.1.1
         version: link:../improvement-tracker
       chalk:
         specifier: ^5.3.0
@@ -1109,7 +1109,7 @@ packages:
     requiresBuild: true
     dependencies:
       '@clack/prompts': 0.7.0
-      '@hawkinside_out/workflow-improvement-tracker': 1.0.1
+      '@hawkinside_out/workflow-improvement-tracker': 1.1.1
       chalk: 5.6.2
       commander: 11.1.0
       cosmiconfig: 9.0.0(typescript@5.9.3)
@@ -1123,8 +1123,8 @@ packages:
       - typescript
     dev: false
 
-  /@hawkinside_out/workflow-improvement-tracker@1.0.1:
-    resolution: {integrity: sha512-RtMAhrNi8xa0Vkxqg7xfgsdDir+L8toHjUX4q0UmgxbyHlL02DBvIt8HCUMB7x2aoED66SnVigtvqKgMZokC/Q==}
+  /@hawkinside_out/workflow-improvement-tracker@1.1.1:
+    resolution: {integrity: sha512-y15TzFZkdPNJVThOlhAM6FPQHhu6D7AdDQNP1qoyZmRH6piOoh8OEiibbmxEk3DeVqjATNuvt9lRjnsqRO6epg==}
     dependencies:
       zod: 3.25.76
 
@@ -4805,7 +4805,7 @@ packages:
     requiresBuild: true
     dependencies:
       '@clack/prompts': 0.7.0
-      '@hawkinside_out/workflow-improvement-tracker': 1.0.1
+      '@hawkinside_out/workflow-improvement-tracker': 1.1.1
       chalk: 5.6.2
       commander: 11.1.0
       cosmiconfig: 9.0.0(typescript@5.9.3)

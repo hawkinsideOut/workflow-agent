@@ -1,0 +1,127 @@
+name: Publish Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      otp:
+        description: 'NPM OTP Code'
+        required: true
+        type: string
+
+jobs:
+  publish-improvement-tracker:
+    name: Publish improvement-tracker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build improvement-tracker
+        run: pnpm --filter @hawkinside_out/workflow-improvement-tracker build
+      
+      - name: Test improvement-tracker
+        run: pnpm --filter @hawkinside_out/workflow-improvement-tracker test
+      
+      - name: Publish improvement-tracker
+        run: |
+          cd packages/improvement-tracker
+          npm publish --access public --otp=${{ github.event.inputs.otp }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Wait for registry sync
+        run: |
+          echo "⏳ Waiting 2 minutes for npm registry to sync..."
+          sleep 120
+          
+          VERSION=$(node -p "require('./packages/improvement-tracker/package.json').version")
+          echo "🔍 Checking if @hawkinside_out/workflow-improvement-tracker@$VERSION is available..."
+          
+          for i in {1..10}; do
+            if npm view @hawkinside_out/workflow-improvement-tracker@$VERSION version; then
+              echo "✅ Package is available on npm registry"
+              exit 0
+            fi
+            echo "⏳ Attempt $i/10 - waiting 30s..."
+            sleep 30
+          done
+          
+          echo "❌ Package not available after 7 minutes"
+          exit 1
+
+  publish-core:
+    name: Publish core
+    needs: publish-improvement-tracker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build core
+        run: pnpm --filter workflow-agent-cli build
+      
+      - name: Test core
+        run: pnpm --filter workflow-agent-cli test
+      
+      - name: Publish core
+        run: |
+          cd packages/core
+          npm publish --access public --otp=${{ github.event.inputs.otp }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Wait for registry sync
+        run: |
+          echo "⏳ Waiting 2 minutes for npm registry to sync..."
+          sleep 120
+
+  publish-scopes:
+    name: Publish scope packages
+    needs: publish-core
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        scope: [scopes-api, scopes-cms, scopes-ecommerce, scopes-library, scopes-saas]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build ${{ matrix.scope }}
+        run: pnpm --filter @hawkinside_out/${{ matrix.scope }} build
+      
+      - name: Publish ${{ matrix.scope }}
+        run: |
+          cd packages/${{ matrix.scope }}
+          npm publish --access public --otp=${{ github.event.inputs.otp }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -9,10 +9,39 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
 
 const WORKFLOW_SCRIPTS = {
+  // Core Commands
   "workflow:init": "workflow-agent init",
   "workflow:validate": "workflow-agent validate",
+  "workflow:config": "workflow-agent config",
   "workflow:suggest": "workflow-agent suggest",
+  "workflow:setup": "workflow-agent setup",
   "workflow:doctor": "workflow-agent doctor",
+
+  // Scope Commands
+  "workflow:scope:create": "workflow-agent scope:create",
+  "workflow:scope:migrate": "workflow-agent scope:migrate",
+
+  // Verification & Auto-Setup
+  "workflow:verify": "workflow-agent verify",
+  "workflow:verify:fix": "workflow-agent verify --fix",
+  "workflow:auto-setup": "workflow-agent auto-setup",
+
+  // Learning System Commands
+  "workflow:learn:record": "workflow-agent learn:record",
+  "workflow:learn:list": "workflow-agent learn:list",
+  "workflow:learn:apply": "workflow-agent learn:apply",
+  "workflow:learn:sync": "workflow-agent learn:sync",
+  "workflow:learn:config": "workflow-agent learn:config",
+  "workflow:learn:deprecate": "workflow-agent learn:deprecate",
+  "workflow:learn:stats": "workflow-agent learn:stats",
+
+  // Solution Pattern Commands
+  "workflow:solution:capture": "workflow-agent solution:capture",
+  "workflow:solution:search": "workflow-agent solution:search",
+  "workflow:solution:list": "workflow-agent solution:list",
+  "workflow:solution:apply": "workflow-agent solution:apply",
+  "workflow:solution:deprecate": "workflow-agent solution:deprecate",
+  "workflow:solution:stats": "workflow-agent solution:stats",
 };
 
 function isGlobalInstall(): boolean {
@@ -101,9 +130,35 @@ function addScriptsToPackageJson(): void {
       );
 
       console.log("\n✓ Added workflow scripts to package.json:");
-      Object.keys(WORKFLOW_SCRIPTS).forEach((scriptName) => {
-        console.log(`  - ${scriptName}`);
-      });
+      console.log("\n  Core Commands:");
+      console.log("    - workflow:init");
+      console.log("    - workflow:validate");
+      console.log("    - workflow:config");
+      console.log("    - workflow:suggest");
+      console.log("    - workflow:setup");
+      console.log("    - workflow:doctor");
+      console.log("\n  Scope Commands:");
+      console.log("    - workflow:scope:create");
+      console.log("    - workflow:scope:migrate");
+      console.log("\n  Verification:");
+      console.log("    - workflow:verify");
+      console.log("    - workflow:verify:fix");
+      console.log("    - workflow:auto-setup");
+      console.log("\n  Learning System:");
+      console.log("    - workflow:learn:record");
+      console.log("    - workflow:learn:list");
+      console.log("    - workflow:learn:apply");
+      console.log("    - workflow:learn:sync");
+      console.log("    - workflow:learn:config");
+      console.log("    - workflow:learn:deprecate");
+      console.log("    - workflow:learn:stats");
+      console.log("\n  Solution Patterns:");
+      console.log("    - workflow:solution:capture");
+      console.log("    - workflow:solution:search");
+      console.log("    - workflow:solution:list");
+      console.log("    - workflow:solution:apply");
+      console.log("    - workflow:solution:deprecate");
+      console.log("    - workflow:solution:stats");
       console.log(
         "\nRun them with: npm run workflow:init (or pnpm run workflow:init)\n",
       );
