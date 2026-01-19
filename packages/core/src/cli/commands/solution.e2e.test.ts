@@ -51,9 +51,17 @@ function createTestSolution(
           lineCount: 1,
         },
       ],
-      dependencies: [{ name: "jsonwebtoken", version: "^9.0.0", compatibleRange: ">=9.0.0" }],
+      dependencies: [
+        { name: "jsonwebtoken", version: "^9.0.0", compatibleRange: ">=9.0.0" },
+      ],
       devDependencies: [],
-      envVars: [{ name: "JWT_SECRET", required: true, description: "Secret key for JWT signing" }],
+      envVars: [
+        {
+          name: "JWT_SECRET",
+          required: true,
+          description: "Secret key for JWT signing",
+        },
+      ],
     },
     architecture: {
       entryPoints: ["src/auth/login.ts"],
@@ -423,13 +431,32 @@ describe("Solution Pattern E2E Tests", () => {
             },
           ],
           dependencies: [
-            { name: "jsonwebtoken", version: "^9.0.0", compatibleRange: ">=9.0.0" },
+            {
+              name: "jsonwebtoken",
+              version: "^9.0.0",
+              compatibleRange: ">=9.0.0",
+            },
             { name: "bcrypt", version: "^5.0.0", compatibleRange: ">=5.0.0" },
           ],
-          devDependencies: [{ name: "@types/jsonwebtoken", version: "^9.0.0", compatibleRange: ">=9.0.0" }],
+          devDependencies: [
+            {
+              name: "@types/jsonwebtoken",
+              version: "^9.0.0",
+              compatibleRange: ">=9.0.0",
+            },
+          ],
           envVars: [
-            { name: "JWT_SECRET", required: true, description: "Secret for JWT signing" },
-            { name: "JWT_EXPIRY", required: false, defaultValue: "1d", description: "JWT expiration time" },
+            {
+              name: "JWT_SECRET",
+              required: true,
+              description: "Secret for JWT signing",
+            },
+            {
+              name: "JWT_EXPIRY",
+              required: false,
+              defaultValue: "1d",
+              description: "JWT expiration time",
+            },
           ],
         },
       });

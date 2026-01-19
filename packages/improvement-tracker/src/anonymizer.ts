@@ -60,8 +60,7 @@ const PII_PATTERNS = {
   ipAddress: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g,
 
   // URLs with potential identifying info
-  authenticatedUrl:
-    /https?:\/\/[^:]+:[^@]+@[^\s]+/g,
+  authenticatedUrl: /https?:\/\/[^:]+:[^@]+@[^\s]+/g,
 
   // API keys and tokens (common patterns)
   apiKey:
@@ -112,9 +111,7 @@ export class PatternAnonymizer {
   /**
    * Anonymize a fix pattern for sharing
    */
-  anonymizeFixPattern(
-    pattern: FixPattern,
-  ): AnonymizationResult<FixPattern> {
+  anonymizeFixPattern(pattern: FixPattern): AnonymizationResult<FixPattern> {
     try {
       const anonymizedFields: string[] = [];
       let anonymized = { ...pattern };
@@ -343,10 +340,7 @@ export class PatternAnonymizer {
     let result = input;
 
     // Replace absolute paths
-    result = result.replace(
-      PII_PATTERNS.absoluteUnixPath,
-      PLACEHOLDERS.path,
-    );
+    result = result.replace(PII_PATTERNS.absoluteUnixPath, PLACEHOLDERS.path);
     result = result.replace(
       PII_PATTERNS.absoluteWindowsPath,
       PLACEHOLDERS.path,
@@ -398,9 +392,7 @@ export class PatternAnonymizer {
    */
   private anonymizeRelativePath(inputPath: string): string {
     // Just normalize separators and remove any username-like patterns
-    return inputPath
-      .replace(/\\/g, "/")
-      .replace(/\/users\/[^/]+\//gi, "/");
+    return inputPath.replace(/\\/g, "/").replace(/\/users\/[^/]+\//gi, "/");
   }
 
   // ============================================
@@ -425,9 +417,10 @@ export class PatternAnonymizer {
   /**
    * Validate that a pattern is properly anonymized
    */
-  validateAnonymization(
-    pattern: FixPattern | Blueprint,
-  ): { isClean: boolean; issues: string[] } {
+  validateAnonymization(pattern: FixPattern | Blueprint): {
+    isClean: boolean;
+    issues: string[];
+  } {
     const issues: string[] = [];
 
     // Check description
@@ -443,7 +436,10 @@ export class PatternAnonymizer {
     // Type-specific checks
     if ("trigger" in pattern) {
       const fix = pattern as FixPattern;
-      if (fix.trigger.errorMessage && this.containsPII(fix.trigger.errorMessage)) {
+      if (
+        fix.trigger.errorMessage &&
+        this.containsPII(fix.trigger.errorMessage)
+      ) {
         issues.push("trigger.errorMessage contains potential PII");
       }
       for (const step of fix.solution.steps) {

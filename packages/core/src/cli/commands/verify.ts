@@ -45,7 +45,9 @@ export async function verifyCommand(options: VerifyOptions) {
   console.log(chalk.dim(`  Max retries: ${maxRetries}`));
   console.log(chalk.dim(`  Commit on success: ${shouldCommit ? "yes" : "no"}`));
   console.log(chalk.dim(`  Dry-run: ${dryRun ? "yes" : "no"}`));
-  console.log(chalk.dim(`  Learn from fixes: ${learnFromFixes ? "yes" : "no"}`));
+  console.log(
+    chalk.dim(`  Learn from fixes: ${learnFromFixes ? "yes" : "no"}`),
+  );
 
   const startTime = Date.now();
 
@@ -212,7 +214,9 @@ async function recordSuccessfulFixes(
 
     // Record telemetry for each fix applied
     if (result.appliedFixes && result.appliedFixes.length > 0) {
-      console.log(chalk.cyan("\n📚 Recording successful fixes for learning...\n"));
+      console.log(
+        chalk.cyan("\n📚 Recording successful fixes for learning...\n"),
+      );
 
       for (const fix of result.appliedFixes) {
         // Create or find existing pattern for this fix type
@@ -224,7 +228,11 @@ async function recordSuccessfulFixes(
           tags: [{ category: "tool", name: fix.checkName }],
         });
 
-        if (existingPatterns.success && existingPatterns.data && existingPatterns.data.length > 0) {
+        if (
+          existingPatterns.success &&
+          existingPatterns.data &&
+          existingPatterns.data.length > 0
+        ) {
           // Update metrics on existing pattern
           const existingPattern = existingPatterns.data[0];
           await store.updateFixMetrics(existingPattern.id, true);
@@ -304,7 +312,9 @@ async function recordSuccessfulFixes(
   } catch (error) {
     // Don't fail the verify command if learning fails
     console.log(
-      chalk.dim(`\n  Note: Could not record learning patterns: ${(error as Error).message}`),
+      chalk.dim(
+        `\n  Note: Could not record learning patterns: ${(error as Error).message}`,
+      ),
     );
   }
 }

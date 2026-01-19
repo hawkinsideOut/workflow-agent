@@ -23,11 +23,11 @@
 
 ### Target Standard
 
-| Standard | Level | Status |
-|----------|-------|--------|
-| WCAG 2.1 | AA | **Required** |
-| WCAG 2.1 | AAA | Recommended where feasible |
-| Section 508 | Full | Required for government contracts |
+| Standard    | Level | Status                            |
+| ----------- | ----- | --------------------------------- |
+| WCAG 2.1    | AA    | **Required**                      |
+| WCAG 2.1    | AAA   | Recommended where feasible        |
+| Section 508 | Full  | Required for government contracts |
 
 ### Non-Negotiables
 
@@ -47,46 +47,46 @@ These accessibility features are **mandatory** for all UI work:
 
 ### Perceivable
 
-| Criterion | Requirement | How to Test |
-|-----------|-------------|-------------|
-| 1.1.1 Non-text Content | All images have alt text | Automated + manual review |
-| 1.3.1 Info and Relationships | Semantic HTML structure | DOM inspection |
-| 1.3.2 Meaningful Sequence | Reading order is logical | Screen reader test |
-| 1.4.1 Use of Color | Color not sole indicator | Grayscale test |
-| 1.4.3 Contrast (Minimum) | 4.5:1 for text, 3:1 for large text | Contrast checker |
-| 1.4.4 Resize Text | Usable at 200% zoom | Browser zoom test |
-| 1.4.10 Reflow | No horizontal scroll at 320px | Responsive test |
-| 1.4.11 Non-text Contrast | 3:1 for UI components | Contrast checker |
+| Criterion                    | Requirement                        | How to Test               |
+| ---------------------------- | ---------------------------------- | ------------------------- |
+| 1.1.1 Non-text Content       | All images have alt text           | Automated + manual review |
+| 1.3.1 Info and Relationships | Semantic HTML structure            | DOM inspection            |
+| 1.3.2 Meaningful Sequence    | Reading order is logical           | Screen reader test        |
+| 1.4.1 Use of Color           | Color not sole indicator           | Grayscale test            |
+| 1.4.3 Contrast (Minimum)     | 4.5:1 for text, 3:1 for large text | Contrast checker          |
+| 1.4.4 Resize Text            | Usable at 200% zoom                | Browser zoom test         |
+| 1.4.10 Reflow                | No horizontal scroll at 320px      | Responsive test           |
+| 1.4.11 Non-text Contrast     | 3:1 for UI components              | Contrast checker          |
 
 ### Operable
 
-| Criterion | Requirement | How to Test |
-|-----------|-------------|-------------|
-| 2.1.1 Keyboard | All functionality via keyboard | Tab through page |
-| 2.1.2 No Keyboard Trap | Can escape all components | Keyboard test |
-| 2.4.1 Bypass Blocks | Skip navigation link present | Manual check |
-| 2.4.3 Focus Order | Logical tab order | Keyboard test |
-| 2.4.4 Link Purpose | Link text is descriptive | Manual review |
-| 2.4.6 Headings and Labels | Descriptive headings | Manual review |
-| 2.4.7 Focus Visible | Focus indicator visible | Keyboard test |
-| 2.5.3 Label in Name | Accessible name matches visible | Screen reader |
+| Criterion                 | Requirement                     | How to Test      |
+| ------------------------- | ------------------------------- | ---------------- |
+| 2.1.1 Keyboard            | All functionality via keyboard  | Tab through page |
+| 2.1.2 No Keyboard Trap    | Can escape all components       | Keyboard test    |
+| 2.4.1 Bypass Blocks       | Skip navigation link present    | Manual check     |
+| 2.4.3 Focus Order         | Logical tab order               | Keyboard test    |
+| 2.4.4 Link Purpose        | Link text is descriptive        | Manual review    |
+| 2.4.6 Headings and Labels | Descriptive headings            | Manual review    |
+| 2.4.7 Focus Visible       | Focus indicator visible         | Keyboard test    |
+| 2.5.3 Label in Name       | Accessible name matches visible | Screen reader    |
 
 ### Understandable
 
-| Criterion | Requirement | How to Test |
-|-----------|-------------|-------------|
-| 3.1.1 Language of Page | `lang` attribute set | DOM inspection |
-| 3.2.1 On Focus | No unexpected changes | Keyboard test |
-| 3.2.2 On Input | No unexpected changes | Form testing |
-| 3.3.1 Error Identification | Errors clearly described | Form validation test |
-| 3.3.2 Labels or Instructions | Form inputs have labels | Automated test |
+| Criterion                    | Requirement              | How to Test          |
+| ---------------------------- | ------------------------ | -------------------- |
+| 3.1.1 Language of Page       | `lang` attribute set     | DOM inspection       |
+| 3.2.1 On Focus               | No unexpected changes    | Keyboard test        |
+| 3.2.2 On Input               | No unexpected changes    | Form testing         |
+| 3.3.1 Error Identification   | Errors clearly described | Form validation test |
+| 3.3.2 Labels or Instructions | Form inputs have labels  | Automated test       |
 
 ### Robust
 
-| Criterion | Requirement | How to Test |
-|-----------|-------------|-------------|
-| 4.1.1 Parsing | Valid HTML | HTML validator |
-| 4.1.2 Name, Role, Value | ARIA used correctly | axe-core |
+| Criterion               | Requirement         | How to Test    |
+| ----------------------- | ------------------- | -------------- |
+| 4.1.1 Parsing           | Valid HTML          | HTML validator |
+| 4.1.2 Name, Role, Value | ARIA used correctly | axe-core       |
 
 ---
 
@@ -128,13 +128,11 @@ import { Dialog } from "@/components/ui/dialog";
   <DialogContent>
     <DialogHeader>
       <DialogTitle>Edit Profile</DialogTitle>
-      <DialogDescription>
-        Make changes to your profile here.
-      </DialogDescription>
+      <DialogDescription>Make changes to your profile here.</DialogDescription>
     </DialogHeader>
     {/* Content */}
   </DialogContent>
-</Dialog>
+</Dialog>;
 ```
 
 #### Forms
@@ -143,8 +141,8 @@ import { Dialog } from "@/components/ui/dialog";
 // ✅ Good - Proper form labeling
 <div>
   <Label htmlFor="email">Email address</Label>
-  <Input 
-    id="email" 
+  <Input
+    id="email"
     type="email"
     aria-describedby="email-error"
     aria-invalid={!!errors.email}
@@ -194,12 +192,12 @@ import { Dialog } from "@/components/ui/dialog";
 
 ### Minimum Contrast Ratios
 
-| Element | Ratio | Example |
-|---------|-------|---------|
-| Normal text (< 18px) | 4.5:1 | Body copy |
-| Large text (≥ 18px bold or ≥ 24px) | 3:1 | Headings |
-| UI components & graphics | 3:1 | Buttons, icons, borders |
-| Disabled elements | No requirement | But should be visually distinct |
+| Element                            | Ratio          | Example                         |
+| ---------------------------------- | -------------- | ------------------------------- |
+| Normal text (< 18px)               | 4.5:1          | Body copy                       |
+| Large text (≥ 18px bold or ≥ 24px) | 3:1            | Headings                        |
+| UI components & graphics           | 3:1            | Buttons, icons, borders         |
+| Disabled elements                  | No requirement | But should be visually distinct |
 
 ### Color Tokens for Accessibility
 
@@ -209,32 +207,32 @@ import { Dialog } from "@/components/ui/dialog";
 export const accessibleColors = {
   // Text on backgrounds
   text: {
-    onLight: "text-gray-900",      // #111827 on white = 15.5:1
-    onDark: "text-gray-100",       // #f3f4f6 on gray-900 = 12.6:1
-    muted: "text-gray-600",        // #4b5563 on white = 7.0:1
-    mutedDark: "text-gray-400",    // #9ca3af on gray-900 = 5.5:1
+    onLight: "text-gray-900", // #111827 on white = 15.5:1
+    onDark: "text-gray-100", // #f3f4f6 on gray-900 = 12.6:1
+    muted: "text-gray-600", // #4b5563 on white = 7.0:1
+    mutedDark: "text-gray-400", // #9ca3af on gray-900 = 5.5:1
   },
-  
+
   // Status colors with sufficient contrast
   status: {
     success: {
       bg: "bg-green-100",
-      text: "text-green-800",      // 5.3:1
+      text: "text-green-800", // 5.3:1
       border: "border-green-500",
     },
     error: {
       bg: "bg-red-100",
-      text: "text-red-800",        // 5.6:1
+      text: "text-red-800", // 5.6:1
       border: "border-red-500",
     },
     warning: {
       bg: "bg-amber-100",
-      text: "text-amber-900",      // 7.2:1
+      text: "text-amber-900", // 7.2:1
       border: "border-amber-500",
     },
     info: {
       bg: "bg-blue-100",
-      text: "text-blue-800",       // 5.4:1
+      text: "text-blue-800", // 5.4:1
       border: "border-blue-500",
     },
   },
@@ -262,14 +260,14 @@ Always provide a secondary indicator (icon, text, pattern):
 
 ### Required Keyboard Support
 
-| Key | Action |
-|-----|--------|
-| `Tab` | Move to next focusable element |
-| `Shift + Tab` | Move to previous focusable element |
-| `Enter` / `Space` | Activate buttons and links |
-| `Escape` | Close dialogs, dropdowns, popovers |
-| `Arrow keys` | Navigate within components (menus, tabs, etc.) |
-| `Home` / `End` | Jump to first/last item in lists |
+| Key               | Action                                         |
+| ----------------- | ---------------------------------------------- |
+| `Tab`             | Move to next focusable element                 |
+| `Shift + Tab`     | Move to previous focusable element             |
+| `Enter` / `Space` | Activate buttons and links                     |
+| `Escape`          | Close dialogs, dropdowns, popovers             |
+| `Arrow keys`      | Navigate within components (menus, tabs, etc.) |
+| `Home` / `End`    | Jump to first/last item in lists               |
 
 ### Focus Styles
 
@@ -304,7 +302,11 @@ Add to main layout:
 
 ```tsx
 // app/layout.tsx
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body>
@@ -413,7 +415,7 @@ export function RouteAnnouncer() {
   useEffect(() => {
     // Get page title or generate from pathname
     const pageTitle = document.title || pathname;
-    
+
     if (announcerRef.current) {
       announcerRef.current.textContent = `Navigated to ${pageTitle}`;
     }
@@ -525,7 +527,7 @@ import AxeBuilder from "@axe-core/playwright";
 test.describe("Accessibility", () => {
   test("homepage should have no accessibility violations", async ({ page }) => {
     await page.goto("/");
-    
+
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze();
@@ -533,9 +535,11 @@ test.describe("Accessibility", () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
-  test("dashboard should have no accessibility violations", async ({ page }) => {
+  test("dashboard should have no accessibility violations", async ({
+    page,
+  }) => {
     await page.goto("/dashboard");
-    
+
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze();
@@ -558,13 +562,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install dependencies
         run: pnpm install
-        
+
       - name: Run accessibility tests
         run: pnpm test:a11y
-        
+
       - name: Run E2E accessibility tests
         run: pnpm test:e2e:a11y
 ```
@@ -585,7 +589,7 @@ export function AccessibleForm() {
   });
 
   return (
-    <form 
+    <form
       onSubmit={form.handleSubmit(onSubmit)}
       aria-label="Contact form"
       noValidate // Use JS validation for better UX
@@ -593,7 +597,10 @@ export function AccessibleForm() {
       <div className="space-y-4">
         <div>
           <Label htmlFor="name">
-            Name <span aria-hidden="true" className="text-destructive">*</span>
+            Name{" "}
+            <span aria-hidden="true" className="text-destructive">
+              *
+            </span>
             <span className="sr-only">(required)</span>
           </Label>
           <Input
@@ -606,7 +613,11 @@ export function AccessibleForm() {
             }
           />
           {form.formState.errors.name && (
-            <p id="name-error" role="alert" className="text-sm text-destructive mt-1">
+            <p
+              id="name-error"
+              role="alert"
+              className="text-sm text-destructive mt-1"
+            >
               {form.formState.errors.name.message}
             </p>
           )}
@@ -706,7 +717,7 @@ const prefersReducedMotion = useReducedMotion();
 <motion.div
   animate={{ opacity: 1 }}
   transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
-/>
+/>;
 ```
 
 ---
@@ -724,6 +735,6 @@ const prefersReducedMotion = useReducedMotion();
 
 ## Changelog
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                                   | Author   |
+| ---------- | ---------------------------------------- | -------- |
 | 2026-01-18 | Initial accessibility standards document | AI Agent |

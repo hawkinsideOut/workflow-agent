@@ -167,8 +167,18 @@ describe("TelemetryCollector", () => {
     });
 
     it("should return queue with recorded events", async () => {
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
-      await collector.recordSuccess("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
+      await collector.recordSuccess(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
 
       const queue = await collector.getQueue();
 
@@ -183,9 +193,24 @@ describe("TelemetryCollector", () => {
     });
 
     it("should return correct count after recording events", async () => {
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440002", "fix", "next", "14.0.0");
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440003", "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440002",
+        "fix",
+        "next",
+        "14.0.0",
+      );
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440003",
+        "fix",
+        "next",
+        "14.0.0",
+      );
 
       const count = await collector.getPendingCount();
       expect(count).toBe(3);
@@ -205,8 +230,18 @@ describe("TelemetryCollector", () => {
       const mockSender = createMockSender();
       collector.setSender(mockSender.sender);
 
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440002", "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440002",
+        "fix",
+        "next",
+        "14.0.0",
+      );
 
       await collector.flush();
 
@@ -233,7 +268,12 @@ describe("TelemetryCollector", () => {
     });
 
     it("should fail when no sender is configured", async () => {
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
 
       const result = await collector.flush();
 
@@ -245,8 +285,18 @@ describe("TelemetryCollector", () => {
       const mockSender = createMockSender();
       collector.setSender(mockSender.sender);
 
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
-      await collector.recordSuccess("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
+      await collector.recordSuccess(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
 
       const result = await collector.flush();
 
@@ -259,7 +309,12 @@ describe("TelemetryCollector", () => {
       const mockSender = createMockSender();
       collector.setSender(mockSender.sender);
 
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
       await collector.flush();
 
       const count = await collector.getPendingCount();
@@ -272,7 +327,12 @@ describe("TelemetryCollector", () => {
         error: "Network error",
       }));
 
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
       const result = await collector.flush();
 
       expect(result.success).toBe(false);
@@ -289,7 +349,12 @@ describe("TelemetryCollector", () => {
 
       // Record TELEMETRY_BATCH_SIZE events
       for (let i = 0; i < TELEMETRY_BATCH_SIZE; i++) {
-        await collector.recordApplication(crypto.randomUUID(), "fix", "next", "14.0.0");
+        await collector.recordApplication(
+          crypto.randomUUID(),
+          "fix",
+          "next",
+          "14.0.0",
+        );
       }
 
       // Queue should be flushed
@@ -305,7 +370,12 @@ describe("TelemetryCollector", () => {
       const mockSender = createMockSender();
       collector.setSender(mockSender.sender);
 
-      await collector.recordApplication(TEST_PATTERN_ID, "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        TEST_PATTERN_ID,
+        "fix",
+        "next",
+        "14.0.0",
+      );
 
       const result = await collector.forceFlush();
 
@@ -316,8 +386,18 @@ describe("TelemetryCollector", () => {
 
   describe("clear", () => {
     it("should clear all pending events", async () => {
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440002", "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440002",
+        "fix",
+        "next",
+        "14.0.0",
+      );
 
       const result = await collector.clear();
 
@@ -345,7 +425,12 @@ describe("TelemetryCollector", () => {
 
   describe("clearCache", () => {
     it("should clear the internal cache", async () => {
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
 
       // This populates cache
       await collector.getQueue();
@@ -369,7 +454,13 @@ describe("TelemetryCollector", () => {
       await collector.recordApplication(patternId, "fix", "next", "14.0.0");
       await collector.recordSuccess(patternId, "fix", "next", "14.0.0");
       await collector.recordSuccess(patternId, "fix", "next", "14.0.0");
-      await collector.recordFailure(patternId, "fix", "next", "14.0.0", "version-mismatch");
+      await collector.recordFailure(
+        patternId,
+        "fix",
+        "next",
+        "14.0.0",
+        "version-mismatch",
+      );
 
       const stats = await collector.getPatternStats(patternId);
 
@@ -391,9 +482,27 @@ describe("TelemetryCollector", () => {
     it("should count multiple failure reasons", async () => {
       const patternId = crypto.randomUUID();
 
-      await collector.recordFailure(patternId, "fix", "next", "14.0.0", "version-mismatch");
-      await collector.recordFailure(patternId, "fix", "next", "14.0.0", "version-mismatch");
-      await collector.recordFailure(patternId, "fix", "next", "14.0.0", "missing-dependency");
+      await collector.recordFailure(
+        patternId,
+        "fix",
+        "next",
+        "14.0.0",
+        "version-mismatch",
+      );
+      await collector.recordFailure(
+        patternId,
+        "fix",
+        "next",
+        "14.0.0",
+        "version-mismatch",
+      );
+      await collector.recordFailure(
+        patternId,
+        "fix",
+        "next",
+        "14.0.0",
+        "missing-dependency",
+      );
 
       const stats = await collector.getPatternStats(patternId);
 
@@ -426,7 +535,12 @@ describe("TelemetryCollector", () => {
 
   describe("persistence", () => {
     it("should persist events to disk", async () => {
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
 
       const filePath = path.join(
         TEST_WORKSPACE,
@@ -440,8 +554,18 @@ describe("TelemetryCollector", () => {
     });
 
     it("should survive collector recreation", async () => {
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440001", "fix", "next", "14.0.0");
-      await collector.recordApplication("550e8400-e29b-41d4-a716-446655440002", "fix", "next", "14.0.0");
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "fix",
+        "next",
+        "14.0.0",
+      );
+      await collector.recordApplication(
+        "550e8400-e29b-41d4-a716-446655440002",
+        "fix",
+        "next",
+        "14.0.0",
+      );
 
       // Create new collector
       const newCollector = createTelemetryCollector(TEST_WORKSPACE);
@@ -463,7 +587,12 @@ describe("TelemetryCollector", () => {
       let lastPatternId = "";
       for (let i = 0; i < 110; i++) {
         lastPatternId = crypto.randomUUID();
-        await collector.recordApplication(lastPatternId, "fix", "next", "14.0.0");
+        await collector.recordApplication(
+          lastPatternId,
+          "fix",
+          "next",
+          "14.0.0",
+        );
       }
 
       const queue = await collector.getQueue();
@@ -547,7 +676,10 @@ describe("createTelemetryCollector", () => {
 
   it("should accept a sender parameter", () => {
     const mockSender = createMockSender();
-    const collector = createTelemetryCollector(TEST_WORKSPACE, mockSender.sender);
+    const collector = createTelemetryCollector(
+      TEST_WORKSPACE,
+      mockSender.sender,
+    );
     expect(collector.hasSender()).toBe(true);
   });
 });

@@ -107,7 +107,7 @@ export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
         return undefined;
       },
     });
-    
+
     if (p.isCancel(pathInput)) {
       p.cancel("Operation cancelled");
       process.exit(0);
@@ -131,7 +131,7 @@ export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
         return undefined;
       },
     });
-    
+
     if (p.isCancel(nameInput)) {
       p.cancel("Operation cancelled");
       process.exit(0);
@@ -151,7 +151,7 @@ export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
         return undefined;
       },
     });
-    
+
     if (p.isCancel(descInput)) {
       p.cancel("Operation cancelled");
       process.exit(0);
@@ -181,7 +181,7 @@ export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
         { value: "other", label: "📦 Other" },
       ],
     });
-    
+
     if (p.isCancel(categoryChoice)) {
       p.cancel("Operation cancelled");
       process.exit(0);
@@ -198,7 +198,7 @@ export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
       message: "Keywords (comma-separated):",
       placeholder: "jwt, authentication, login, refresh-token",
     });
-    
+
     if (p.isCancel(keywordsInput)) {
       p.cancel("Operation cancelled");
       process.exit(0);
@@ -231,8 +231,12 @@ export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
     console.log(chalk.green("\n✓ Solution captured successfully!\n"));
     console.log(chalk.dim("─".repeat(50)));
     console.log(`${chalk.bold("Name:")} ${pattern.name}`);
-    console.log(`${chalk.bold("Category:")} ${formatCategory(pattern.category)}`);
-    console.log(`${chalk.bold("Files:")} ${pattern.implementation.files.length}`);
+    console.log(
+      `${chalk.bold("Category:")} ${formatCategory(pattern.category)}`,
+    );
+    console.log(
+      `${chalk.bold("Files:")} ${pattern.implementation.files.length}`,
+    );
     console.log(
       `${chalk.bold("Dependencies:")} ${pattern.implementation.dependencies.length}`,
     );
@@ -279,8 +283,8 @@ export async function solutionSearchCommand(
   console.log(chalk.cyan("\n🔍 Search Solution Patterns\n"));
 
   // Convert query to keywords array
-  const keywords = query.split(/\s+/).filter(k => k.length > 0);
-  
+  const keywords = query.split(/\s+/).filter((k) => k.length > 0);
+
   const result = await store.searchSolutions(keywords, {
     category: options.category,
     framework: options.framework,
@@ -317,7 +321,9 @@ export async function solutionSearchCommand(
     console.log(chalk.dim("─".repeat(70)));
   }
 
-  console.log(chalk.dim("\nUse 'workflow solution:apply <id>' to apply a solution."));
+  console.log(
+    chalk.dim("\nUse 'workflow solution:apply <id>' to apply a solution."),
+  );
 }
 
 // ============================================
@@ -349,7 +355,9 @@ export async function solutionListCommand(options: SolutionListOptions) {
 
   if (solutions.length === 0) {
     console.log(chalk.yellow("No solutions found.\n"));
-    console.log(chalk.dim("Use 'workflow solution:capture' to capture a solution."));
+    console.log(
+      chalk.dim("Use 'workflow solution:capture' to capture a solution."),
+    );
     return;
   }
 
@@ -366,7 +374,7 @@ export async function solutionListCommand(options: SolutionListOptions) {
   for (const [category, items] of byCategory) {
     console.log(chalk.bold(`\n${formatCategory(category)}`));
     console.log(chalk.dim("─".repeat(50)));
-    
+
     for (const solution of items) {
       const deprecated = solution.deprecatedAt
         ? chalk.red(" [DEPRECATED]")
@@ -384,7 +392,9 @@ export async function solutionListCommand(options: SolutionListOptions) {
   }
 
   console.log(
-    chalk.dim("\nUse 'workflow solution:search <query>' to find specific solutions."),
+    chalk.dim(
+      "\nUse 'workflow solution:search <query>' to find specific solutions.",
+    ),
   );
 }
 
@@ -424,7 +434,7 @@ export async function solutionApplyCommand(
       message: "Do you want to continue?",
       initialValue: false,
     });
-    
+
     if (p.isCancel(proceed) || !proceed) {
       p.cancel("Operation cancelled");
       process.exit(0);
@@ -440,7 +450,9 @@ export async function solutionApplyCommand(
   console.log(chalk.bold("Files to create:"));
   const filesToApply: SolutionFile[] = options.includeTests
     ? solution.implementation.files
-    : solution.implementation.files.filter((f: SolutionFile) => f.role !== "test");
+    : solution.implementation.files.filter(
+        (f: SolutionFile) => f.role !== "test",
+      );
 
   for (const file of filesToApply) {
     console.log(chalk.dim(`  • ${file.path} (${file.role})`));
@@ -494,7 +506,7 @@ export async function solutionApplyCommand(
     for (const file of filesToApply) {
       const filePath = pathModule.join(outputDir, file.path);
       const dir = pathModule.dirname(filePath);
-      
+
       await fs.promises.mkdir(dir, { recursive: true });
       await fs.promises.writeFile(filePath, file.content);
     }
@@ -508,9 +520,7 @@ export async function solutionApplyCommand(
 
     // Show next steps
     if (solution.implementation.dependencies.length > 0) {
-      console.log(
-        chalk.cyan("\nNext step: Install dependencies with:"),
-      );
+      console.log(chalk.cyan("\nNext step: Install dependencies with:"));
       const deps = solution.implementation.dependencies
         .map((d: DependencyVersion) => `${d.name}@${d.version}`)
         .join(" ");
@@ -518,10 +528,10 @@ export async function solutionApplyCommand(
     }
   } catch (error) {
     spinner.stop("Application failed");
-    
+
     // Record failure
     await store.updateSolutionMetrics(solution.id, false);
-    
+
     console.error(chalk.red(`\n✗ Error: ${(error as Error).message}\n`));
     process.exit(1);
   }
@@ -597,14 +607,14 @@ export async function solutionStatsCommand() {
   // Category breakdown
   console.log(`\n${chalk.bold("By Category:")}`);
   const listResult = await store.listSolutions({ limit: 1000 });
-  
+
   if (listResult.success && listResult.data) {
     const categories = new Map<SolutionCategory, number>();
-    
+
     for (const s of listResult.data) {
       categories.set(s.category, (categories.get(s.category) || 0) + 1);
     }
-    
+
     for (const [category, count] of categories) {
       console.log(`  ${formatCategory(category)}: ${count}`);
     }

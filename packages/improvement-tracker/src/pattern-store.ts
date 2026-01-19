@@ -130,7 +130,9 @@ export class PatternStore {
   /**
    * Save a fix pattern to the store
    */
-  async saveFixPattern(pattern: FixPattern): Promise<PatternResult<FixPattern>> {
+  async saveFixPattern(
+    pattern: FixPattern,
+  ): Promise<PatternResult<FixPattern>> {
     try {
       const validation = FixPatternSchema.safeParse(pattern);
       if (!validation.success) {
@@ -215,7 +217,9 @@ export class PatternStore {
   /**
    * List all fix patterns with optional filtering
    */
-  async listFixPatterns(query: PatternQuery = {}): Promise<PatternResult<FixPattern[]>> {
+  async listFixPatterns(
+    query: PatternQuery = {},
+  ): Promise<PatternResult<FixPattern[]>> {
     try {
       const patterns = await this.loadAllFixPatterns();
       const filtered = this.filterPatterns(patterns, query);
@@ -362,7 +366,9 @@ export class PatternStore {
   /**
    * List all blueprints with optional filtering
    */
-  async listBlueprints(query: PatternQuery = {}): Promise<PatternResult<Blueprint[]>> {
+  async listBlueprints(
+    query: PatternQuery = {},
+  ): Promise<PatternResult<Blueprint[]>> {
     try {
       const blueprints = await this.loadAllBlueprints();
       const filtered = this.filterPatterns(blueprints, query);
@@ -425,7 +431,9 @@ export class PatternStore {
   /**
    * Save a solution pattern to the store
    */
-  async saveSolution(pattern: SolutionPattern): Promise<PatternResult<SolutionPattern>> {
+  async saveSolution(
+    pattern: SolutionPattern,
+  ): Promise<PatternResult<SolutionPattern>> {
     try {
       const validation = SolutionPatternSchema.safeParse(pattern);
       if (!validation.success) {
@@ -510,7 +518,9 @@ export class PatternStore {
   /**
    * List all solution patterns with optional filtering
    */
-  async listSolutions(query: SolutionQuery = {}): Promise<PatternResult<SolutionPattern[]>> {
+  async listSolutions(
+    query: SolutionQuery = {},
+  ): Promise<PatternResult<SolutionPattern[]>> {
     try {
       const solutions = await this.loadAllSolutions();
       const filtered = this.filterSolutions(solutions, query);
@@ -526,7 +536,10 @@ export class PatternStore {
   /**
    * Search for solutions by keywords (problem matching)
    */
-  async searchSolutions(keywords: string[], options: SolutionQuery = {}): Promise<PatternResult<SolutionPattern[]>> {
+  async searchSolutions(
+    keywords: string[],
+    options: SolutionQuery = {},
+  ): Promise<PatternResult<SolutionPattern[]>> {
     try {
       const result = await this.listSolutions({
         ...options,
@@ -545,7 +558,8 @@ export class PatternStore {
         // Check problem keywords (highest weight)
         for (const term of searchTerms) {
           const keywordMatch = solution.problem.keywords.some(
-            (k) => k.toLowerCase().includes(term) || term.includes(k.toLowerCase())
+            (k) =>
+              k.toLowerCase().includes(term) || term.includes(k.toLowerCase()),
           );
           if (keywordMatch) score += 10;
         }
@@ -558,8 +572,8 @@ export class PatternStore {
 
         // Check tags (medium weight)
         for (const term of searchTerms) {
-          const tagMatch = solution.tags.some(
-            (t) => t.name.toLowerCase().includes(term)
+          const tagMatch = solution.tags.some((t) =>
+            t.name.toLowerCase().includes(term),
           );
           if (tagMatch) score += 5;
         }
@@ -759,7 +773,9 @@ export class PatternStore {
   /**
    * Detect if a solution pattern conflicts with existing solutions
    */
-  async detectSolutionConflict(solution: SolutionPattern): Promise<ConflictResult> {
+  async detectSolutionConflict(
+    solution: SolutionPattern,
+  ): Promise<ConflictResult> {
     const existing = await this.loadAllSolutions();
     const hash = generatePatternHash(solution);
 
@@ -801,7 +817,10 @@ export class PatternStore {
     // Process fix patterns
     const fixes = await this.loadAllFixPatterns();
     for (const pattern of fixes) {
-      if (!pattern.deprecatedAt && isPatternDeprecated(pattern, thresholdDays)) {
+      if (
+        !pattern.deprecatedAt &&
+        isPatternDeprecated(pattern, thresholdDays)
+      ) {
         await this.deprecateFixPattern(
           pattern.id,
           `Auto-deprecated: No updates in ${thresholdDays}+ days`,
@@ -813,7 +832,10 @@ export class PatternStore {
     // Process blueprints
     const blueprints = await this.loadAllBlueprints();
     for (const blueprint of blueprints) {
-      if (!blueprint.deprecatedAt && isPatternDeprecated(blueprint, thresholdDays)) {
+      if (
+        !blueprint.deprecatedAt &&
+        isPatternDeprecated(blueprint, thresholdDays)
+      ) {
         await this.deprecateBlueprint(
           blueprint.id,
           `Auto-deprecated: No updates in ${thresholdDays}+ days`,
@@ -1106,9 +1128,7 @@ export class PatternStore {
 
     // Filter by solution category
     if (query.solutionCategory) {
-      filtered = filtered.filter(
-        (s) => s.category === query.solutionCategory,
-      );
+      filtered = filtered.filter((s) => s.category === query.solutionCategory);
     }
 
     // Filter by source project
@@ -1122,8 +1142,8 @@ export class PatternStore {
     if (query.keywords && query.keywords.length > 0) {
       filtered = filtered.filter((s) =>
         query.keywords!.some((keyword) =>
-          s.problem.keywords.some(
-            (k) => k.toLowerCase().includes(keyword.toLowerCase()),
+          s.problem.keywords.some((k) =>
+            k.toLowerCase().includes(keyword.toLowerCase()),
           ),
         ),
       );

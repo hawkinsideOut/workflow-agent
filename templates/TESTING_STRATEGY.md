@@ -835,7 +835,7 @@ export const axe = configureAxe({
     "aria-valid-attr-value": { enabled: true },
     "button-name": { enabled: true },
     "image-alt": { enabled: true },
-    "label": { enabled: true },
+    label: { enabled: true },
   },
 });
 ```
@@ -886,7 +886,7 @@ import AxeBuilder from "@axe-core/playwright";
 test.describe("Accessibility", () => {
   test("homepage should have no accessibility violations", async ({ page }) => {
     await page.goto("/");
-    
+
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze();
@@ -894,12 +894,14 @@ test.describe("Accessibility", () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
-  test("should maintain accessibility during interactions", async ({ page }) => {
+  test("should maintain accessibility during interactions", async ({
+    page,
+  }) => {
     await page.goto("/dashboard");
-    
+
     // Open a modal
     await page.getByRole("button", { name: /create task/i }).click();
-    
+
     // Scan with modal open
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
@@ -932,7 +934,7 @@ jobs:
     steps:
       - name: Run accessibility tests
         run: pnpm test -- --grep "accessibility"
-        
+
       - name: Run E2E accessibility tests
         run: pnpm test:e2e:a11y
 ```

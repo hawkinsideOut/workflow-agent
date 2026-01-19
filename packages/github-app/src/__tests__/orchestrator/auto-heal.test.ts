@@ -186,12 +186,7 @@ describe("Auto-Heal Orchestrator", () => {
       const { manualTrigger } = await import("../../orchestrator/auto-heal");
 
       await expect(
-        manualTrigger(
-          "owner",
-          "repo",
-          "abc123def456",
-          "Test error message",
-        ),
+        manualTrigger("owner", "repo", "abc123def456", "Test error message"),
       ).resolves.not.toThrow();
     });
   });

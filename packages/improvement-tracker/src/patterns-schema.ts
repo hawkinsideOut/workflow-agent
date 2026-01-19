@@ -715,7 +715,9 @@ export function isPatternDeprecated(
 /**
  * Generate a content hash for conflict detection
  */
-export function generatePatternHash(pattern: FixPattern | Blueprint | SolutionPattern): string {
+export function generatePatternHash(
+  pattern: FixPattern | Blueprint | SolutionPattern,
+): string {
   // Create a hash from the essential content (excluding metadata)
   let contentToHash: Record<string, unknown>;
 
@@ -753,7 +755,10 @@ export function generatePatternHash(pattern: FixPattern | Blueprint | SolutionPa
   }
 
   // Simple hash using JSON string
-  const jsonString = JSON.stringify(contentToHash, Object.keys(contentToHash).sort());
+  const jsonString = JSON.stringify(
+    contentToHash,
+    Object.keys(contentToHash).sort(),
+  );
   let hash = 0;
   for (let i = 0; i < jsonString.length; i++) {
     const char = jsonString.charCodeAt(i);

@@ -299,7 +299,13 @@ describe("CompatibilitySchema", () => {
 
 describe("PatternTagSchema", () => {
   it("should validate all category types", () => {
-    const categories = ["framework", "tool", "error-type", "file-type", "custom"];
+    const categories = [
+      "framework",
+      "tool",
+      "error-type",
+      "file-type",
+      "custom",
+    ];
     categories.forEach((category) => {
       const result = PatternTagSchema.safeParse({ name: "test", category });
       expect(result.success).toBe(true);
@@ -383,7 +389,14 @@ describe("SolutionTypeEnum", () => {
 
 describe("StepActionEnum", () => {
   it("should accept all valid actions", () => {
-    const actions = ["run", "create", "modify", "delete", "install", "uninstall"];
+    const actions = [
+      "run",
+      "create",
+      "modify",
+      "delete",
+      "install",
+      "uninstall",
+    ];
     actions.forEach((action) => {
       expect(StepActionEnum.safeParse(action).success).toBe(true);
     });
@@ -392,7 +405,13 @@ describe("StepActionEnum", () => {
 
 describe("PatternSourceEnum", () => {
   it("should accept all valid sources", () => {
-    const sources = ["manual", "auto-heal", "verify-fix", "imported", "community"];
+    const sources = [
+      "manual",
+      "auto-heal",
+      "verify-fix",
+      "imported",
+      "community",
+    ];
     sources.forEach((source) => {
       expect(PatternSourceEnum.safeParse(source).success).toBe(true);
     });
@@ -988,7 +1007,9 @@ describe("generatePatternHash", () => {
       ...createValidFixPattern(),
       name: "Different Name",
     };
-    expect(generatePatternHash(pattern1)).not.toBe(generatePatternHash(pattern2));
+    expect(generatePatternHash(pattern1)).not.toBe(
+      generatePatternHash(pattern2),
+    );
   });
 
   it("should ignore metadata fields when hashing", () => {
@@ -1176,7 +1197,9 @@ describe("Integration: Pattern validation flow", () => {
         language: "typescript",
         runtime: "node",
         packageManager: "pnpm",
-        dependencies: [{ name: "next", version: "14.0.0", compatibleRange: "^14.0.0" }],
+        dependencies: [
+          { name: "next", version: "14.0.0", compatibleRange: "^14.0.0" },
+        ],
         devDependencies: [],
       },
       structure: {
@@ -1186,7 +1209,11 @@ describe("Integration: Pattern validation flow", () => {
       setup: {
         prerequisites: ["Node.js 20+", "pnpm"],
         steps: [
-          { order: 1, command: "pnpm install", description: "Install dependencies" },
+          {
+            order: 1,
+            command: "pnpm install",
+            description: "Install dependencies",
+          },
         ],
         configs: [],
       },
@@ -1251,8 +1278,12 @@ const createValidSolutionProblem = () => ({
 
 const createValidSolutionImplementation = () => ({
   files: [createValidSolutionFile()],
-  dependencies: [{ name: "bcrypt", version: "5.1.0", compatibleRange: "^5.0.0" }],
-  devDependencies: [{ name: "@types/bcrypt", version: "5.0.0", compatibleRange: "^5.0.0" }],
+  dependencies: [
+    { name: "bcrypt", version: "5.1.0", compatibleRange: "^5.0.0" },
+  ],
+  devDependencies: [
+    { name: "@types/bcrypt", version: "5.0.0", compatibleRange: "^5.0.0" },
+  ],
   envVars: [createValidSolutionEnvVar()],
   dataModels: [createValidSolutionDataModel()],
 });
@@ -1270,7 +1301,8 @@ const createValidSolutionArchitecture = () => ({
 const createValidSolutionPattern = (): SolutionPattern => ({
   id: "550e8400-e29b-41d4-a716-446655440001",
   name: "Email/Password Authentication",
-  description: "Complete authentication flow with email and password using bcrypt and sessions",
+  description:
+    "Complete authentication flow with email and password using bcrypt and sessions",
   category: "auth",
   tags: [
     { name: "authentication", category: "custom" },
@@ -1284,7 +1316,9 @@ const createValidSolutionPattern = (): SolutionPattern => ({
     frameworkVersion: "^14.0.0",
     runtime: "node",
     runtimeVersion: "^20.0.0",
-    dependencies: [{ name: "bcrypt", version: "5.0.0", compatibleRange: "^5.0.0" }],
+    dependencies: [
+      { name: "bcrypt", version: "5.0.0", compatibleRange: "^5.0.0" },
+    ],
   },
   metrics: createValidMetrics(),
   relatedPatterns: [],
@@ -1473,7 +1507,9 @@ describe("SolutionFileSchema", () => {
 
 describe("ProblemDefinitionSchema (Solution)", () => {
   it("should validate a complete problem definition", () => {
-    const result = ProblemDefinitionSchema.safeParse(createValidSolutionProblem());
+    const result = ProblemDefinitionSchema.safeParse(
+      createValidSolutionProblem(),
+    );
     expect(result.success).toBe(true);
   });
 
@@ -1490,7 +1526,10 @@ describe("ProblemDefinitionSchema (Solution)", () => {
   });
 
   it("should reject problem with description exceeding max", () => {
-    const problem = { ...createValidSolutionProblem(), description: "x".repeat(501) };
+    const problem = {
+      ...createValidSolutionProblem(),
+      description: "x".repeat(501),
+    };
     const result = ProblemDefinitionSchema.safeParse(problem);
     expect(result.success).toBe(false);
   });
@@ -1516,7 +1555,9 @@ describe("ProblemDefinitionSchema (Solution)", () => {
 
 describe("ImplementationSchema (Solution)", () => {
   it("should validate a complete implementation", () => {
-    const result = ImplementationSchema.safeParse(createValidSolutionImplementation());
+    const result = ImplementationSchema.safeParse(
+      createValidSolutionImplementation(),
+    );
     expect(result.success).toBe(true);
   });
 
@@ -1539,7 +1580,10 @@ describe("ImplementationSchema (Solution)", () => {
   });
 
   it("should accept implementation with empty devDependencies", () => {
-    const impl = { ...createValidSolutionImplementation(), devDependencies: [] };
+    const impl = {
+      ...createValidSolutionImplementation(),
+      devDependencies: [],
+    };
     const result = ImplementationSchema.safeParse(impl);
     expect(result.success).toBe(true);
   });
@@ -1576,7 +1620,9 @@ describe("ImplementationSchema (Solution)", () => {
 
 describe("ArchitectureSchema (Solution)", () => {
   it("should validate a complete architecture", () => {
-    const result = ArchitectureSchema.safeParse(createValidSolutionArchitecture());
+    const result = ArchitectureSchema.safeParse(
+      createValidSolutionArchitecture(),
+    );
     expect(result.success).toBe(true);
   });
 
@@ -1593,7 +1639,10 @@ describe("ArchitectureSchema (Solution)", () => {
   });
 
   it("should reject architecture with dataFlow exceeding max", () => {
-    const arch = { ...createValidSolutionArchitecture(), dataFlow: "x".repeat(1001) };
+    const arch = {
+      ...createValidSolutionArchitecture(),
+      dataFlow: "x".repeat(1001),
+    };
     const result = ArchitectureSchema.safeParse(arch);
     expect(result.success).toBe(false);
   });
@@ -1619,7 +1668,9 @@ describe("ArchitectureSchema (Solution)", () => {
 
 describe("SolutionPatternSchema", () => {
   it("should validate a complete solution pattern", () => {
-    const result = SolutionPatternSchema.safeParse(createValidSolutionPattern());
+    const result = SolutionPatternSchema.safeParse(
+      createValidSolutionPattern(),
+    );
     expect(result.success).toBe(true);
   });
 
@@ -1654,7 +1705,10 @@ describe("SolutionPatternSchema", () => {
   });
 
   it("should reject solution pattern with invalid category", () => {
-    const pattern = { ...createValidSolutionPattern(), category: "invalid-category" };
+    const pattern = {
+      ...createValidSolutionPattern(),
+      category: "invalid-category",
+    };
     const result = SolutionPatternSchema.safeParse(pattern);
     expect(result.success).toBe(false);
   });
@@ -1799,7 +1853,8 @@ describe("Solution Pattern Integration Tests", () => {
     const authSolution: SolutionPattern = {
       id: crypto.randomUUID(),
       name: "JWT Authentication with Refresh Tokens",
-      description: "Complete JWT auth implementation with access and refresh token rotation",
+      description:
+        "Complete JWT auth implementation with access and refresh token rotation",
       category: "auth",
       tags: [
         { name: "jwt", category: "custom" },
@@ -1808,7 +1863,8 @@ describe("Solution Pattern Integration Tests", () => {
       ],
       problem: {
         keywords: ["jwt", "authentication", "refresh-token", "security"],
-        description: "Implement secure token-based authentication with automatic refresh capability",
+        description:
+          "Implement secure token-based authentication with automatic refresh capability",
         errorPatterns: ["Token expired", "Invalid token"],
       },
       implementation: {
@@ -1828,17 +1884,39 @@ export function generateTokens(userId: string) {
             lineCount: 7,
           },
         ],
-        dependencies: [{ name: "jsonwebtoken", version: "9.0.0", compatibleRange: "^9.0.0" }],
-        devDependencies: [{ name: "@types/jsonwebtoken", version: "9.0.0", compatibleRange: "^9.0.0" }],
+        dependencies: [
+          { name: "jsonwebtoken", version: "9.0.0", compatibleRange: "^9.0.0" },
+        ],
+        devDependencies: [
+          {
+            name: "@types/jsonwebtoken",
+            version: "9.0.0",
+            compatibleRange: "^9.0.0",
+          },
+        ],
         envVars: [
-          { name: "JWT_SECRET", description: "Secret for access tokens", required: true, example: "your-secret-key" },
-          { name: "REFRESH_SECRET", description: "Secret for refresh tokens", required: true, example: "refresh-secret" },
+          {
+            name: "JWT_SECRET",
+            description: "Secret for access tokens",
+            required: true,
+            example: "your-secret-key",
+          },
+          {
+            name: "REFRESH_SECRET",
+            description: "Secret for refresh tokens",
+            required: true,
+            example: "refresh-secret",
+          },
         ],
       },
       architecture: {
         entryPoints: ["src/auth/jwt.ts"],
-        dataFlow: "Request → Verify Token → Controller → Response with new tokens",
-        keyDecisions: ["Separate secrets for access and refresh tokens", "Short-lived access tokens"],
+        dataFlow:
+          "Request → Verify Token → Controller → Response with new tokens",
+        keyDecisions: [
+          "Separate secrets for access and refresh tokens",
+          "Short-lived access tokens",
+        ],
       },
       compatibility: {
         framework: "express",
@@ -1871,7 +1949,8 @@ export function generateTokens(userId: string) {
       ],
       problem: {
         keywords: ["database", "prisma", "repository", "orm"],
-        description: "Abstract database operations using repository pattern for clean architecture",
+        description:
+          "Abstract database operations using repository pattern for clean architecture",
       },
       implementation: {
         files: [
@@ -1879,7 +1958,8 @@ export function generateTokens(userId: string) {
             path: "src/repositories/base.repository.ts",
             purpose: "Base repository interface",
             role: "model",
-            content: "export abstract class BaseRepository<T> { abstract findById(id: string): Promise<T | null>; }",
+            content:
+              "export abstract class BaseRepository<T> { abstract findById(id: string): Promise<T | null>; }",
             exports: ["BaseRepository"],
             imports: [],
             lineCount: 3,
@@ -1888,18 +1968,25 @@ export function generateTokens(userId: string) {
             path: "src/repositories/user.repository.ts",
             purpose: "User repository implementation",
             role: "service",
-            content: "export class UserRepository extends BaseRepository<User> { async findById(id: string) { return prisma.user.findUnique({ where: { id } }); } }",
+            content:
+              "export class UserRepository extends BaseRepository<User> { async findById(id: string) { return prisma.user.findUnique({ where: { id } }); } }",
             exports: ["UserRepository"],
             imports: ["@prisma/client"],
             lineCount: 5,
           },
         ],
-        dependencies: [{ name: "@prisma/client", version: "5.0.0", compatibleRange: "^5.0.0" }],
-        devDependencies: [{ name: "prisma", version: "5.0.0", compatibleRange: "^5.0.0" }],
-        envVars: [],
-        dataModels: [
-          { name: "User", description: "User entity model" },
+        dependencies: [
+          {
+            name: "@prisma/client",
+            version: "5.0.0",
+            compatibleRange: "^5.0.0",
+          },
         ],
+        devDependencies: [
+          { name: "prisma", version: "5.0.0", compatibleRange: "^5.0.0" },
+        ],
+        envVars: [],
+        dataModels: [{ name: "User", description: "User entity model" }],
       },
       architecture: {
         entryPoints: ["src/repositories/user.repository.ts"],
@@ -1933,7 +2020,8 @@ export function generateTokens(userId: string) {
     const uiPattern: SolutionPattern = {
       id: crypto.randomUUID(),
       name: "Accessible Modal Component",
-      description: "ARIA-compliant modal dialog with focus trap for accessibility",
+      description:
+        "ARIA-compliant modal dialog with focus trap for accessibility",
       category: "ui",
       tags: [
         { name: "react", category: "framework" },
@@ -1941,7 +2029,8 @@ export function generateTokens(userId: string) {
       ],
       problem: {
         keywords: ["modal", "dialog", "accessibility", "focus-trap"],
-        description: "Create accessible modal component with proper focus management and ARIA attributes",
+        description:
+          "Create accessible modal component with proper focus management and ARIA attributes",
       },
       implementation: {
         files: [
@@ -2003,7 +2092,9 @@ export function Modal({ isOpen, onClose, children }) {
       expect(result.data.syncedAt).toBeDefined();
       expect(result.data.contributorId).toBe("contrib-123");
       expect(result.data.conflictVersion).toBe(3);
-      expect(result.data.originalId).toBe("550e8400-e29b-41d4-a716-446655440099");
+      expect(result.data.originalId).toBe(
+        "550e8400-e29b-41d4-a716-446655440099",
+      );
     }
   });
 
@@ -2011,7 +2102,8 @@ export function Modal({ isOpen, onClose, children }) {
     const deprecatedPattern: SolutionPattern = {
       ...createValidSolutionPattern(),
       deprecatedAt: new Date().toISOString(),
-      deprecationReason: "Replaced by improved implementation with better performance",
+      deprecationReason:
+        "Replaced by improved implementation with better performance",
     };
 
     const result = SolutionPatternSchema.safeParse(deprecatedPattern);

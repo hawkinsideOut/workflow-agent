@@ -371,9 +371,7 @@ export class TelemetryCollector {
     failureReasons: Record<string, number>;
   }> {
     const queue = await this.getQueue();
-    const patternEvents = queue.events.filter(
-      (e) => e.patternId === patternId,
-    );
+    const patternEvents = queue.events.filter((e) => e.patternId === patternId);
 
     const failureReasons: Record<string, number> = {};
 
@@ -401,9 +399,7 @@ export class TelemetryCollector {
   /**
    * Get events by type
    */
-  async getEventsByType(
-    type: TelemetryEventType,
-  ): Promise<TelemetryEvent[]> {
+  async getEventsByType(type: TelemetryEventType): Promise<TelemetryEvent[]> {
     const queue = await this.getQueue();
     return queue.events.filter((e) => e.type === type);
   }

@@ -24,10 +24,7 @@ describe("NPM Package Integration", () => {
       encoding: "utf-8",
     });
 
-    tarballPath = path.join(
-      packageRoot,
-      packOutput.trim().split("\n").pop()!
-    );
+    tarballPath = path.join(packageRoot, packOutput.trim().split("\n").pop()!);
 
     // Extract tarball
     console.log("📂 Extracting to temp dir...");
@@ -138,7 +135,7 @@ describe("NPM Package Integration", () => {
       console.error("\n❌ Missing exports in packed tarball:");
       missing.forEach((name) => console.error(`  - ${name}`));
       console.error(
-        `\n📊 Coverage: ${found.length}/${requiredExports.length} (${Math.round((found.length / requiredExports.length) * 100)}%)`
+        `\n📊 Coverage: ${found.length}/${requiredExports.length} (${Math.round((found.length / requiredExports.length) * 100)}%)`,
       );
     }
 
@@ -153,12 +150,10 @@ describe("NPM Package Integration", () => {
 
     expect(fs.existsSync(packageJsonPath)).toBe(true);
 
-    const packageJson = JSON.parse(
-      fs.readFileSync(packageJsonPath, "utf-8")
-    );
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 
     expect(packageJson.name).toBe(
-      "@hawkinside_out/workflow-improvement-tracker"
+      "@hawkinside_out/workflow-improvement-tracker",
     );
     expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+$/);
     expect(packageJson.main).toBe("./dist/index.js");

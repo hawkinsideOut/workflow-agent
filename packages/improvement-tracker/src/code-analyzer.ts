@@ -36,7 +36,15 @@ export interface AnalyzerOptions {
 export const DEFAULT_ANALYZER_OPTIONS: AnalyzerOptions = {
   maxFiles: 50,
   extensions: [".ts", ".tsx", ".js", ".jsx", ".py", ".go", ".rs", ".java"],
-  ignoreDirs: ["node_modules", ".git", "dist", "build", ".next", "coverage", "__pycache__"],
+  ignoreDirs: [
+    "node_modules",
+    ".git",
+    "dist",
+    "build",
+    ".next",
+    "coverage",
+    "__pycache__",
+  ],
   maxFileSize: 100_000, // 100KB
   anonymize: true,
 };
@@ -81,22 +89,27 @@ const PATTERNS = {
   // JavaScript/TypeScript imports - matches:
   // import "package" | import x from "package" | import { x } from "package"
   // require("package") | require('package')
-  jsImport: /(?:import\s+(?:[\w{},*\s]+\s+from\s+)?|require\s*\()['"]([^'"./][^'"]*)['"]\)?/g,
-  
+  jsImport:
+    /(?:import\s+(?:[\w{},*\s]+\s+from\s+)?|require\s*\()['"]([^'"./][^'"]*)['"]\)?/g,
+
   // JavaScript/TypeScript exports
-  jsExportNamed: /export\s+(?:const|let|var|function|class|interface|type|enum)\s+(\w+)/g,
+  jsExportNamed:
+    /export\s+(?:const|let|var|function|class|interface|type|enum)\s+(\w+)/g,
   jsExportDefault: /export\s+default\s+(?:function\s+)?(\w+)?/g,
-  
+
   // Python imports
-  pyImport: /(?:from|import)\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)/g,
-  
+  pyImport:
+    /(?:from|import)\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)/g,
+
   // Environment variables
-  envVar: /(?:process\.env\.|os\.environ(?:\.get)?\(?\[?)['"]?([A-Z][A-Z0-9_]+)['"]?/g,
-  
+  envVar:
+    /(?:process\.env\.|os\.environ(?:\.get)?\(?\[?)['"]?([A-Z][A-Z0-9_]+)['"]?/g,
+
   // Function/class definitions
-  jsFunctionDef: /(?:async\s+)?(?:function\s+)?(\w+)\s*(?:<[^>]*>)?\s*\([^)]*\)\s*(?::\s*\w+)?\s*[{=>]/g,
+  jsFunctionDef:
+    /(?:async\s+)?(?:function\s+)?(\w+)\s*(?:<[^>]*>)?\s*\([^)]*\)\s*(?::\s*\w+)?\s*[{=>]/g,
   jsClassDef: /class\s+(\w+)/g,
-  
+
   // Framework detection patterns
   frameworkPatterns: {
     next: /['"]next['"]/,
@@ -153,7 +166,7 @@ export class CodeAnalyzer {
   async analyzeFile(filePath: string): Promise<FileAnalysis | null> {
     try {
       const stat = await fs.promises.stat(filePath);
-      
+
       // Skip large files
       if (stat.size > this.options.maxFileSize) {
         return null;
@@ -162,14 +175,14 @@ export class CodeAnalyzer {
       const content = await fs.promises.readFile(filePath, "utf-8");
       const relativePath = path.basename(filePath);
       const ext = path.extname(filePath);
-      
+
       const exports = this.extractExports(content, ext);
       const imports = this.extractImports(content, ext);
       const dependencies = this.extractDependencies(content, ext);
       const lineCount = content.split("\n").length;
       const role = this.detectFileRole(filePath, content);
       const purpose = this.inferPurpose(filePath, exports, role);
-      
+
       // Optionally anonymize content
       const processedContent = this.options.anonymize
         ? this.anonymizeContent(content)
@@ -249,7 +262,7 @@ export class CodeAnalyzer {
   detectArchitecture(analysis: SolutionAnalysis): ArchitectureAnalysis {
     const entryPoints = analysis.entryPoints;
     const roles = new Set(analysis.files.map((f) => f.role));
-    
+
     // Detect data flow based on file roles
     let dataFlow = "Entry -> Processing -> Output";
     if (roles.has("middleware")) {
@@ -294,9 +307,9 @@ export class CodeAnalyzer {
   ): Promise<SolutionPattern> {
     const analysis = await this.analyzeDirectory(dirPath, category);
     const architecture = this.detectArchitecture(analysis);
-    
+
     const now = new Date().toISOString();
-    
+
     const files: SolutionFile[] = analysis.files.map((f) => ({
       path: f.path,
       purpose: f.purpose,
@@ -358,13 +371,13 @@ export class CodeAnalyzer {
 
   private async collectFiles(dirPath: string): Promise<string[]> {
     const files: string[] = [];
-    
+
     const walk = async (dir: string): Promise<void> => {
       const entries = await fs.promises.readdir(dir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name);
-        
+
         if (entry.isDirectory()) {
           if (!this.options.ignoreDirs.includes(entry.name)) {
             await walk(fullPath);
@@ -384,7 +397,7 @@ export class CodeAnalyzer {
 
   private extractExports(content: string, ext: string): string[] {
     const exports: string[] = [];
-    
+
     if ([".ts", ".tsx", ".js", ".jsx"].includes(ext)) {
       // Named exports
       let match;
@@ -392,7 +405,7 @@ export class CodeAnalyzer {
       while ((match = namedRegex.exec(content)) !== null) {
         exports.push(match[1]);
       }
-      
+
       // Default export
       const defaultRegex = new RegExp(PATTERNS.jsExportDefault.source, "g");
       while ((match = defaultRegex.exec(content)) !== null) {
@@ -409,7 +422,7 @@ export class CodeAnalyzer {
 
   private extractImports(content: string, ext: string): string[] {
     const imports: string[] = [];
-    
+
     if ([".ts", ".tsx", ".js", ".jsx"].includes(ext)) {
       let match;
       const regex = new RegExp(PATTERNS.jsImport.source, "g");
@@ -430,7 +443,7 @@ export class CodeAnalyzer {
   private extractDependencies(content: string, ext: string): string[] {
     // Extract external package dependencies (not relative imports)
     const deps: string[] = [];
-    
+
     if ([".ts", ".tsx", ".js", ".jsx"].includes(ext)) {
       let match;
       const regex = new RegExp(PATTERNS.jsImport.source, "g");
@@ -452,7 +465,7 @@ export class CodeAnalyzer {
 
   private detectFileRole(filePath: string, content: string): FileRole {
     const normalizedPath = filePath.toLowerCase();
-    
+
     for (const { pattern, role } of ROLE_PATTERNS) {
       if (typeof pattern === "string") {
         if (normalizedPath.includes(pattern)) {
@@ -466,14 +479,21 @@ export class CodeAnalyzer {
     }
 
     // Default based on content analysis
-    if (content.includes("export default function") || content.includes("export function")) {
+    if (
+      content.includes("export default function") ||
+      content.includes("export function")
+    ) {
       return "util";
     }
-    
+
     return "util";
   }
 
-  private inferPurpose(filePath: string, exports: string[], role: FileRole): string {
+  private inferPurpose(
+    filePath: string,
+    exports: string[],
+    role: FileRole,
+  ): string {
     const fileName = path.basename(filePath, path.extname(filePath));
     const roleDescriptions: Record<FileRole, string> = {
       entry: "Application entry point",
@@ -489,17 +509,17 @@ export class CodeAnalyzer {
     };
 
     const base = roleDescriptions[role] || "Source file";
-    
+
     if (exports.length > 0) {
       return `${base}: ${exports.slice(0, 3).join(", ")}${exports.length > 3 ? "..." : ""}`;
     }
-    
+
     return `${base} for ${fileName}`;
   }
 
   private extractEnvVars(files: FileAnalysis[]): EnvVar[] {
     const envVars = new Set<string>();
-    
+
     for (const file of files) {
       let match;
       const regex = new RegExp(PATTERNS.envVar.source, "g");
@@ -520,15 +540,19 @@ export class CodeAnalyzer {
     if (entryFiles.length > 0) {
       return entryFiles.map((f) => f.path);
     }
-    
+
     // Fallback: look for common entry point names
     const commonEntryNames = ["index", "main", "app", "server"];
     const entries = files.filter((f) => {
-      const baseName = path.basename(f.path, path.extname(f.path)).toLowerCase();
+      const baseName = path
+        .basename(f.path, path.extname(f.path))
+        .toLowerCase();
       return commonEntryNames.includes(baseName);
     });
-    
-    return entries.length > 0 ? entries.map((f) => f.path) : files.slice(0, 1).map((f) => f.path);
+
+    return entries.length > 0
+      ? entries.map((f) => f.path)
+      : files.slice(0, 1).map((f) => f.path);
   }
 
   private async parsePackageJson(dirPath: string): Promise<{
@@ -542,7 +566,9 @@ export class CodeAnalyzer {
       const content = await fs.promises.readFile(pkgPath, "utf-8");
       const pkg = JSON.parse(content);
 
-      const parseDeps = (deps: Record<string, string> = {}): DependencyVersion[] =>
+      const parseDeps = (
+        deps: Record<string, string> = {},
+      ): DependencyVersion[] =>
         Object.entries(deps).map(([name, version]) => ({
           name,
           version: version.replace(/^[\^~]/, ""),
@@ -582,14 +608,17 @@ export class CodeAnalyzer {
 
   private anonymizeContent(content: string): string {
     // Replace absolute paths
-    let anonymized = content.replace(/\/(?:home|Users|var|tmp)\/[^\s:'"]+/g, "<PATH>");
-    
+    let anonymized = content.replace(
+      /\/(?:home|Users|var|tmp)\/[^\s:'"]+/g,
+      "<PATH>",
+    );
+
     // Replace potential secrets
     anonymized = anonymized.replace(
       /(?:password|secret|api[_-]?key|token)\s*[:=]\s*["'][^"']+["']/gi,
       "<REDACTED>",
     );
-    
+
     // Replace email addresses
     anonymized = anonymized.replace(
       /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,

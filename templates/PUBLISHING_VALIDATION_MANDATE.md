@@ -9,6 +9,7 @@ Prevent export/dependency errors in published packages by enforcing systematic v
 ## 📋 Automated Workflow
 
 ### Pre-Commit (Automatic)
+
 1. **Export Change Detection** - `scripts/detect-export-changes.sh` runs automatically
    - Scans `src/index.ts` for added/removed exports
    - **Auto-bumps versions** following semver:
@@ -25,12 +26,15 @@ Prevent export/dependency errors in published packages by enforcing systematic v
    - Build verification
 
 ### Pre-Publish (Automatic)
+
 `prepublishOnly` script in package.json:
+
 ```json
 "prepublishOnly": "pnpm build && pnpm test"
 ```
 
 Runs:
+
 1. **Export Validation Test** - `src/__tests__/exports.test.ts`
    - Parses `src/index.ts` for all export declarations
    - Imports built `dist/index.js`
@@ -46,7 +50,9 @@ Runs:
    - Fails publish if any import fails
 
 ### Publish (Manual with CI/CD)
+
 `.github/workflows/publish.yml`:
+
 1. **improvement-tracker** publishes first
 2. Wait 2 minutes + poll `npm view` until available
 3. **core** publishes (depends on improvement-tracker)
@@ -54,7 +60,9 @@ Runs:
 5. **scope packages** publish in parallel (depend on core)
 
 ### Post-Publish (CI/CD)
+
 `scripts/validate-versions.sh` (runs in CI):
+
 1. Compares workspace versions vs lockfile versions
 2. If mismatched → runs `pnpm install` → commits lockfile update
 3. Fails CI if versions diverge
@@ -62,6 +70,7 @@ Runs:
 ## 🚨 Failure Scenarios & Recovery
 
 ### Export Missing from Built Package
+
 **Error**: `SyntaxError: The requested module does not provide an export named 'X'`
 
 **Cause**: Export declared in `src/index.ts` but not included in build
@@ -69,6 +78,7 @@ Runs:
 **Prevention**: Export validation test catches this before publish
 
 **Recovery**:
+
 ```bash
 # Check exports in source
 grep "export" packages/PKG/src/index.ts
@@ -80,6 +90,7 @@ node -e "import('packages/PKG/dist/index.js').then(m => console.log(Object.keys(
 ```
 
 ### Version Mismatch in Lockfile
+
 **Error**: Old package version installed despite new version published
 
 **Cause**: Lockfile not updated after version bump
@@ -87,6 +98,7 @@ node -e "import('packages/PKG/dist/index.js').then(m => console.log(Object.keys(
 **Prevention**: Auto-version-bump script + post-publish validation
 
 **Recovery**:
+
 ```bash
 cd packages/core
 pnpm add @hawkinside_out/workflow-improvement-tracker@^1.1.1
@@ -96,6 +108,7 @@ git commit -m "chore: update lockfile after publish"
 ```
 
 ### Dependent Package Published Before Dependency
+
 **Error**: Package depends on newer version that doesn't exist yet
 
 **Cause**: Published out of order
@@ -103,6 +116,7 @@ git commit -m "chore: update lockfile after publish"
 **Prevention**: CI/CD enforces publish order with `needs:`
 
 **Recovery**:
+
 ```bash
 # Publish in correct order with delays:
 cd packages/improvement-tracker && npm publish --otp=XXX
@@ -130,35 +144,47 @@ If publishing manually (not using CI/CD):
 ## 🔧 Configuration Files
 
 ### Export Validation Test
+
 `packages/PKG/src/__tests__/exports.test.ts`
+
 - Parses index.ts exports
 - Validates 100% coverage in dist/index.js
 
 ### Pack Integration Test
+
 `packages/PKG/src/__tests__/npm-package.integration.test.ts`
+
 - Creates tarball
 - Validates imports from packed package
 
 ### Auto Version Bump
+
 `scripts/detect-export-changes.sh`
+
 - Runs on pre-commit
 - Detects export additions/removals
 - Auto-bumps version (minor/major)
 - Suggests conventional commit message
 
 ### Pre-Commit Hook
+
 `scripts/pre-commit-checks.sh`
+
 - Runs export detection
 - Runs all validation checks
 
 ### Publish Workflow
+
 `.github/workflows/publish.yml`
+
 - Enforces publish order
 - Waits for registry sync
 - Validates tests pass
 
 ### Version Sync Check
+
 `scripts/validate-versions.sh`
+
 - Compares workspace vs lockfile
 - Auto-updates if mismatched
 
@@ -172,6 +198,7 @@ If publishing manually (not using CI/CD):
 ## 🎓 Developer Guidelines
 
 ### Adding New Exports
+
 1. Add export to `src/index.ts`
 2. Commit changes
 3. Pre-commit hook auto-bumps version (minor)
@@ -180,6 +207,7 @@ If publishing manually (not using CI/CD):
 6. Publish script ensures it works
 
 ### Removing Exports (Breaking Change)
+
 1. Remove export from `src/index.ts`
 2. Commit changes
 3. Pre-commit hook auto-bumps version (MAJOR)
@@ -188,6 +216,7 @@ If publishing manually (not using CI/CD):
 6. Publish in dependency order
 
 ### Troubleshooting
+
 - **Export test failing**: Export declared but not exported from implementation file
 - **Pack test failing**: Build configuration issue or missing dependency
 - **Version mismatch**: Run `pnpm install` to sync lockfile
@@ -196,6 +225,7 @@ If publishing manually (not using CI/CD):
 ## 🔐 Security Note
 
 Never commit OTP codes. Always provide them at publish time via:
+
 - CI/CD workflow input
 - Command line: `npm publish --otp=XXXXXX`
 - Interactive prompt

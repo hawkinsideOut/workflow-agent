@@ -58,7 +58,7 @@ describe("Package Exports Validation", () => {
       console.error("\n❌ Missing exports in built package:");
       missing.forEach((name) => console.error(`  - ${name}`));
       console.error(
-        `\n📊 Coverage: ${found.length}/${exportedNames.size} (${Math.round((found.length / exportedNames.size) * 100)}%)`
+        `\n📊 Coverage: ${found.length}/${exportedNames.size} (${Math.round((found.length / exportedNames.size) * 100)}%)`,
       );
     }
 

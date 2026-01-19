@@ -13,10 +13,7 @@
  * - Growth Opportunities
  */
 
-import type {
-  AdvisoryAnalysis,
-  PackageCategory,
-} from "./advisory-analyzer.js";
+import type { AdvisoryAnalysis, PackageCategory } from "./advisory-analyzer.js";
 import type { AdvisoryConfig, AdvisoryQuestion } from "../config/schema.js";
 
 // ============================================================================

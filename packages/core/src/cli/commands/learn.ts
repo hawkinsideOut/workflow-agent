@@ -118,7 +118,8 @@ export async function learnRecordCommand(options: LearnRecordOptions) {
       message: "Pattern name:",
       placeholder: "e.g., Next.js App Router Migration",
       validate: (value) => {
-        if (!value || value.length < 3) return "Name must be at least 3 characters";
+        if (!value || value.length < 3)
+          return "Name must be at least 3 characters";
         if (value.length > 100) return "Name must be less than 100 characters";
         return undefined;
       },
@@ -138,8 +139,10 @@ export async function learnRecordCommand(options: LearnRecordOptions) {
       message: "Description:",
       placeholder: "What does this pattern solve?",
       validate: (value) => {
-        if (!value || value.length < 10) return "Description must be at least 10 characters";
-        if (value.length > 500) return "Description must be less than 500 characters";
+        if (!value || value.length < 10)
+          return "Description must be at least 10 characters";
+        if (value.length > 500)
+          return "Description must be less than 500 characters";
         return undefined;
       },
     });
@@ -378,7 +381,9 @@ export async function learnListCommand(options: LearnListOptions) {
         console.log(`  ${statusIcon} ${nameColor(pattern.name)}`);
         console.log(chalk.dim(`     ID: ${pattern.id}`));
         console.log(chalk.dim(`     Category: ${pattern.category}`));
-        console.log(chalk.dim(`     Created: ${formatDate(pattern.createdAt)}`));
+        console.log(
+          chalk.dim(`     Created: ${formatDate(pattern.createdAt)}`),
+        );
         console.log(
           chalk.dim(
             `     Success Rate: ${(pattern.metrics.successRate * 100).toFixed(0)}% (${pattern.metrics.successes}/${pattern.metrics.applications})`,
@@ -415,7 +420,9 @@ export async function learnListCommand(options: LearnListOptions) {
         console.log(`  ${statusIcon} ${nameColor(blueprint.name)}`);
         console.log(chalk.dim(`     ID: ${blueprint.id}`));
         console.log(chalk.dim(`     Language: ${blueprint.stack.language}`));
-        console.log(chalk.dim(`     Created: ${formatDate(blueprint.createdAt)}`));
+        console.log(
+          chalk.dim(`     Created: ${formatDate(blueprint.createdAt)}`),
+        );
         console.log(
           chalk.dim(
             `     Success Rate: ${(blueprint.metrics.successRate * 100).toFixed(0)}% (${blueprint.metrics.successes}/${blueprint.metrics.applications})`,
@@ -435,7 +442,7 @@ export async function learnListCommand(options: LearnListOptions) {
   const stats = await store.getStats();
   const totalPatterns = stats.totalFixes + stats.totalBlueprints;
   const totalDeprecated = stats.deprecatedFixes + stats.deprecatedBlueprints;
-  
+
   console.log(chalk.dim("━".repeat(40)));
   console.log(chalk.dim(`Total: ${totalPatterns} patterns`));
   console.log(chalk.dim(`  Fix Patterns: ${stats.totalFixes}`));
@@ -473,7 +480,9 @@ export async function learnApplyCommand(
       patternType = "blueprint";
     } else {
       console.log(chalk.red(`\n❌ Pattern not found: ${patternId}`));
-      console.log(chalk.dim("  Use 'workflow learn:list' to see available patterns"));
+      console.log(
+        chalk.dim("  Use 'workflow learn:list' to see available patterns"),
+      );
       process.exit(1);
     }
   }
@@ -484,12 +493,20 @@ export async function learnApplyCommand(
   console.log(chalk.dim(`  Description: ${patternData.description}`));
 
   if (options.dryRun) {
-    console.log(chalk.yellow("\n📋 DRY-RUN MODE: No changes will be applied\n"));
+    console.log(
+      chalk.yellow("\n📋 DRY-RUN MODE: No changes will be applied\n"),
+    );
   }
 
   // Record telemetry for application attempt
-  const framework = options.framework ?? patternData.compatibility.frameworks[0]?.name ?? "unknown";
-  const version = options.version ?? patternData.compatibility.frameworks[0]?.version ?? "0.0.0";
+  const framework =
+    options.framework ??
+    patternData.compatibility.frameworks[0]?.name ??
+    "unknown";
+  const version =
+    options.version ??
+    patternData.compatibility.frameworks[0]?.version ??
+    "0.0.0";
 
   await telemetry.recordApplication(patternId, patternType, framework, version);
 
@@ -502,7 +519,9 @@ export async function learnApplyCommand(
     if (fixPattern.solution.steps) {
       for (let i = 0; i < fixPattern.solution.steps.length; i++) {
         const step = fixPattern.solution.steps[i];
-        console.log(chalk.white(`  ${i + 1}. [${step.action}] ${step.description}`));
+        console.log(
+          chalk.white(`  ${i + 1}. [${step.action}] ${step.description}`),
+        );
         if (step.file) {
           console.log(chalk.dim(`     File: ${step.file}`));
         }
@@ -543,8 +562,16 @@ export async function learnApplyCommand(
     } else {
       // Record failure
       await store.updatePatternMetrics(patternId, patternType, false);
-      await telemetry.recordFailure(patternId, patternType, framework, version, "unknown");
-      console.log(chalk.yellow("\n⚠️ Pattern application marked as unsuccessful."));
+      await telemetry.recordFailure(
+        patternId,
+        patternType,
+        framework,
+        version,
+        "unknown",
+      );
+      console.log(
+        chalk.yellow("\n⚠️ Pattern application marked as unsuccessful."),
+      );
     }
   }
 }
@@ -568,7 +595,11 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
     console.log(chalk.yellow("⚠️ Sync is not enabled.\n"));
     console.log(chalk.dim("  To enable sync, run:"));
     console.log(chalk.dim("    workflow learn:config --enable-sync\n"));
-    console.log(chalk.dim("  This allows you to share anonymized patterns with the community."));
+    console.log(
+      chalk.dim(
+        "  This allows you to share anonymized patterns with the community.",
+      ),
+    );
     process.exit(0);
   }
 
@@ -582,7 +613,11 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
   // Get patterns to sync
   const { fixes, blueprints } = await store.getPatternsForSync();
 
-  console.log(chalk.dim(`  Patterns ready to sync: ${fixes.length} fixes, ${blueprints.length} blueprints`));
+  console.log(
+    chalk.dim(
+      `  Patterns ready to sync: ${fixes.length} fixes, ${blueprints.length} blueprints`,
+    ),
+  );
 
   if (options.push) {
     console.log(chalk.cyan("\n📤 Pushing patterns...\n"));
@@ -614,7 +649,9 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
     }
 
     console.log(
-      chalk.green(`\n✅ Ready to push ${anonymizedFixes} fixes and ${anonymizedBlueprints} blueprints`),
+      chalk.green(
+        `\n✅ Ready to push ${anonymizedFixes} fixes and ${anonymizedBlueprints} blueprints`,
+      ),
     );
     console.log(chalk.dim("  (Registry push not yet implemented)"));
   }
@@ -625,7 +662,9 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
   }
 
   if (!options.push && !options.pull) {
-    console.log(chalk.dim("  Specify --push to upload or --pull to download patterns.\n"));
+    console.log(
+      chalk.dim("  Specify --push to upload or --pull to download patterns.\n"),
+    );
   }
 }
 
@@ -646,7 +685,9 @@ export async function learnConfigCommand(options: LearnConfigOptions) {
     const result = await contributorManager.enableSync();
     if (result.success) {
       console.log(chalk.green("✅ Sync enabled"));
-      console.log(chalk.dim("  Your patterns will be anonymized before sharing."));
+      console.log(
+        chalk.dim("  Your patterns will be anonymized before sharing."),
+      );
     } else {
       console.log(chalk.red(`❌ Failed: ${result.error}`));
     }
@@ -667,7 +708,11 @@ export async function learnConfigCommand(options: LearnConfigOptions) {
     const result = await contributorManager.enableTelemetry();
     if (result.success) {
       console.log(chalk.green("✅ Telemetry enabled"));
-      console.log(chalk.dim("  Anonymous usage data helps improve pattern recommendations."));
+      console.log(
+        chalk.dim(
+          "  Anonymous usage data helps improve pattern recommendations.",
+        ),
+      );
     } else {
       console.log(chalk.red(`❌ Failed: ${result.error}`));
     }
@@ -686,7 +731,8 @@ export async function learnConfigCommand(options: LearnConfigOptions) {
 
   if (options.resetId) {
     const confirmed = await p.confirm({
-      message: "Are you sure you want to reset your contributor ID? This cannot be undone.",
+      message:
+        "Are you sure you want to reset your contributor ID? This cannot be undone.",
       initialValue: false,
     });
 
@@ -711,13 +757,27 @@ export async function learnConfigCommand(options: LearnConfigOptions) {
     console.log(chalk.white("  Current Settings:\n"));
     console.log(chalk.dim(`  Contributor ID: ${config.data.id}`));
     console.log(chalk.dim(`  Created: ${formatDate(config.data.createdAt)}`));
-    console.log(chalk.dim(`  Sync Enabled: ${config.data.syncOptIn ? "Yes" : "No"}`));
-    console.log(chalk.dim(`  Telemetry Enabled: ${config.data.telemetryEnabled ? "Yes" : "No"}`));
+    console.log(
+      chalk.dim(`  Sync Enabled: ${config.data.syncOptIn ? "Yes" : "No"}`),
+    );
+    console.log(
+      chalk.dim(
+        `  Telemetry Enabled: ${config.data.telemetryEnabled ? "Yes" : "No"}`,
+      ),
+    );
     if (config.data.syncEnabledAt) {
-      console.log(chalk.dim(`  Sync Enabled At: ${formatDate(config.data.syncEnabledAt)}`));
+      console.log(
+        chalk.dim(
+          `  Sync Enabled At: ${formatDate(config.data.syncEnabledAt)}`,
+        ),
+      );
     }
   } else {
-    console.log(chalk.dim("  No configuration found. Settings will be created on first use.\n"));
+    console.log(
+      chalk.dim(
+        "  No configuration found. Settings will be created on first use.\n",
+      ),
+    );
   }
 }
 
@@ -789,8 +849,9 @@ export async function learnStatsCommand() {
   // Pattern stats
   const storeStats = await store.getStats();
   const totalPatterns = storeStats.totalFixes + storeStats.totalBlueprints;
-  const totalDeprecated = storeStats.deprecatedFixes + storeStats.deprecatedBlueprints;
-  
+  const totalDeprecated =
+    storeStats.deprecatedFixes + storeStats.deprecatedBlueprints;
+
   console.log(chalk.bold.white("  Patterns:\n"));
   console.log(chalk.dim(`    Total: ${totalPatterns}`));
   console.log(chalk.dim(`    Fix Patterns: ${storeStats.totalFixes}`));
@@ -801,9 +862,13 @@ export async function learnStatsCommand() {
   const telemetryStats = await telemetry.getStats();
   console.log(chalk.bold.white("\n  Telemetry:\n"));
   console.log(chalk.dim(`    Pending Events: ${telemetryStats.pendingEvents}`));
-  console.log(chalk.dim(`    Total Events Sent: ${telemetryStats.totalEventsSent}`));
+  console.log(
+    chalk.dim(`    Total Events Sent: ${telemetryStats.totalEventsSent}`),
+  );
   if (telemetryStats.lastFlushAt) {
-    console.log(chalk.dim(`    Last Flush: ${formatDate(telemetryStats.lastFlushAt)}`));
+    console.log(
+      chalk.dim(`    Last Flush: ${formatDate(telemetryStats.lastFlushAt)}`),
+    );
   }
 
   console.log("");

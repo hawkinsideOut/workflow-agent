@@ -406,7 +406,9 @@ describe("workflow learn - E2E", () => {
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("Sync Learning Patterns");
-      expect(stdout).toContain("Specify --push to upload or --pull to download");
+      expect(stdout).toContain(
+        "Specify --push to upload or --pull to download",
+      );
     });
 
     it("shows patterns ready to sync with --push --dry-run", async () => {

@@ -22,28 +22,30 @@
 
 Initiate pattern analysis when:
 
-| Trigger | Description |
-|---------|-------------|
-| **Post-fix success** | A quality issue was detected and auto-fixed successfully |
-| **User request** | User explicitly asks to "analyze patterns" or "record what we learned" |
-| **Project setup complete** | A new project was scaffolded and configured successfully |
-| **Migration complete** | A framework upgrade or refactor was completed without issues |
-| **CI/CD passing** | All quality checks pass after non-trivial changes |
+| Trigger                    | Description                                                            |
+| -------------------------- | ---------------------------------------------------------------------- |
+| **Post-fix success**       | A quality issue was detected and auto-fixed successfully               |
+| **User request**           | User explicitly asks to "analyze patterns" or "record what we learned" |
+| **Project setup complete** | A new project was scaffolded and configured successfully               |
+| **Migration complete**     | A framework upgrade or refactor was completed without issues           |
+| **CI/CD passing**          | All quality checks pass after non-trivial changes                      |
 
 ---
 
 ## Phase 1: Discovery
 
 ### Objective
+
 Identify candidate patterns worth capturing from the current work session.
 
 ### Steps
 
 1. **Review Recent Changes**
+
    ```bash
    # Check what was modified
    git diff HEAD~5 --name-only
-   
+
    # Review specific fix patterns
    git log --oneline -10 --grep="fix"
    ```
@@ -58,6 +60,7 @@ Identify candidate patterns worth capturing from the current work session.
    - ✅ Framework-specific workarounds
 
 3. **Check Existing Patterns**
+
    ```bash
    # List current patterns to avoid duplicates
    workflow learn:list --framework <current-framework>
@@ -77,29 +80,30 @@ Identify candidate patterns worth capturing from the current work session.
 ## Phase 2: Categorization
 
 ### Objective
+
 Classify each pattern candidate into the appropriate type and category.
 
 ### Pattern Types
 
-| Type | Use When | Example |
-|------|----------|---------|
-| **Fix Pattern** | Solves a specific, repeatable error | ESLint rule violation fix |
-| **Blueprint** | Represents complete project/feature setup | Next.js 14 TypeScript starter |
+| Type            | Use When                                  | Example                       |
+| --------------- | ----------------------------------------- | ----------------------------- |
+| **Fix Pattern** | Solves a specific, repeatable error       | ESLint rule violation fix     |
+| **Blueprint**   | Represents complete project/feature setup | Next.js 14 TypeScript starter |
 
 ### Fix Pattern Categories
 
 Choose the most specific category:
 
-| Category | Description | Examples |
-|----------|-------------|----------|
-| `lint` | Linting rule violations | ESLint, Prettier, Stylelint |
-| `type-error` | TypeScript/type system errors | Missing types, inference issues |
-| `dependency` | Package/module resolution | Missing deps, version conflicts |
-| `config` | Configuration file issues | tsconfig, next.config, vite.config |
-| `runtime` | Runtime errors | Null refs, async issues |
-| `build` | Build/compilation failures | Bundler errors, missing exports |
-| `test` | Test failures | Jest, Vitest, Playwright |
-| `security` | Security vulnerabilities | Dependency audits, secrets |
+| Category     | Description                   | Examples                           |
+| ------------ | ----------------------------- | ---------------------------------- |
+| `lint`       | Linting rule violations       | ESLint, Prettier, Stylelint        |
+| `type-error` | TypeScript/type system errors | Missing types, inference issues    |
+| `dependency` | Package/module resolution     | Missing deps, version conflicts    |
+| `config`     | Configuration file issues     | tsconfig, next.config, vite.config |
+| `runtime`    | Runtime errors                | Null refs, async issues            |
+| `build`      | Build/compilation failures    | Bundler errors, missing exports    |
+| `test`       | Test failures                 | Jest, Vitest, Playwright           |
+| `security`   | Security vulnerabilities      | Dependency audits, secrets         |
 
 ### Tag Schema
 
@@ -118,6 +122,7 @@ custom:<value>       → custom:app-router, custom:server-component
 ## Phase 3: Pattern Extraction
 
 ### Objective
+
 Convert the identified fixes into structured pattern definitions.
 
 ### For Fix Patterns
@@ -130,14 +135,14 @@ Extract these components:
   name: string,           // "ESLint prefer-const fix"
   description: string,    // "Replace let with const for variables that are never reassigned"
   category: string,       // "lint"
-  
+
   // TRIGGER (when does this apply?)
   trigger: {
     errorPattern: string,   // Regex: "Prefer const over let"
     errorMessage: string,   // Example: "'x' is never reassigned"
     filePattern: string,    // Glob: "*.ts,*.tsx"
   },
-  
+
   // SOLUTION (how to fix it)
   solution: {
     type: string,           // "file-change" | "command" | "config-update"
@@ -148,7 +153,7 @@ Extract these components:
       description: string,  // Human-readable step
     }]
   },
-  
+
   // COMPATIBILITY (where does this work?)
   compatibility: {
     framework: string,        // "next" | "react" | "vue" | ...
@@ -156,7 +161,7 @@ Extract these components:
     runtime: string,          // "node"
     runtimeVersion: string,   // ">=18.0.0"
   },
-  
+
   // METADATA
   tags: [{ name: string, category: string }],
   source: "manual" | "auto-heal" | "verify-fix" | "imported",
@@ -173,7 +178,7 @@ Extract these components:
   // IDENTIFICATION
   name: string,           // "Next.js 14 TypeScript Starter"
   description: string,    // "Complete setup with App Router, Tailwind, and testing"
-  
+
   // STACK DEFINITION
   stack: {
     framework: string,      // "next"
@@ -183,20 +188,20 @@ Extract these components:
     dependencies: [{ name: string, version: string }],
     devDependencies: [{ name: string, version: string }],
   },
-  
+
   // PROJECT STRUCTURE
   structure: {
     directories: [{ path: string, purpose: string }],
     keyFiles: [{ path: string, purpose: string, template?: string }],
   },
-  
+
   // SETUP STEPS
   setup: {
     prerequisites: string[],
     steps: [{ order: number, command: string, description: string }],
     configs: [{ file: string, content: string, description: string }],
   },
-  
+
   // METADATA
   tags: [{ name: string, category: string }],
   relatedPatterns: string[],  // UUIDs of related fix patterns
@@ -209,6 +214,7 @@ Extract these components:
 ## Phase 4: Validation
 
 ### Objective
+
 Ensure patterns are high-quality before storing.
 
 ### Quality Checklist
@@ -236,19 +242,20 @@ workflow learn:record --type fix --name "..." --dry-run
 
 Ensure these are NOT in the pattern:
 
-| Data Type | Example | Action |
-|-----------|---------|--------|
-| Absolute paths | `/home/user/project` | Remove or use `<PATH>` |
-| Email addresses | `dev@company.com` | Remove entirely |
-| API keys | `sk_live_...` | Never include |
-| IP addresses | `192.168.1.100` | Remove or use `<IP>` |
-| Repo-specific names | `my-company-app` | Generalize |
+| Data Type           | Example              | Action                 |
+| ------------------- | -------------------- | ---------------------- |
+| Absolute paths      | `/home/user/project` | Remove or use `<PATH>` |
+| Email addresses     | `dev@company.com`    | Remove entirely        |
+| API keys            | `sk_live_...`        | Never include          |
+| IP addresses        | `192.168.1.100`      | Remove or use `<IP>`   |
+| Repo-specific names | `my-company-app`     | Generalize             |
 
 ---
 
 ## Phase 5: Store Update
 
 ### Objective
+
 Persist validated patterns to the central store.
 
 ### Recording Fix Patterns
@@ -280,7 +287,10 @@ workflow learn:record \
 When automating pattern capture:
 
 ```typescript
-import { PatternStore, type FixPattern } from "@hawkinside_out/workflow-improvement-tracker";
+import {
+  PatternStore,
+  type FixPattern,
+} from "@hawkinside_out/workflow-improvement-tracker";
 
 const store = new PatternStore(process.cwd());
 await store.initialize();
@@ -300,12 +310,14 @@ const pattern: FixPattern = {
   },
   solution: {
     type: "file-change",
-    steps: [{
-      order: 1,
-      action: "modify",
-      target: "<file>",
-      description: "Change 'let' to 'const' for the flagged variable",
-    }],
+    steps: [
+      {
+        order: 1,
+        action: "modify",
+        target: "<file>",
+        description: "Change 'let' to 'const' for the flagged variable",
+      },
+    ],
   },
   compatibility: {
     framework: "node",
@@ -350,6 +362,7 @@ await store.saveFixPattern(existing);
 ## Phase 6: Reporting
 
 ### Objective
+
 Communicate what patterns were captured and their status.
 
 ### Post-Analysis Report Template
@@ -360,18 +373,21 @@ After completing pattern analysis, report:
 ## 📚 Pattern Analysis Complete
 
 ### Patterns Recorded
-| Type | Name | Category | Status |
-|------|------|----------|--------|
-| Fix | ESLint prefer-const | lint | ✅ Saved |
-| Fix | TS null assertion | type-error | ✅ Saved |
-| Blueprint | Next.js 14 Starter | - | ⏭ Skipped (duplicate) |
+
+| Type      | Name                | Category   | Status                 |
+| --------- | ------------------- | ---------- | ---------------------- |
+| Fix       | ESLint prefer-const | lint       | ✅ Saved               |
+| Fix       | TS null assertion   | type-error | ✅ Saved               |
+| Blueprint | Next.js 14 Starter  | -          | ⏭ Skipped (duplicate) |
 
 ### Store Statistics
+
 - Total Fix Patterns: 45
 - Total Blueprints: 7
 - This Session: +2 fixes
 
 ### Next Steps
+
 - Run `workflow learn:list` to view all patterns
 - Run `workflow learn:sync --push` to share with community
 ```
@@ -388,12 +404,12 @@ workflow learn:stats
 
 ### Good Pattern Characteristics
 
-| Criteria | Good Example | Bad Example |
-|----------|--------------|-------------|
-| **Specificity** | `errorPattern: "Cannot find module '@/.*'"` | `errorPattern: "error"` |
-| **Reusability** | Works across similar projects | Only works in one specific repo |
-| **Documentation** | Clear description with context | "Fixes the thing" |
-| **Versioning** | `frameworkVersion: "^14.0.0"` | No version specified |
+| Criteria          | Good Example                                | Bad Example                     |
+| ----------------- | ------------------------------------------- | ------------------------------- |
+| **Specificity**   | `errorPattern: "Cannot find module '@/.*'"` | `errorPattern: "error"`         |
+| **Reusability**   | Works across similar projects               | Only works in one specific repo |
+| **Documentation** | Clear description with context              | "Fixes the thing"               |
+| **Versioning**    | `frameworkVersion: "^14.0.0"`               | No version specified            |
 
 ### Pattern Red Flags
 
@@ -502,6 +518,7 @@ workflow verify --fix --learn
 ```
 
 This automatically:
+
 1. Runs all quality checks
 2. Applies auto-fixes
 3. Re-validates

@@ -11,6 +11,7 @@ The improvement-tracker package provides a comprehensive agent learning system t
 ## ✨ Features
 
 ### Pattern Capture
+
 - 🧠 **Smart Analysis** - Automatically detects code structure, dependencies, and architecture
 - 📁 **Multi-file Support** - Capture entire implementations with all related files
 - 🔗 **Dependency Detection** - Identifies both production and development dependencies
@@ -18,6 +19,7 @@ The improvement-tracker package provides a comprehensive agent learning system t
 - 🏗️ **Architecture Detection** - Recognizes patterns like request-response, middleware, etc.
 
 ### Pattern Management
+
 - 🔍 **Semantic Search** - Find patterns by keywords, category, or intent
 - 📊 **Usage Tracking** - Track how often patterns are applied
 - ⭐ **Effectiveness Scores** - Measure pattern success rates
@@ -25,6 +27,7 @@ The improvement-tracker package provides a comprehensive agent learning system t
 - 🔒 **Privacy-First** - PII automatically stripped before storage
 
 ### Integration
+
 - 🎯 **CLI Commands** - Full CLI integration with `workflow solution:*`
 - 💾 **File-based Storage** - Patterns stored in `.workflow/patterns/solutions/`
 - 📦 **Schema Validation** - Zod-powered schemas ensure data integrity
@@ -63,6 +66,7 @@ workflow-agent solution:capture \
 ```
 
 The analyzer will:
+
 1. Scan all files in the specified path
 2. Detect dependencies and dev dependencies
 3. Identify environment variables
@@ -123,6 +127,7 @@ workflow-agent solution:stats
 ```
 
 Shows:
+
 - Total patterns by category
 - Most used patterns
 - Highest effectiveness scores
@@ -145,30 +150,30 @@ workflow-agent solution:deprecate sol_abc123 "Replaced by OAuth2 implementation"
 Analyze files and directories to extract code patterns:
 
 ```typescript
-import { createCodeAnalyzer } from '@hawkinside_out/workflow-improvement-tracker';
+import { createCodeAnalyzer } from "@hawkinside_out/workflow-improvement-tracker";
 
 // Create analyzer instance
 const analyzer = createCodeAnalyzer();
 
 // Analyze a single file
-const fileResult = await analyzer.analyzeFile('/path/to/auth.ts');
-console.log(fileResult.language);      // 'typescript'
-console.log(fileResult.imports);       // ['jsonwebtoken', 'express']
-console.log(fileResult.exports);       // ['authenticateUser', 'generateToken']
+const fileResult = await analyzer.analyzeFile("/path/to/auth.ts");
+console.log(fileResult.language); // 'typescript'
+console.log(fileResult.imports); // ['jsonwebtoken', 'express']
+console.log(fileResult.exports); // ['authenticateUser', 'generateToken']
 
 // Analyze a directory
-const dirResult = await analyzer.analyzeDirectory('/path/to/auth');
-console.log(dirResult.files);          // Array of file analysis results
-console.log(dirResult.entryPoints);    // ['index.ts']
-console.log(dirResult.architecture);   // 'middleware'
+const dirResult = await analyzer.analyzeDirectory("/path/to/auth");
+console.log(dirResult.files); // Array of file analysis results
+console.log(dirResult.entryPoints); // ['index.ts']
+console.log(dirResult.architecture); // 'middleware'
 
 // Create a solution pattern from analyzed code
-const pattern = await analyzer.createSolutionPattern('/path/to/auth', {
-  name: 'JWT Authentication',
-  description: 'Complete JWT auth implementation with refresh tokens',
-  category: 'auth',
-  tags: ['jwt', 'authentication', 'security'],
-  author: 'your-name'
+const pattern = await analyzer.createSolutionPattern("/path/to/auth", {
+  name: "JWT Authentication",
+  description: "Complete JWT auth implementation with refresh tokens",
+  category: "auth",
+  tags: ["jwt", "authentication", "security"],
+  author: "your-name",
 });
 ```
 
@@ -177,34 +182,34 @@ const pattern = await analyzer.createSolutionPattern('/path/to/auth', {
 Store and retrieve solution patterns:
 
 ```typescript
-import { PatternStore } from '@hawkinside_out/workflow-improvement-tracker';
+import { PatternStore } from "@hawkinside_out/workflow-improvement-tracker";
 
 // Create store instance
-const store = new PatternStore('/path/to/project');
+const store = new PatternStore("/path/to/project");
 
 // Add a solution pattern
 const result = await store.addSolutionPattern(pattern);
 if (result.success) {
-  console.log('Pattern saved:', result.data.id);
+  console.log("Pattern saved:", result.data.id);
 }
 
 // Search for patterns
 const searchResults = await store.searchSolutionPatterns({
-  keywords: ['authentication'],
-  category: 'auth',
-  limit: 10
+  keywords: ["authentication"],
+  category: "auth",
+  limit: 10,
 });
 
 // Get pattern by ID
-const patternResult = await store.getSolutionPatternById('sol_abc123');
+const patternResult = await store.getSolutionPatternById("sol_abc123");
 
 // List all patterns
 const allPatterns = await store.listSolutionPatterns();
 
 // Record pattern usage
-await store.recordSolutionUsage('sol_abc123', {
-  projectContext: 'e-commerce-app',
-  effectiveness: 0.95
+await store.recordSolutionUsage("sol_abc123", {
+  projectContext: "e-commerce-app",
+  effectiveness: 0.95,
 });
 
 // Get statistics
@@ -224,14 +229,14 @@ import {
   SolutionDependencySchema,
   SolutionCodeSnippetSchema,
   SolutionEnvironmentVarSchema,
-  SolutionCategorySchema
-} from '@hawkinside_out/workflow-improvement-tracker';
+  SolutionCategorySchema,
+} from "@hawkinside_out/workflow-improvement-tracker";
 
 // Validate a pattern
 const validatedPattern = SolutionPatternSchema.parse(rawData);
 
 // Validate category
-const category = SolutionCategorySchema.parse('auth'); // Valid
+const category = SolutionCategorySchema.parse("auth"); // Valid
 ```
 
 ---
@@ -242,28 +247,28 @@ A Solution Pattern contains:
 
 ```typescript
 interface SolutionPattern {
-  id: string;                           // Unique ID (sol_*)
-  name: string;                         // Human-readable name
-  description: string;                  // Detailed description
-  category: SolutionCategory;           // auth, api, database, etc.
-  tags: string[];                       // Searchable tags
-  
+  id: string; // Unique ID (sol_*)
+  name: string; // Human-readable name
+  description: string; // Detailed description
+  category: SolutionCategory; // auth, api, database, etc.
+  tags: string[]; // Searchable tags
+
   // Code content
-  codeSnippets: SolutionCodeSnippet[];  // The actual code
-  dependencies: SolutionDependency[];   // Required packages
-  environmentVars: SolutionEnvVar[];    // Required env vars
-  fileStructure?: string;               // Directory layout
-  
+  codeSnippets: SolutionCodeSnippet[]; // The actual code
+  dependencies: SolutionDependency[]; // Required packages
+  environmentVars: SolutionEnvVar[]; // Required env vars
+  fileStructure?: string; // Directory layout
+
   // Metadata
   author?: string;
   sourceProject?: string;
   createdAt: Date;
   updatedAt: Date;
-  
+
   // Usage tracking
   usageCount: number;
-  effectivenessScore: number;           // 0-1 based on feedback
-  
+  effectivenessScore: number; // 0-1 based on feedback
+
   // Lifecycle
   deprecated: boolean;
   deprecatedAt?: Date;
@@ -274,6 +279,7 @@ interface SolutionPattern {
 ### Categories
 
 Available solution categories:
+
 - `auth` - Authentication & authorization
 - `api` - API design & endpoints
 - `database` - Database schemas & queries
@@ -323,6 +329,7 @@ npx vitest run code-analyzer.test.ts
 ```
 
 Test coverage includes:
+
 - 53 tests for CodeAnalyzer
 - 37 tests for PatternStore
 - 45 tests for Schema validation

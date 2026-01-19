@@ -16,7 +16,9 @@ import {
 
 const TEST_WORKSPACE = "/tmp/pattern-store-test";
 
-const createTestFixPattern = (overrides: Partial<FixPattern> = {}): FixPattern => {
+const createTestFixPattern = (
+  overrides: Partial<FixPattern> = {},
+): FixPattern => {
   const now = new Date().toISOString();
   return {
     id: crypto.randomUUID(),
@@ -65,7 +67,9 @@ const createTestBlueprint = (overrides: Partial<Blueprint> = {}): Blueprint => {
       language: "typescript",
       runtime: "node",
       packageManager: "pnpm",
-      dependencies: [{ name: "next", version: "14.0.0", compatibleRange: "^14.0.0" }],
+      dependencies: [
+        { name: "next", version: "14.0.0", compatibleRange: "^14.0.0" },
+      ],
       devDependencies: [],
     },
     structure: {
@@ -74,7 +78,9 @@ const createTestBlueprint = (overrides: Partial<Blueprint> = {}): Blueprint => {
     },
     setup: {
       prerequisites: ["Node.js 20+"],
-      steps: [{ order: 1, command: "pnpm install", description: "Install deps" }],
+      steps: [
+        { order: 1, command: "pnpm install", description: "Install deps" },
+      ],
       configs: [],
     },
     compatibility: {
@@ -91,7 +97,9 @@ const createTestBlueprint = (overrides: Partial<Blueprint> = {}): Blueprint => {
   };
 };
 
-const createTestSolution = (overrides: Partial<SolutionPattern> = {}): SolutionPattern => {
+const createTestSolution = (
+  overrides: Partial<SolutionPattern> = {},
+): SolutionPattern => {
   const now = new Date().toISOString();
   return {
     id: crypto.randomUUID(),
@@ -110,13 +118,16 @@ const createTestSolution = (overrides: Partial<SolutionPattern> = {}): SolutionP
           path: "src/auth/login.ts",
           purpose: "Handles user login authentication",
           role: "service",
-          content: "export async function login(email: string, password: string) { return true; }",
+          content:
+            "export async function login(email: string, password: string) { return true; }",
           exports: ["login"],
           imports: [],
           lineCount: 5,
         },
       ],
-      dependencies: [{ name: "jsonwebtoken", version: "9.0.0", compatibleRange: "^9.0.0" }],
+      dependencies: [
+        { name: "jsonwebtoken", version: "9.0.0", compatibleRange: "^9.0.0" },
+      ],
       devDependencies: [],
       envVars: [],
     },
@@ -176,7 +187,11 @@ describe("PatternStore", () => {
       await store.initialize();
 
       const fixesPath = path.join(TEST_WORKSPACE, PATTERNS_DIR, "fixes");
-      const blueprintsPath = path.join(TEST_WORKSPACE, PATTERNS_DIR, "blueprints");
+      const blueprintsPath = path.join(
+        TEST_WORKSPACE,
+        PATTERNS_DIR,
+        "blueprints",
+      );
 
       await expect(fs.promises.access(fixesPath)).resolves.toBeUndefined();
       await expect(fs.promises.access(blueprintsPath)).resolves.toBeUndefined();
@@ -387,7 +402,9 @@ describe("PatternStore", () => {
 
       it("should apply pagination", async () => {
         for (let i = 0; i < 5; i++) {
-          await store.saveFixPattern(createTestFixPattern({ name: `Pattern ${i}` }));
+          await store.saveFixPattern(
+            createTestFixPattern({ name: `Pattern ${i}` }),
+          );
         }
 
         const result = await store.listFixPatterns({ limit: 2, offset: 1 });
@@ -789,8 +806,14 @@ describe("PatternStore", () => {
       });
 
       it("should suggest incrementing version number", async () => {
-        const v1 = createTestFixPattern({ name: "Pattern", conflictVersion: 1 });
-        const v2 = createTestFixPattern({ name: "Pattern", conflictVersion: 2 });
+        const v1 = createTestFixPattern({
+          name: "Pattern",
+          conflictVersion: 1,
+        });
+        const v2 = createTestFixPattern({
+          name: "Pattern",
+          conflictVersion: 2,
+        });
         await store.saveFixPattern(v1);
         await store.saveFixPattern(v2);
 
@@ -826,7 +849,9 @@ describe("PatternStore", () => {
         const existing = createTestBlueprint({ name: "Duplicate Blueprint" });
         await store.saveBlueprint(existing);
 
-        const newBlueprint = createTestBlueprint({ name: "Duplicate Blueprint" });
+        const newBlueprint = createTestBlueprint({
+          name: "Duplicate Blueprint",
+        });
         const result = await store.detectBlueprintConflict(newBlueprint);
 
         expect(result.hasConflict).toBe(true);
@@ -1160,7 +1185,9 @@ describe("PatternStore", () => {
         expect(result.data?.category).toBe("auth");
         expect(result.data?.problem.keywords).toContain("jwt");
         expect(result.data?.implementation.files.length).toBe(1);
-        expect(result.data?.architecture.entryPoints).toContain("src/auth/login.ts");
+        expect(result.data?.architecture.entryPoints).toContain(
+          "src/auth/login.ts",
+        );
       });
     });
 
@@ -1253,7 +1280,9 @@ describe("PatternStore", () => {
         await store.saveSolution(proj1);
         await store.saveSolution(proj2);
 
-        const result = await store.listSolutions({ sourceProject: "project-a" });
+        const result = await store.listSolutions({
+          sourceProject: "project-a",
+        });
 
         expect(result.success).toBe(true);
         expect(result.data?.length).toBe(1);
@@ -1325,7 +1354,9 @@ describe("PatternStore", () => {
 
       it("should apply pagination", async () => {
         for (let i = 0; i < 5; i++) {
-          await store.saveSolution(createTestSolution({ name: `Solution ${i}` }));
+          await store.saveSolution(
+            createTestSolution({ name: `Solution ${i}` }),
+          );
         }
 
         const result = await store.listSolutions({ limit: 2, offset: 1 });
@@ -1381,7 +1412,10 @@ describe("PatternStore", () => {
         await store.saveSolution(authSolution);
         await store.saveSolution(dbSolution);
 
-        const result = await store.searchSolutions(["authentication-test", "login-test"]);
+        const result = await store.searchSolutions([
+          "authentication-test",
+          "login-test",
+        ]);
 
         expect(result.success).toBe(true);
         expect(result.data?.length).toBe(1);
@@ -1489,7 +1523,9 @@ describe("PatternStore", () => {
         await store.saveSolution(nextAuth);
         await store.saveSolution(reactAuth);
 
-        const result = await store.searchSolutions(["auth"], { framework: "next" });
+        const result = await store.searchSolutions(["auth"], {
+          framework: "next",
+        });
 
         expect(result.success).toBe(true);
         expect(result.data?.length).toBe(1);
@@ -1626,7 +1662,9 @@ describe("PatternStore", () => {
       });
 
       it("should count synced solutions", async () => {
-        const solution = createTestSolution({ syncedAt: new Date().toISOString() });
+        const solution = createTestSolution({
+          syncedAt: new Date().toISOString(),
+        });
         await store.saveSolution(solution);
 
         const stats = await store.getStats();

@@ -13,7 +13,10 @@ import {
 
 const TEST_DIR = "/tmp/code-analyzer-test";
 
-const createTestFile = async (relativePath: string, content: string): Promise<void> => {
+const createTestFile = async (
+  relativePath: string,
+  content: string,
+): Promise<void> => {
   const fullPath = path.join(TEST_DIR, relativePath);
   await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
   await fs.promises.writeFile(fullPath, content);
@@ -267,7 +270,9 @@ describe("CodeAnalyzer", () => {
       );
 
       const analyzer = createCodeAnalyzer();
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "simple.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "simple.ts"),
+      );
 
       expect(result).not.toBeNull();
       expect(result?.exports).toContain("hello");
@@ -287,7 +292,9 @@ export type Quux = string;
       );
 
       const analyzer = createCodeAnalyzer();
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "exports.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "exports.ts"),
+      );
 
       expect(result?.exports).toContain("FOO");
       expect(result?.exports).toContain("bar");
@@ -297,13 +304,12 @@ export type Quux = string;
     });
 
     it("should extract default exports", async () => {
-      await createTestFile(
-        "default.ts",
-        `export default function main() {}`,
-      );
+      await createTestFile("default.ts", `export default function main() {}`);
 
       const analyzer = createCodeAnalyzer();
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "default.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "default.ts"),
+      );
 
       expect(result?.exports).toContain("main");
     });
@@ -319,7 +325,9 @@ import { z } from "zod";
       );
 
       const analyzer = createCodeAnalyzer();
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "imports.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "imports.ts"),
+      );
 
       expect(result?.imports).toContain("react");
       expect(result?.imports).toContain("express");
@@ -330,7 +338,9 @@ import { z } from "zod";
       await createTestFile("utils.test.ts", `describe("test", () => {});`);
 
       const analyzer = createCodeAnalyzer();
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "utils.test.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "utils.test.ts"),
+      );
 
       expect(result?.role).toBe("test");
     });
@@ -339,7 +349,9 @@ import { z } from "zod";
       await createTestFile("vite.config.ts", `export default {};`);
 
       const analyzer = createCodeAnalyzer();
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "vite.config.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "vite.config.ts"),
+      );
 
       expect(result?.role).toBe("config");
     });
@@ -348,16 +360,15 @@ import { z } from "zod";
       await createTestFile("types.ts", `export type Foo = string;`);
 
       const analyzer = createCodeAnalyzer();
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "types.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "types.ts"),
+      );
 
       expect(result?.role).toBe("type");
     });
 
     it("should detect file role for hooks", async () => {
-      await createTestFile(
-        "hooks/useAuth.ts",
-        `export function useAuth() {}`,
-      );
+      await createTestFile("hooks/useAuth.ts", `export function useAuth() {}`);
 
       const analyzer = createCodeAnalyzer();
       const result = await analyzer.analyzeFile(
@@ -424,7 +435,9 @@ import { z } from "zod";
       await createTestFile("index.ts", `export default function main() {}`);
 
       const analyzer = createCodeAnalyzer();
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "index.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "index.ts"),
+      );
 
       expect(result?.role).toBe("entry");
     });
@@ -434,14 +447,18 @@ import { z } from "zod";
       await createTestFile("large.ts", largeContent);
 
       const analyzer = createCodeAnalyzer({ maxFileSize: 100_000 });
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "large.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "large.ts"),
+      );
 
       expect(result).toBeNull();
     });
 
     it("should return null for non-existent files", async () => {
       const analyzer = createCodeAnalyzer();
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "nonexistent.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "nonexistent.ts"),
+      );
 
       expect(result).toBeNull();
     });
@@ -474,7 +491,9 @@ import { bar } from "../lib/helpers";
       );
 
       const analyzer = createCodeAnalyzer();
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "relative.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "relative.ts"),
+      );
 
       expect(result?.dependencies).not.toContain("./utils");
       expect(result?.dependencies).not.toContain("../lib/helpers");
@@ -491,7 +510,9 @@ const path = "/home/username/project";
       );
 
       const analyzer = createCodeAnalyzer({ anonymize: true });
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "secrets.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "secrets.ts"),
+      );
 
       expect(result?.content).not.toContain("/home/username");
       expect(result?.content).not.toContain("user@example.com");
@@ -504,7 +525,9 @@ const path = "/home/username/project";
       );
 
       const analyzer = createCodeAnalyzer();
-      const result = await analyzer.analyzeFile(path.join(TEST_DIR, "utils.ts"));
+      const result = await analyzer.analyzeFile(
+        path.join(TEST_DIR, "utils.ts"),
+      );
 
       expect(result?.purpose).toContain("formatDate");
     });
@@ -541,7 +564,9 @@ const path = "/home/username/project";
       const result = await analyzer.analyzeDirectory(TEST_DIR);
 
       expect(result.devDependencies).toBeDefined();
-      expect(result.devDependencies.some((d) => d.name === "typescript")).toBe(true);
+      expect(result.devDependencies.some((d) => d.name === "typescript")).toBe(
+        true,
+      );
     });
 
     it("should detect framework from package.json", async () => {

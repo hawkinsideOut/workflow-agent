@@ -30,7 +30,9 @@ const TEST_WORKSPACE = "/tmp/privacy-test";
 // Test Fixtures
 // ============================================
 
-const createTestFixPattern = (overrides: Partial<FixPattern> = {}): FixPattern => {
+const createTestFixPattern = (
+  overrides: Partial<FixPattern> = {},
+): FixPattern => {
   const now = new Date().toISOString();
   return {
     id: crypto.randomUUID(),
@@ -40,7 +42,8 @@ const createTestFixPattern = (overrides: Partial<FixPattern> = {}): FixPattern =
     tags: [{ name: "test", category: "custom" }],
     trigger: {
       errorPattern: "Cannot find module '(.+)'",
-      errorMessage: "Error in /home/johndoe/projects/myapp/src/index.ts: Cannot find module 'lodash'",
+      errorMessage:
+        "Error in /home/johndoe/projects/myapp/src/index.ts: Cannot find module 'lodash'",
       context: "File: /Users/johndoe/Documents/code/project/src/main.ts",
     },
     solution: {
@@ -466,7 +469,9 @@ describe("PatternAnonymizer", () => {
       );
       expect(result).not.toContain("ghp_FAKE_TOKEN_FOR_TESTING_1234");
       // GitHub tokens are caught by either API_KEY or SECRET pattern
-      expect(result.includes("<SECRET>") || result.includes("<API_KEY>")).toBe(true);
+      expect(result.includes("<SECRET>") || result.includes("<API_KEY>")).toBe(
+        true,
+      );
     });
 
     it("should anonymize authenticated URLs", () => {
@@ -510,7 +515,9 @@ describe("PatternAnonymizer", () => {
     });
 
     it("should convert absolute paths to relative", () => {
-      const result = anonymizer.anonymizePath("/home/user/projects/app/src/index.ts");
+      const result = anonymizer.anonymizePath(
+        "/home/user/projects/app/src/index.ts",
+      );
       expect(result).not.toContain("/home/user");
       expect(result).toContain("app/src/index.ts");
     });
@@ -555,7 +562,9 @@ describe("PatternAnonymizer", () => {
       const result = anonymizer.anonymizeFixPattern(pattern);
 
       expect(result.success).toBe(true);
-      expect(result.data?.solution.steps[0].target).not.toContain("/home/johndoe");
+      expect(result.data?.solution.steps[0].target).not.toContain(
+        "/home/johndoe",
+      );
       expect(result.data?.solution.steps[0].content).not.toContain("sk_live_");
     });
 
@@ -658,7 +667,9 @@ describe("PatternAnonymizer", () => {
     });
 
     it("should detect API keys", () => {
-      expect(anonymizer.containsPII("api_key=sk_test_abc123xyz789secret")).toBe(true);
+      expect(anonymizer.containsPII("api_key=sk_test_abc123xyz789secret")).toBe(
+        true,
+      );
     });
 
     it("should detect secrets", () => {
