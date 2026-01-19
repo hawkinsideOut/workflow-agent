@@ -3,7 +3,16 @@
  * Runs before all tests to configure the test environment
  */
 
+import { webcrypto } from "node:crypto";
 import { beforeAll, afterAll, beforeEach, afterEach, vi } from "vitest";
+
+// Polyfill crypto for Node.js environment
+// The global crypto object is available in browsers and newer Node.js with --experimental-global-webcrypto
+// but in test environments we need to polyfill it
+if (typeof globalThis.crypto === "undefined") {
+  // @ts-expect-error - webcrypto is compatible with Crypto
+  globalThis.crypto = webcrypto;
+}
 
 // Store original env
 const originalEnv = { ...process.env };
