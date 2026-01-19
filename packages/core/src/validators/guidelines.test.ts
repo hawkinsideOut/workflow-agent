@@ -28,6 +28,7 @@ describe("guidelines validator", () => {
       expect(templates).toContain("BRANCHING_STRATEGY.md");
       expect(templates).toContain("TESTING_STRATEGY.md");
       expect(templates).toContain("SELF_IMPROVEMENT_MANDATE.md");
+      expect(templates).toContain("PATTERN_ANALYSIS_WORKFLOW.md");
     });
 
     it("adds additional mandatory templates from config", () => {

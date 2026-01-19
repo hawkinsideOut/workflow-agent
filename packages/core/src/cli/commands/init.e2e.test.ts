@@ -64,6 +64,9 @@ describe("workflow init - E2E", () => {
       expect(
         existsSync(join(tempDir, "guidelines", "TESTING_STRATEGY.md")),
       ).toBe(true);
+      expect(
+        existsSync(join(tempDir, "guidelines", "PATTERN_ANALYSIS_WORKFLOW.md")),
+      ).toBe(true);
 
       // Check .workflow directory was created
       expect(existsSync(join(tempDir, ".workflow"))).toBe(true);

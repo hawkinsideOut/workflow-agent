@@ -75,6 +75,15 @@ export const templateMetadata: Record<string, TemplateMetadata> = {
     validators: [],
     description: "Continuous improvement tracking, changelog requirements",
   },
+  "PATTERN_ANALYSIS_WORKFLOW.md": {
+    filename: "PATTERN_ANALYSIS_WORKFLOW.md",
+    displayName: "Pattern Analysis Workflow",
+    mandatory: true,
+    category: "workflow",
+    validators: [],
+    description:
+      "AI agent workflow for analyzing codebases, extracting patterns, and updating the central pattern store",
+  },
   "SINGLE_SOURCE_OF_TRUTH.md": {
     filename: "SINGLE_SOURCE_OF_TRUTH.md",
     displayName: "Single Source of Truth",

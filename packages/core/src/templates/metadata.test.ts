@@ -20,6 +20,9 @@ describe("template metadata", () => {
       expect(templateMetadata["SELF_IMPROVEMENT_MANDATE.md"].mandatory).toBe(
         true,
       );
+      expect(templateMetadata["PATTERN_ANALYSIS_WORKFLOW.md"].mandatory).toBe(
+        true,
+      );
       expect(templateMetadata["SINGLE_SOURCE_OF_TRUTH.md"].mandatory).toBe(
         true,
       );
@@ -49,7 +52,7 @@ describe("template metadata", () => {
     it("returns only mandatory templates", () => {
       const templates = getMandatoryTemplates();
       expect(templates.every((t) => t.mandatory)).toBe(true);
-      expect(templates.length).toBeGreaterThanOrEqual(5);
+      expect(templates.length).toBeGreaterThanOrEqual(6);
     });
   });
 
@@ -104,6 +107,7 @@ describe("template metadata", () => {
       const filenames = getMandatoryTemplateFilenames();
       expect(filenames).toContain("AGENT_EDITING_INSTRUCTIONS.md");
       expect(filenames).toContain("BRANCHING_STRATEGY.md");
+      expect(filenames).toContain("PATTERN_ANALYSIS_WORKFLOW.md");
       expect(filenames).not.toContain("DEPLOYMENT_STRATEGY.md");
     });
   });
