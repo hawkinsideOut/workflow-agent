@@ -1,0 +1,574 @@
+import { z } from "zod";
+
+// ============================================
+// Constants
+// ============================================
+
+/** Number of days after which a pattern is considered deprecated */
+export const DEPRECATION_THRESHOLD_DAYS = 365;
+
+/** Default path for storing patterns */
+export const PATTERNS_DIR = ".workflow/patterns";
+
+/** File name for contributor ID */
+export const CONTRIBUTOR_ID_FILE = ".workflow/.contributor-id";
+
+/** Number of telemetry events to batch before sending */
+export const TELEMETRY_BATCH_SIZE = 10;
+
+// ============================================
+// Dependency Version Schema
+// ============================================
+
+/**
+ * Tracks exact and compatible versions of a dependency
+ */
+export const DependencyVersionSchema = z.object({
+  /** Package name */
+  name: z.string().min(1),
+  /** Exact version used: "15.1.0" */
+  version: z.string().min(1),
+  /** Semver compatible range: "^15.0.0" */
+  compatibleRange: z.string().min(1),
+});
+
+// ============================================
+// Compatibility Schema
+// ============================================
+
+/**
+ * Defines framework and runtime compatibility requirements
+ */
+export const CompatibilitySchema = z.object({
+  /** Framework name: "next", "react", "vue", etc. */
+  framework: z.string().min(1),
+  /** Semver range for framework: "^15.0.0" */
+  frameworkVersion: z.string().min(1),
+  /** Runtime environment: "node", "bun", "deno" */
+  runtime: z.string().optional(),
+  /** Semver range for runtime: "^20.0.0" */
+  runtimeVersion: z.string().optional(),
+  /** All relevant dependencies with version info */
+  dependencies: z.array(DependencyVersionSchema),
+});
+
+// ============================================
+// Pattern Tag Schema
+// ============================================
+
+/**
+ * Categorized tag for pattern classification
+ */
+export const PatternTagSchema = z.object({
+  /** Tag name */
+  name: z.string().min(1).max(50),
+  /** Tag category for filtering */
+  category: z.enum(["framework", "tool", "error-type", "file-type", "custom"]),
+});
+
+// ============================================
+// Fix Pattern Schema
+// ============================================
+
+/** Valid categories for fix patterns */
+export const FixCategoryEnum = z.enum([
+  "lint",
+  "type-error",
+  "dependency",
+  "config",
+  "runtime",
+  "build",
+  "test",
+  "security",
+]);
+
+/** Valid solution types */
+export const SolutionTypeEnum = z.enum([
+  "command",
+  "file-change",
+  "config-update",
+  "dependency-add",
+  "dependency-remove",
+  "multi-step",
+]);
+
+/** Valid actions for solution steps */
+export const StepActionEnum = z.enum([
+  "run",
+  "create",
+  "modify",
+  "delete",
+  "install",
+  "uninstall",
+]);
+
+/** Valid sources for patterns */
+export const PatternSourceEnum = z.enum([
+  "manual",
+  "auto-heal",
+  "verify-fix",
+  "imported",
+  "community",
+]);
+
+/**
+ * Solution step for fix patterns
+ */
+export const SolutionStepSchema = z.object({
+  /** Execution order */
+  order: z.number().int().min(1),
+  /** Action type */
+  action: StepActionEnum,
+  /** Target file path or command (anonymized) */
+  target: z.string().min(1),
+  /** File content or diff (anonymized, optional) */
+  content: z.string().optional(),
+  /** Human-readable description */
+  description: z.string().min(1).max(500),
+});
+
+/**
+ * Metrics tracking pattern success rate and usage
+ */
+export const PatternMetricsSchema = z.object({
+  /** Success rate percentage (0-100) */
+  successRate: z.number().min(0).max(100),
+  /** Total number of applications */
+  applications: z.number().int().min(0),
+  /** Number of successful applications */
+  successes: z.number().int().min(0),
+  /** Number of failed applications */
+  failures: z.number().int().min(0),
+  /** Last time the pattern was used */
+  lastUsed: z.string().datetime().optional(),
+  /** Last time the pattern was successfully applied */
+  lastSuccessful: z.string().datetime().optional(),
+});
+
+/**
+ * Trigger conditions for when a pattern should be suggested
+ */
+export const PatternTriggerSchema = z.object({
+  /** Regex pattern to match error messages */
+  errorPattern: z.string().min(1),
+  /** Example error message (anonymized) */
+  errorMessage: z.string().optional(),
+  /** Glob pattern for affected files: "*.tsx" */
+  filePattern: z.string().optional(),
+  /** Additional context keywords */
+  context: z.string().optional(),
+});
+
+/**
+ * Solution definition for fix patterns
+ */
+export const PatternSolutionSchema = z.object({
+  /** Type of solution */
+  type: SolutionTypeEnum,
+  /** Ordered steps to execute */
+  steps: z.array(SolutionStepSchema).min(1),
+});
+
+/**
+ * Fix-level pattern for single issue resolution
+ */
+export const FixPatternSchema = z.object({
+  /** Unique identifier (UUID) */
+  id: z.string().uuid(),
+  /** Human-readable name */
+  name: z.string().min(3).max(100),
+  /** Description of what the pattern fixes */
+  description: z.string().max(500),
+
+  /** Category of fix */
+  category: FixCategoryEnum,
+
+  /** Tags for classification */
+  tags: z.array(PatternTagSchema),
+
+  /** Conditions that trigger this pattern */
+  trigger: PatternTriggerSchema,
+
+  /** Solution to apply */
+  solution: PatternSolutionSchema,
+
+  /** Framework/runtime compatibility */
+  compatibility: CompatibilitySchema,
+
+  /** Usage metrics */
+  metrics: PatternMetricsSchema,
+
+  /** Where this pattern originated */
+  source: PatternSourceEnum,
+
+  // Privacy and sync
+  /** Whether this pattern should be synced to central registry */
+  isPrivate: z.boolean().default(true),
+  /** When this pattern was last synced */
+  syncedAt: z.string().datetime().optional(),
+  /** Anonymous contributor identifier */
+  contributorId: z.string().optional(),
+
+  // Conflict resolution
+  /** Version number for conflict resolution (1, 2, 3...) */
+  conflictVersion: z.number().int().min(1).optional(),
+  /** Original pattern ID if this is a conflict copy */
+  originalId: z.string().uuid().optional(),
+
+  // Deprecation
+  /** When this pattern was deprecated */
+  deprecatedAt: z.string().datetime().optional(),
+  /** Reason for deprecation */
+  deprecationReason: z.string().optional(),
+
+  // Metadata
+  /** When this pattern was created */
+  createdAt: z.string().datetime(),
+  /** When this pattern was last updated */
+  updatedAt: z.string().datetime(),
+});
+
+// ============================================
+// Blueprint Schema
+// ============================================
+
+/** Language enum for blueprints */
+export const LanguageEnum = z.enum([
+  "typescript",
+  "javascript",
+  "python",
+  "go",
+  "rust",
+  "other",
+]);
+
+/** Package manager enum */
+export const PackageManagerEnum = z.enum(["npm", "pnpm", "yarn", "bun"]);
+
+/**
+ * Technology stack definition
+ */
+export const StackSchema = z.object({
+  /** Framework name */
+  framework: z.string().min(1),
+  /** Primary language */
+  language: LanguageEnum,
+  /** Runtime environment */
+  runtime: z.string().min(1),
+  /** Package manager */
+  packageManager: PackageManagerEnum,
+  /** Production dependencies */
+  dependencies: z.array(DependencyVersionSchema),
+  /** Development dependencies */
+  devDependencies: z.array(DependencyVersionSchema),
+});
+
+/**
+ * Directory structure entry
+ */
+export const DirectoryEntrySchema = z.object({
+  /** Relative path */
+  path: z.string().min(1),
+  /** Purpose of this directory */
+  purpose: z.string().min(1),
+});
+
+/**
+ * Key file entry in blueprint
+ */
+export const KeyFileSchema = z.object({
+  /** Relative file path */
+  path: z.string().min(1),
+  /** Purpose of this file */
+  purpose: z.string().min(1),
+  /** Template content (anonymized) */
+  template: z.string().optional(),
+});
+
+/**
+ * Project structure definition
+ */
+export const StructureSchema = z.object({
+  /** Directories to create */
+  directories: z.array(DirectoryEntrySchema),
+  /** Key files with templates */
+  keyFiles: z.array(KeyFileSchema),
+});
+
+/**
+ * Setup step for blueprint
+ */
+export const SetupStepSchema = z.object({
+  /** Execution order */
+  order: z.number().int().min(1),
+  /** Command to run */
+  command: z.string().min(1),
+  /** Description of what this step does */
+  description: z.string().min(1),
+  /** Whether this step is optional */
+  optional: z.boolean().default(false),
+});
+
+/**
+ * Config file entry
+ */
+export const ConfigEntrySchema = z.object({
+  /** File path */
+  file: z.string().min(1),
+  /** File content (anonymized) */
+  content: z.string().min(1),
+  /** Description of this config */
+  description: z.string().min(1),
+});
+
+/**
+ * Setup instructions for blueprint
+ */
+export const SetupSchema = z.object({
+  /** Prerequisites before setup */
+  prerequisites: z.array(z.string()),
+  /** Ordered setup steps */
+  steps: z.array(SetupStepSchema),
+  /** Config files to create */
+  configs: z.array(ConfigEntrySchema),
+  /** Post-setup commands */
+  postSetup: z.array(z.string()).optional(),
+});
+
+/**
+ * Application-level blueprint for complete project setup
+ */
+export const BlueprintSchema = z.object({
+  /** Unique identifier (UUID) */
+  id: z.string().uuid(),
+  /** Human-readable name */
+  name: z.string().min(3).max(100),
+  /** Description of what this blueprint creates */
+  description: z.string().max(1000),
+
+  /** Tags for classification */
+  tags: z.array(PatternTagSchema),
+
+  /** Technology stack */
+  stack: StackSchema,
+
+  /** Project structure */
+  structure: StructureSchema,
+
+  /** Setup instructions */
+  setup: SetupSchema,
+
+  /** Framework/runtime compatibility */
+  compatibility: CompatibilitySchema,
+
+  /** Usage metrics */
+  metrics: PatternMetricsSchema,
+
+  /** Related fix patterns commonly used with this blueprint */
+  relatedPatterns: z.array(z.string().uuid()),
+
+  // Privacy and sync
+  /** Whether this blueprint should be synced */
+  isPrivate: z.boolean().default(true),
+  /** When this blueprint was last synced */
+  syncedAt: z.string().datetime().optional(),
+  /** Anonymous contributor identifier */
+  contributorId: z.string().optional(),
+
+  // Conflict resolution
+  /** Version number for conflict resolution */
+  conflictVersion: z.number().int().min(1).optional(),
+  /** Original blueprint ID if this is a conflict copy */
+  originalId: z.string().uuid().optional(),
+
+  // Deprecation
+  /** When this blueprint was deprecated */
+  deprecatedAt: z.string().datetime().optional(),
+  /** Reason for deprecation */
+  deprecationReason: z.string().optional(),
+
+  // Metadata
+  /** When this blueprint was created */
+  createdAt: z.string().datetime(),
+  /** When this blueprint was last updated */
+  updatedAt: z.string().datetime(),
+});
+
+// ============================================
+// Telemetry Schema (Anonymized)
+// ============================================
+
+/** Telemetry event types */
+export const TelemetryEventTypeEnum = z.enum([
+  "pattern-applied",
+  "pattern-success",
+  "pattern-failure",
+]);
+
+/** Pattern type enum */
+export const PatternTypeEnum = z.enum(["fix", "blueprint"]);
+
+/**
+ * Anonymized telemetry event for success/failure tracking
+ */
+export const TelemetryEventSchema = z.object({
+  /** Unique event identifier */
+  id: z.string().uuid(),
+  /** Event type */
+  type: TelemetryEventTypeEnum,
+  /** Pattern that was applied */
+  patternId: z.string().uuid(),
+  /** Type of pattern */
+  patternType: PatternTypeEnum,
+  /** Anonymous contributor/sender ID */
+  contributorId: z.string().min(1),
+
+  // Context (no PII)
+  /** Framework used */
+  framework: z.string().min(1),
+  /** Framework version */
+  frameworkVersion: z.string().min(1),
+  /** Runtime (optional) */
+  runtime: z.string().optional(),
+  /** Runtime version (optional) */
+  runtimeVersion: z.string().optional(),
+
+  // Outcome
+  /** Whether the application was successful */
+  success: z.boolean().optional(),
+  /** Categorized failure reason (not raw error) */
+  failureReason: z
+    .enum([
+      "version-mismatch",
+      "missing-dependency",
+      "file-conflict",
+      "permission-error",
+      "syntax-error",
+      "unknown",
+    ])
+    .optional(),
+
+  /** Event timestamp */
+  timestamp: z.string().datetime(),
+});
+
+// ============================================
+// Type Exports
+// ============================================
+
+export type DependencyVersion = z.infer<typeof DependencyVersionSchema>;
+export type Compatibility = z.infer<typeof CompatibilitySchema>;
+export type PatternTag = z.infer<typeof PatternTagSchema>;
+export type SolutionStep = z.infer<typeof SolutionStepSchema>;
+export type PatternMetrics = z.infer<typeof PatternMetricsSchema>;
+export type PatternTrigger = z.infer<typeof PatternTriggerSchema>;
+export type PatternSolution = z.infer<typeof PatternSolutionSchema>;
+export type FixPattern = z.infer<typeof FixPatternSchema>;
+export type Stack = z.infer<typeof StackSchema>;
+export type DirectoryEntry = z.infer<typeof DirectoryEntrySchema>;
+export type KeyFile = z.infer<typeof KeyFileSchema>;
+export type Structure = z.infer<typeof StructureSchema>;
+export type SetupStep = z.infer<typeof SetupStepSchema>;
+export type ConfigEntry = z.infer<typeof ConfigEntrySchema>;
+export type Setup = z.infer<typeof SetupSchema>;
+export type Blueprint = z.infer<typeof BlueprintSchema>;
+export type TelemetryEvent = z.infer<typeof TelemetryEventSchema>;
+
+export type FixCategory = z.infer<typeof FixCategoryEnum>;
+export type SolutionType = z.infer<typeof SolutionTypeEnum>;
+export type StepAction = z.infer<typeof StepActionEnum>;
+export type PatternSource = z.infer<typeof PatternSourceEnum>;
+export type Language = z.infer<typeof LanguageEnum>;
+export type PackageManager = z.infer<typeof PackageManagerEnum>;
+export type TelemetryEventType = z.infer<typeof TelemetryEventTypeEnum>;
+export type PatternType = z.infer<typeof PatternTypeEnum>;
+
+// ============================================
+// Utility Functions
+// ============================================
+
+/**
+ * Check if a pattern is deprecated based on its updatedAt date
+ */
+export function isPatternDeprecated(
+  pattern: FixPattern | Blueprint,
+  thresholdDays: number = DEPRECATION_THRESHOLD_DAYS,
+): boolean {
+  // If manually deprecated, return true
+  if (pattern.deprecatedAt) {
+    return true;
+  }
+
+  // Check if updatedAt is older than threshold
+  const updatedAt = new Date(pattern.updatedAt);
+  const now = new Date();
+  const daysSinceUpdate = Math.floor(
+    (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  return daysSinceUpdate > thresholdDays;
+}
+
+/**
+ * Generate a content hash for conflict detection
+ */
+export function generatePatternHash(pattern: FixPattern | Blueprint): string {
+  // Create a hash from the essential content (excluding metadata)
+  const contentToHash = {
+    name: pattern.name,
+    description: pattern.description,
+    tags: pattern.tags,
+    compatibility: pattern.compatibility,
+    // Include type-specific content
+    ...("trigger" in pattern
+      ? { trigger: pattern.trigger, solution: pattern.solution }
+      : { stack: pattern.stack, structure: pattern.structure }),
+  };
+
+  // Simple hash using JSON string
+  const jsonString = JSON.stringify(contentToHash, Object.keys(contentToHash).sort());
+  let hash = 0;
+  for (let i = 0; i < jsonString.length; i++) {
+    const char = jsonString.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(16).padStart(8, "0");
+}
+
+/**
+ * Create default metrics for a new pattern
+ */
+export function createDefaultMetrics(): PatternMetrics {
+  return {
+    successRate: 0,
+    applications: 0,
+    successes: 0,
+    failures: 0,
+    lastUsed: undefined,
+    lastSuccessful: undefined,
+  };
+}
+
+/**
+ * Update metrics after pattern application
+ */
+export function updateMetrics(
+  metrics: PatternMetrics,
+  success: boolean,
+): PatternMetrics {
+  const now = new Date().toISOString();
+  const applications = metrics.applications + 1;
+  const successes = success ? metrics.successes + 1 : metrics.successes;
+  const failures = success ? metrics.failures : metrics.failures + 1;
+  const successRate = applications > 0 ? (successes / applications) * 100 : 0;
+
+  return {
+    successRate: Math.round(successRate * 100) / 100,
+    applications,
+    successes,
+    failures,
+    lastUsed: now,
+    lastSuccessful: success ? now : metrics.lastSuccessful,
+  };
+}

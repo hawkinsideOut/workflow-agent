@@ -26,11 +26,19 @@ export interface CheckResult {
   duration: number;
 }
 
+export interface AppliedFix {
+  checkName: string;
+  displayName: string;
+  command: string;
+  timestamp: Date;
+}
+
 export interface RunAllChecksResult {
   success: boolean;
   results: CheckResult[];
   totalAttempts: number;
   fixesApplied: number;
+  appliedFixes: AppliedFix[];
   pendingFixes?: Array<{ check: CheckDefinition; command: string }>;
 }
 
@@ -222,6 +230,7 @@ export async function runAllChecks(
 
   let attempt = 0;
   let fixesApplied = 0;
+  const appliedFixes: AppliedFix[] = [];
   const pendingFixes: Array<{ check: CheckDefinition; command: string }> = [];
 
   while (attempt < maxRetries) {
@@ -273,6 +282,12 @@ export async function runAllChecks(
           if (fixResult.success) {
             log(`✨ Auto-fix applied for ${check.displayName}`, "success");
             fixesApplied++;
+            appliedFixes.push({
+              checkName: check.name,
+              displayName: check.displayName,
+              command: formatFixCommand(check),
+              timestamp: new Date(),
+            });
             fixAppliedThisCycle = true;
 
             // IMPORTANT: Re-run ALL checks from the beginning
@@ -304,6 +319,7 @@ export async function runAllChecks(
               results,
               totalAttempts: attempt,
               fixesApplied,
+              appliedFixes,
             };
           }
         } else {
@@ -335,6 +351,7 @@ export async function runAllChecks(
               results,
               totalAttempts: attempt,
               fixesApplied,
+              appliedFixes,
             };
           }
         }
@@ -357,6 +374,7 @@ export async function runAllChecks(
         results,
         totalAttempts: attempt,
         fixesApplied: 0,
+        appliedFixes: [],
         pendingFixes,
       };
     }
@@ -368,6 +386,7 @@ export async function runAllChecks(
         results,
         totalAttempts: attempt,
         fixesApplied,
+        appliedFixes,
       };
     }
 
@@ -378,6 +397,7 @@ export async function runAllChecks(
         results,
         totalAttempts: attempt,
         fixesApplied,
+        appliedFixes,
       };
     }
 
@@ -392,6 +412,7 @@ export async function runAllChecks(
     results: [],
     totalAttempts: attempt,
     fixesApplied,
+    appliedFixes,
   };
 }
 

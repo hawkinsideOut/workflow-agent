@@ -10,9 +10,10 @@
 2. [Unit Testing with Vitest](#unit-testing-with-vitest)
 3. [Component Library Testing](#component-library-testing)
 4. [E2E Testing with Playwright](#e2e-testing-with-playwright)
-5. [Test Infrastructure](#test-infrastructure)
-6. [When Tests Are Required](#when-tests-are-required)
-7. [Pre-Merge Checklist](#pre-merge-checklist)
+5. [Accessibility Testing](#accessibility-testing)
+6. [Test Infrastructure](#test-infrastructure)
+7. [When Tests Are Required](#when-tests-are-required)
+8. [Pre-Merge Checklist](#pre-merge-checklist)
 
 ---
 
@@ -804,8 +805,155 @@ Add `data-testid` attributes to elements that E2E tests need to interact with.
 
 ---
 
+## Accessibility Testing
+
+> **Requirement**: All UI components MUST pass automated accessibility tests before merge. See [ACCESSIBILITY_STANDARDS.md](ACCESSIBILITY_STANDARDS.md) for full compliance requirements.
+
+### axe-core Integration
+
+We use `jest-axe` with Vitest for automated accessibility testing.
+
+#### Installation
+
+```bash
+pnpm add -D jest-axe @axe-core/playwright
+```
+
+#### Test Setup
+
+```typescript
+// test/setup.ts
+import { configureAxe, toHaveNoViolations } from "jest-axe";
+
+expect.extend(toHaveNoViolations);
+
+// Configure axe for WCAG 2.1 AA compliance
+export const axe = configureAxe({
+  rules: {
+    "color-contrast": { enabled: true },
+    "aria-allowed-attr": { enabled: true },
+    "aria-valid-attr-value": { enabled: true },
+    "button-name": { enabled: true },
+    "image-alt": { enabled: true },
+    "label": { enabled: true },
+  },
+});
+```
+
+### Component Accessibility Tests
+
+Every UI component MUST include accessibility tests:
+
+```typescript
+import { render } from "@testing-library/react";
+import { axe } from "@/test/setup";
+import { Button } from "./button";
+
+describe("Button accessibility", () => {
+  it("should have no accessibility violations", async () => {
+    const { container } = render(<Button>Click me</Button>);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it("should have no violations when disabled", async () => {
+    const { container } = render(<Button disabled>Disabled</Button>);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it("should have no violations as icon button", async () => {
+    const { container } = render(
+      <Button aria-label="Close dialog">
+        <XIcon aria-hidden="true" />
+      </Button>
+    );
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+});
+```
+
+### E2E Accessibility Testing with Playwright
+
+Critical user flows MUST include accessibility scans:
+
+```typescript
+// e2e/accessibility.spec.ts
+import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+
+test.describe("Accessibility", () => {
+  test("homepage should have no accessibility violations", async ({ page }) => {
+    await page.goto("/");
+    
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze();
+
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
+
+  test("should maintain accessibility during interactions", async ({ page }) => {
+    await page.goto("/dashboard");
+    
+    // Open a modal
+    await page.getByRole("button", { name: /create task/i }).click();
+    
+    // Scan with modal open
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze();
+
+    expect(results.violations).toEqual([]);
+  });
+});
+```
+
+### Running Accessibility Tests
+
+```bash
+# Run all tests including a11y
+pnpm test
+
+# Run only accessibility tests
+pnpm test -- --grep "accessibility"
+
+# E2E accessibility tests
+pnpm test:e2e:a11y
+```
+
+### CI Pipeline Integration
+
+```yaml
+# .github/workflows/ci.yml
+jobs:
+  test:
+    steps:
+      - name: Run accessibility tests
+        run: pnpm test -- --grep "accessibility"
+        
+      - name: Run E2E accessibility tests
+        run: pnpm test:e2e:a11y
+```
+
+### Accessibility Test Checklist
+
+Before submitting a UI PR:
+
+- [ ] Component has `*.a11y.test.tsx` or accessibility tests in main test file
+- [ ] All variants tested with axe-core
+- [ ] Icon buttons have `aria-label`
+- [ ] Form inputs have associated labels
+- [ ] Interactive elements are keyboard accessible
+- [ ] Color contrast meets WCAG AA (4.5:1 for text)
+- [ ] Focus states are visible
+
+---
+
 ## Related Documents
 
+- [ACCESSIBILITY_STANDARDS.md](ACCESSIBILITY_STANDARDS.md) - WCAG 2.1 AA compliance requirements
 - [AGENT_EDITING_INSTRUCTIONS.md](AGENT_EDITING_INSTRUCTIONS.md) - Required files for each change type
 - [TESTING_GUIDE.md](../TESTING_GUIDE.md) - Manual testing checklist
 - [QUICK_START_TESTING.md](../QUICK_START_TESTING.md) - Getting started with testing
