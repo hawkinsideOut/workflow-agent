@@ -42,6 +42,14 @@
 - 📊 **Voting system** - Community upvote/downvote suggestions
 - 🔄 **Automatic integration** - Approved suggestions go into future releases
 
+### Agent Learning System
+
+- 🧠 **Pattern recording** - Capture successful fixes and project setups
+- 🔒 **Privacy-first** - PII automatically anonymized before sharing
+- 📈 **Telemetry** - Track pattern success rates (opt-in)
+- 🔄 **Community sync** - Share patterns with the ecosystem
+- ⏰ **Auto-deprecation** - Unused patterns deprecate after 1 year
+
 ### Developer Experience
 
 - 🚀 **Interactive CLI** - Beautiful prompts with @clack/prompts

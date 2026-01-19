@@ -14,6 +14,7 @@ const docs = [
   { slug: "presets", title: "Presets" },
   { slug: "custom-scopes", title: "Custom Scopes" },
   { slug: "configuration", title: "Configuration" },
+  { slug: "agent-learning", title: "Agent Learning System" },
 ];
 
 export async function generateStaticParams() {

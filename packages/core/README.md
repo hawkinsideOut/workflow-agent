@@ -188,6 +188,12 @@ workflow-agent scope:migrate
 | `workflow-agent doctor`                    | Run health checks and get optimization tips |
 | `workflow-agent scope:create`              | Create a custom scope package               |
 | `workflow-agent scope:migrate`             | Migrate inline scopes to package            |
+| `workflow-agent learn:record`              | Record a new fix pattern or blueprint       |
+| `workflow-agent learn:list`                | List recorded patterns                      |
+| `workflow-agent learn:apply <id>`          | Apply a pattern to current project          |
+| `workflow-agent learn:sync`                | Sync patterns with community registry       |
+| `workflow-agent learn:config`              | Configure learning settings                 |
+| `workflow-agent learn:stats`               | View learning statistics                    |
 
 ### Command Options
 
@@ -206,6 +212,28 @@ workflow-agent scope:migrate
 
 - `--category <type>` - Suggestion category (feature, bug, improvement, documentation)
 - `--author <name>` - Your name or username
+
+#### `learn:record`
+
+- `--type <type>` - Pattern type: `fix` or `blueprint`
+- `--name <name>` - Human-readable pattern name
+- `--description <desc>` - What the pattern does
+- `--category <cat>` - Fix category: `lint`, `type-error`, `dependency`, `config`, etc.
+- `--framework <fw>` - Target framework: `next`, `react`, `vue`, etc.
+- `--version <ver>` - Semver version range
+
+#### `learn:list`
+
+- `--type <type>` - Filter by pattern type
+- `--framework <fw>` - Filter by framework
+- `--deprecated` - Include deprecated patterns
+
+#### `learn:config`
+
+- `--enable-telemetry` - Enable anonymous usage telemetry
+- `--disable-telemetry` - Disable telemetry
+- `--enable-sync` - Enable community pattern sync
+- `--disable-sync` - Disable sync
 
 ---
 

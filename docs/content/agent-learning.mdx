@@ -1,0 +1,564 @@
+# Agent Learning System
+
+> The Agent Learning System enables workflow-agent to learn from successful implementations across your projects, building a knowledge base of proven patterns that can be shared with the community.
+
+---
+
+## Overview
+
+The Agent Learning System captures successful fixes and project blueprints as reusable patterns. When you fix a linting error, resolve a type issue, or configure a new project successfully, the agent can record these solutions for future use.
+
+### Key Features
+
+- **Pattern Recording**: Capture successful fixes and project setups
+- **Local-First Storage**: All patterns stored locally in `.workflow/patterns/`
+- **Opt-In Sync**: Share anonymized patterns with the community
+- **Privacy Protection**: PII automatically stripped before sharing
+- **Telemetry**: Track pattern success rates for quality improvement
+- **Auto-Deprecation**: Patterns unused for 1+ year are automatically deprecated
+
+---
+
+## How It Works
+
+### 1. Pattern Detection
+
+When you run `workflow verify --fix --learn`, the agent:
+
+1. Executes quality checks (typecheck, lint, format, test, build)
+2. Applies auto-fixes when issues are found
+3. Re-validates to ensure fixes work
+4. Records successful fixes as patterns
+
+```bash
+# Run verification with learning enabled
+workflow verify --fix --learn
+
+# Example output
+✅ ALL QUALITY CHECKS PASSED!
+  Total time: 12.5s
+  Validation cycles: 3
+  Fixes applied: 2
+
+📚 Recording successful fixes for learning...
+  ✓ Recorded: Auto-fix: ESLint
+  ✓ Recorded: Auto-fix: Prettier
+
+Use 'workflow learn:list' to see recorded patterns.
+```
+
+### 2. Pattern Storage
+
+Patterns are stored in two categories:
+
+| Type | Description | Use Case |
+|------|-------------|----------|
+| **Fix Patterns** | Single-issue solutions | Lint errors, type errors, config issues |
+| **Blueprints** | Complete project setups | Next.js starter, Express API template |
+
+Storage location: `.workflow/patterns/`
+
+```
+.workflow/
+├── patterns/
+│   ├── fixes/
+│   │   ├── <uuid>.json
+│   │   └── ...
+│   └── blueprints/
+│       ├── <uuid>.json
+│       └── ...
+└── .contributor-id
+```
+
+### 3. Pattern Application
+
+When similar errors occur, the agent suggests relevant patterns:
+
+```bash
+# List available patterns
+workflow learn:list
+
+# Apply a specific pattern
+workflow learn:apply <pattern-id>
+```
+
+---
+
+## CLI Commands
+
+### `workflow learn:record`
+
+Manually record a new pattern:
+
+```bash
+# Record a fix pattern
+workflow learn:record \
+  --type fix \
+  --name "ESLint no-unused-vars" \
+  --description "Add underscore prefix to unused variables" \
+  --category lint \
+  --framework react \
+  --version "^18.0.0"
+
+# Record a blueprint
+workflow learn:record \
+  --type blueprint \
+  --name "Next.js 14 Starter" \
+  --description "Complete Next.js setup with TypeScript, Tailwind, and testing" \
+  --framework next \
+  --version "^14.0.0"
+```
+
+**Options:**
+- `--type` - Pattern type: `fix` or `blueprint`
+- `--name` - Human-readable name (3-100 characters)
+- `--description` - What the pattern does (max 500 characters)
+- `--category` - Fix category: `lint`, `type-error`, `dependency`, `config`, `runtime`, `build`, `test`, `security`
+- `--framework` - Target framework: `next`, `react`, `vue`, `express`, etc.
+- `--version` - Semver-compatible version range
+- `--tags` - Comma-separated tags: `framework:react,tool:eslint`
+
+### `workflow learn:list`
+
+View recorded patterns:
+
+```bash
+# List all patterns
+workflow learn:list
+
+# Filter by type
+workflow learn:list --type fix
+
+# Filter by framework
+workflow learn:list --framework next
+
+# Include deprecated patterns
+workflow learn:list --deprecated
+```
+
+### `workflow learn:apply`
+
+Apply a pattern to the current project:
+
+```bash
+# Apply by pattern ID
+workflow learn:apply abc123-def456
+
+# Dry run to preview changes
+workflow learn:apply abc123-def456 --dry-run
+```
+
+### `workflow learn:stats`
+
+View learning statistics:
+
+```bash
+workflow learn:stats
+
+# Output
+📊 Pattern Statistics
+
+Total Patterns: 45
+  Fix Patterns: 38
+  Blueprints: 7
+
+Success Metrics:
+  Overall Success Rate: 87.3%
+  Most Applied: "ESLint unused-vars fix" (127 applications)
+
+Storage:
+  Private Patterns: 40
+  Synced Patterns: 5
+  Deprecated: 3
+```
+
+### `workflow learn:config`
+
+Configure learning settings:
+
+```bash
+# View current configuration
+workflow learn:config
+
+# Enable telemetry (anonymous usage data)
+workflow learn:config --enable-telemetry
+
+# Disable telemetry
+workflow learn:config --disable-telemetry
+
+# Enable community sync
+workflow learn:config --enable-sync
+
+# Disable community sync
+workflow learn:config --disable-sync
+```
+
+### `workflow learn:deprecate`
+
+Deprecate a pattern:
+
+```bash
+# Deprecate with reason
+workflow learn:deprecate <pattern-id> --reason "Superseded by better solution"
+```
+
+### `workflow learn:sync`
+
+Sync patterns with the community registry:
+
+```bash
+# Preview what would be synced
+workflow learn:sync --dry-run
+
+# Push local patterns to registry
+workflow learn:sync --push
+
+# Pull new patterns from registry
+workflow learn:sync --pull
+```
+
+---
+
+## Pattern Schema
+
+### Fix Pattern Structure
+
+```typescript
+interface FixPattern {
+  id: string;           // UUID
+  name: string;         // "ESLint no-unused-vars fix"
+  description: string;  // What this pattern fixes
+  category: string;     // lint, type-error, dependency, etc.
+  
+  tags: Array<{
+    name: string;       // "eslint"
+    category: string;   // framework, tool, error-type, file-type, custom
+  }>;
+  
+  trigger: {
+    errorPattern: string;   // Regex to match error messages
+    errorMessage?: string;  // Example error (anonymized)
+    filePattern?: string;   // Glob pattern: "*.tsx"
+  };
+  
+  solution: {
+    type: string;   // command, file-change, config-update, etc.
+    steps: Array<{
+      order: number;
+      action: string;       // run, create, modify, delete, install
+      target: string;       // Command or file path
+      description: string;
+    }>;
+  };
+  
+  compatibility: {
+    framework: string;        // "next"
+    frameworkVersion: string; // "^14.0.0"
+    runtime?: string;         // "node"
+    runtimeVersion?: string;  // ">=18.0.0"
+    dependencies: Array<{
+      name: string;
+      version: string;
+      compatibleRange: string;
+    }>;
+  };
+  
+  metrics: {
+    successRate: number;    // 0-100
+    applications: number;   // Total uses
+    successes: number;
+    failures: number;
+    lastUsed?: string;      // ISO datetime
+  };
+  
+  source: string;     // manual, auto-heal, verify-fix, imported, community
+  isPrivate: boolean; // Default: true
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### Blueprint Structure
+
+```typescript
+interface Blueprint {
+  id: string;
+  name: string;           // "Next.js 14 TypeScript Starter"
+  description: string;
+  
+  tags: PatternTag[];
+  
+  stack: {
+    framework: string;      // "next"
+    language: string;       // typescript, javascript, python, etc.
+    runtime: string;        // "node"
+    packageManager: string; // npm, pnpm, yarn, bun
+    dependencies: DependencyVersion[];
+    devDependencies: DependencyVersion[];
+  };
+  
+  structure: {
+    directories: Array<{ path: string; purpose: string }>;
+    keyFiles: Array<{ path: string; purpose: string; template?: string }>;
+  };
+  
+  setup: {
+    prerequisites: string[];
+    steps: Array<{
+      order: number;
+      command: string;
+      description: string;
+      optional: boolean;
+    }>;
+    configs: Array<{
+      file: string;
+      content: string;
+      description: string;
+    }>;
+  };
+  
+  compatibility: Compatibility;
+  metrics: PatternMetrics;
+  relatedPatterns: string[]; // UUIDs of related fix patterns
+  
+  isPrivate: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+---
+
+## Privacy & Security
+
+### What Gets Anonymized
+
+Before any pattern is shared, the following is stripped:
+
+| Data Type | Example | Replacement |
+|-----------|---------|-------------|
+| File paths | `/home/user/project/src` | `<PATH>/src` |
+| Email addresses | `dev@company.com` | `<EMAIL>` |
+| IP addresses | `192.168.1.100` | `<IP>` |
+| API keys | `sk_live_abc123...` | `<API_KEY>` |
+| Secrets/tokens | `ghp_xxxxx` | `<SECRET>` |
+| URLs with auth | `https://user:pass@host` | `<URL>` |
+
+### Contributor ID
+
+Each installation generates an anonymous contributor ID:
+
+```
+wf-550e8400-e29b-41d4-a716-446655440000
+```
+
+This ID:
+- Contains no personally identifiable information
+- Is stored locally in `.workflow/.contributor-id`
+- Can be reset anytime with `workflow learn:config --reset-id`
+- Is used only for pattern attribution, not tracking
+
+### Telemetry
+
+When telemetry is enabled, the following is collected:
+
+- Pattern ID applied
+- Success/failure outcome
+- Framework and version used
+- Anonymized failure reason (if applicable)
+
+**No** source code, file contents, or personal data is ever transmitted.
+
+```bash
+# Check telemetry status
+workflow learn:config
+
+# Disable telemetry
+workflow learn:config --disable-telemetry
+```
+
+---
+
+## Configuration
+
+### Enable Learning on Verify
+
+Add to your npm scripts:
+
+```json
+{
+  "scripts": {
+    "verify": "workflow verify --fix --learn"
+  }
+}
+```
+
+### workflow.config.json
+
+```json
+{
+  "learning": {
+    "autoRecord": true,
+    "telemetry": false,
+    "syncEnabled": false,
+    "syncRegistry": "https://patterns.workflow-agent.dev"
+  }
+}
+```
+
+### Environment Variables
+
+```bash
+# Disable learning globally
+WORKFLOW_LEARNING_DISABLED=true
+
+# Custom patterns directory
+WORKFLOW_PATTERNS_DIR=.custom-patterns
+```
+
+---
+
+## Conflict Resolution
+
+When importing patterns that conflict with existing ones:
+
+### Detection
+
+Conflicts are detected by:
+1. Same pattern name
+2. Same content hash (identical trigger + solution)
+
+### Resolution
+
+```bash
+# During sync, conflicts are versioned
+workflow learn:sync --pull
+
+# Patterns are saved as:
+# - original-pattern.json (conflictVersion: 1)
+# - original-pattern-v2.json (conflictVersion: 2)
+```
+
+Each version includes `originalId` reference for traceability.
+
+---
+
+## Auto-Deprecation
+
+Patterns are automatically deprecated when:
+
+1. Not updated in 365+ days
+2. Success rate drops below 20% (after 10+ applications)
+3. Manually marked deprecated
+
+Deprecated patterns:
+- Still available via `--deprecated` flag
+- Not synced to community registry
+- Not suggested automatically
+
+---
+
+## Best Practices
+
+### Recording Good Patterns
+
+1. **Be specific**: Name patterns clearly (`"ESLint prefer-const rule"` not `"lint fix"`)
+2. **Document well**: Include what, why, and when to use
+3. **Test first**: Only record patterns that actually work
+4. **Tag appropriately**: Use relevant tags for discoverability
+
+### Organizing Patterns
+
+```bash
+# Use tags for organization
+workflow learn:record \
+  --tags "framework:next,tool:eslint,error-type:unused-import"
+```
+
+### Sharing Patterns
+
+1. Enable sync: `workflow learn:config --enable-sync`
+2. Mark patterns public: Edit pattern JSON, set `isPrivate: false`
+3. Push to registry: `workflow learn:sync --push`
+
+---
+
+## Programmatic API
+
+Use the learning system in your own tools:
+
+```typescript
+import {
+  PatternStore,
+  ContributorManager,
+  TelemetryCollector,
+  PatternAnonymizer,
+  type FixPattern,
+} from "@hawkinside_out/workflow-improvement-tracker";
+
+// Initialize
+const store = new PatternStore(process.cwd());
+await store.initialize();
+
+// Save a pattern
+const pattern: FixPattern = { /* ... */ };
+await store.saveFixPattern(pattern);
+
+// Find matching patterns
+const matches = await store.findMatchingFixes(
+  "Cannot find module 'lodash'",
+  "next"
+);
+
+// Update metrics after use
+await store.updateFixMetrics(patternId, true); // success
+
+// Anonymize before sharing
+const anonymizer = new PatternAnonymizer();
+const { data: anonymized } = anonymizer.anonymizeFixPattern(pattern);
+
+// Record telemetry
+const telemetry = new TelemetryCollector(process.cwd());
+await telemetry.recordSuccess(patternId, "fix", "next", "14.0.0");
+```
+
+---
+
+## Troubleshooting
+
+### Patterns not recording
+
+```bash
+# Check if learning is enabled
+workflow learn:config
+
+# Ensure verify is run with --learn flag
+workflow verify --fix --learn
+```
+
+### Sync failing
+
+```bash
+# Check sync status
+workflow learn:config
+
+# Verify patterns are public
+workflow learn:list | grep "private: false"
+```
+
+### Pattern not matching
+
+Check the trigger regex:
+
+```bash
+# View pattern details
+cat .workflow/patterns/fixes/<pattern-id>.json | jq '.trigger'
+```
+
+---
+
+## Related Documentation
+
+- [Getting Started](/docs/getting-started) - Initial setup
+- [Configuration](/docs/configuration) - All config options
+- [Pre-Commit Workflow](/docs/pre-commit-workflow) - Integration with git hooks
