@@ -1,13 +1,32 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { AdvisoryAnalyzer } from "../advisory-analyzer.js";
 import type { AdvisoryOptions } from "../advisory-analyzer.js";
-import { vol } from "memfs";
+import { fs, vol } from "memfs";
 
-vi.mock("fs");
-vi.mock("fs/promises");
+// Mock fs and fs/promises with memfs implementations
+vi.mock("fs", () => ({
+  existsSync: (path: string) => fs.existsSync(path),
+  readFileSync: (path: string, encoding?: string) =>
+    fs.readFileSync(path, encoding),
+  writeFileSync: (path: string, data: string) => fs.writeFileSync(path, data),
+  mkdirSync: (path: string, options?: any) => fs.mkdirSync(path, options),
+  readdirSync: (path: string, options?: any) => fs.readdirSync(path, options),
+  statSync: (path: string) => fs.statSync(path),
+}));
 
-// TODO: Fix memfs mocking - these tests need proper setup for memfs to work with vitest
-describe.skip("AdvisoryAnalyzer", () => {
+vi.mock("fs/promises", () => ({
+  readFile: async (path: string, encoding?: string) =>
+    fs.promises.readFile(path, encoding),
+  writeFile: async (path: string, data: string) =>
+    fs.promises.writeFile(path, data),
+  mkdir: async (path: string, options?: any) =>
+    fs.promises.mkdir(path, options),
+  readdir: async (path: string, options?: any) =>
+    fs.promises.readdir(path, options),
+  stat: async (path: string) => fs.promises.stat(path),
+}));
+
+describe("AdvisoryAnalyzer", () => {
   beforeEach(() => {
     vol.reset();
   });

@@ -280,6 +280,76 @@ vi.restoreAllMocks();
 
 ## Test Organization
 
+## Testing with File System Mocks
+
+When testing code that interacts with the file system, use `memfs` for proper in-memory mocking:
+
+### Installation
+
+```bash
+pnpm add -D memfs
+```
+
+### Configuration
+
+```typescript
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { fs, vol } from "memfs";
+
+// Mock fs and fs/promises with memfs implementations
+vi.mock("fs", () => ({
+  existsSync: (path: string) => fs.existsSync(path),
+  readFileSync: (path: string, encoding?: string) =>
+    fs.readFileSync(path, encoding),
+  writeFileSync: (path: string, data: string) => fs.writeFileSync(path, data),
+  mkdirSync: (path: string, options?: any) => fs.mkdirSync(path, options),
+  readdirSync: (path: string, options?: any) => fs.readdirSync(path, options),
+  statSync: (path: string) => fs.statSync(path),
+}));
+
+vi.mock("fs/promises", () => ({
+  readFile: async (path: string, encoding?: string) =>
+    fs.promises.readFile(path, encoding),
+  writeFile: async (path: string, data: string) =>
+    fs.promises.writeFile(path, data),
+  mkdir: async (path: string, options?: any) =>
+    fs.promises.mkdir(path, options),
+  readdir: async (path: string, options?: any) =>
+    fs.promises.readdir(path, options),
+  stat: async (path: string) => fs.promises.stat(path),
+}));
+
+describe("Your Test Suite", () => {
+  beforeEach(() => {
+    // Reset the virtual file system before each test
+    vol.reset();
+  });
+
+  it("should work with virtual files", async () => {
+    // Create virtual files in memory
+    vol.fromJSON({
+      "/path/to/file.json": JSON.stringify({ key: "value" }),
+      "/path/to/config.js": "module.exports = {};",
+    });
+
+    // Your test code using fs operations
+    // The mocked fs will use memfs instead of real file system
+  });
+});
+```
+
+### Key Points
+
+- **Import both `fs` and `vol`**: `vol` manages the virtual volume, `fs` provides the API
+- **Provide actual implementations**: `vi.mock()` needs function implementations, not just module names
+- **Reset before each test**: Use `vol.reset()` in `beforeEach()` to ensure test isolation
+- **Use `vol.fromJSON()`**: Easiest way to create multiple virtual files at once
+- **memfs is complete**: Supports both sync and async fs operations
+
+---
+
+## Test Organization
+
 ### Directory Structure
 
 ```
