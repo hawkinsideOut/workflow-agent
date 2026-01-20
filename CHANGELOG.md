@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1] - 2026-01-19
+
+### Changed
+
+- **Framework-Agnostic Templates**: Refactored all 7 mandatory templates to be technology-neutral
+  - Replaced Next.js/React/Supabase/Vercel references with generic placeholders
+  - Added `{{projectName}}`, `[HOSTING]`, `[DATABASE]`, `[FRAMEWORK]` placeholder patterns
+  - Included `<!-- PROJECT-SPECIFIC: -->` comment markers for customization points
+  - Templates now work for any tech stack (frontend, backend, mobile, CLI, libraries)
+  - Affected: DEPLOYMENT_STRATEGY, LIBRARY_INVENTORY, SINGLE_SOURCE_OF_TRUTH, TESTING_STRATEGY, COMPONENT_LIBRARY, AGENT_EDITING_INSTRUCTIONS, BRANCHING_STRATEGY
+
 ## [2.8.0] - 2026-01-19
 
 ### Added
