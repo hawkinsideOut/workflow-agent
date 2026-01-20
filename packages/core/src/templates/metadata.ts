@@ -112,7 +112,7 @@ export const templateMetadata: Record<string, TemplateMetadata> = {
   "LIBRARY_INVENTORY.md": {
     filename: "LIBRARY_INVENTORY.md",
     displayName: "Library Inventory",
-    mandatory: false,
+    mandatory: true,
     category: "development",
     validators: [],
     description: "Dependency catalog, approved libraries, new library process",

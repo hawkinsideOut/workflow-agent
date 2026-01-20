@@ -26,11 +26,11 @@ describe("template metadata", () => {
       expect(templateMetadata["SINGLE_SOURCE_OF_TRUTH.md"].mandatory).toBe(
         true,
       );
+      expect(templateMetadata["LIBRARY_INVENTORY.md"].mandatory).toBe(true);
     });
 
     it("contains expected optional templates", () => {
       expect(templateMetadata["DEPLOYMENT_STRATEGY.md"].mandatory).toBe(false);
-      expect(templateMetadata["LIBRARY_INVENTORY.md"].mandatory).toBe(false);
       expect(templateMetadata["COMPONENT_LIBRARY.md"].mandatory).toBe(false);
     });
 
@@ -52,7 +52,7 @@ describe("template metadata", () => {
     it("returns only mandatory templates", () => {
       const templates = getMandatoryTemplates();
       expect(templates.every((t) => t.mandatory)).toBe(true);
-      expect(templates.length).toBeGreaterThanOrEqual(6);
+      expect(templates.length).toBeGreaterThanOrEqual(7);
     });
   });
 

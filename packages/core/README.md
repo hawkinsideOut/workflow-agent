@@ -227,8 +227,21 @@ workflow-agent scope:migrate
 | `workflow-agent learn:sync`                | Sync patterns with community registry       |
 | `workflow-agent learn:config`              | Configure learning settings                 |
 | `workflow-agent learn:stats`               | View learning statistics                    |
+| `workflow-agent update-templates`          | Update guideline templates from package     |
+| `workflow-agent docs:validate`             | Validate document references in markdown    |
 
 ### Command Options
+
+#### `update-templates`
+
+- `--force` - Overwrite existing template files with latest versions
+- `--skip` - Skip update (useful in CI pipelines)
+
+#### `docs:validate`
+
+- `--fix` - Interactively fix broken references
+- `--patterns <patterns>` - Custom glob patterns (comma-separated)
+- `--ignore <patterns>` - Patterns to ignore (comma-separated)
 
 #### `init`
 
@@ -270,7 +283,51 @@ workflow-agent scope:migrate
 
 ---
 
-## 📦 Preset Scope Libraries
+## � Guideline Templates
+
+Workflow Agent provides guideline templates that are installed to your project's `guidelines/` directory. These templates provide consistent documentation for AI agents and team members.
+
+### Mandatory Templates (7 files)
+
+These templates are automatically installed during `workflow init` and `workflow setup`:
+
+| Template | Purpose |
+|----------|---------|
+| `AGENT_EDITING_INSTRUCTIONS.md` | Core rules for AI agents: implementation plans, coding standards |
+| `BRANCHING_STRATEGY.md` | Git branch naming conventions, PR requirements |
+| `TESTING_STRATEGY.md` | Testing pyramid, patterns, when tests are required |
+| `SELF_IMPROVEMENT_MANDATE.md` | Continuous improvement tracking, changelog requirements |
+| `PATTERN_ANALYSIS_WORKFLOW.md` | AI workflow for analyzing and extracting patterns |
+| `SINGLE_SOURCE_OF_TRUTH.md` | Canonical code locations, avoiding duplication |
+| `LIBRARY_INVENTORY.md` | Dependency catalog, approved libraries, new library process |
+
+### Optional Templates
+
+Additional templates available via `workflow update-templates --force`:
+
+| Template | Purpose |
+|----------|---------|
+| `DEPLOYMENT_STRATEGY.md` | Deployment workflow, environments, migrations |
+| `COMPONENT_LIBRARY.md` | UI component patterns, design tokens |
+| `SCOPE_CREATION_WORKFLOW.md` | Workflow for creating custom scopes |
+| `CUSTOM_SCOPE_TEMPLATE.md` | Template for scope package definitions |
+| `PROJECT_TEMPLATE_README.md` | Meta-document describing project structure |
+
+### Updating Templates
+
+When upgrading to a new version of workflow-agent, run:
+
+```bash
+# Check for new/updated templates (interactive)
+workflow-agent update-templates
+
+# Force update all templates (overwrites existing)
+workflow-agent update-templates --force
+```
+
+---
+
+## �📦 Preset Scope Libraries
 
 ### SaaS (17 scopes)
 

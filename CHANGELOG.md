@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Document Reference Validation**: New `workflow docs:validate` command to scan markdown files for broken file references
+
+### Changed
+
+- **LIBRARY_INVENTORY.md Now Mandatory**: Promoted `LIBRARY_INVENTORY.md` from optional to mandatory template
+  - This file is referenced by mandatory templates (`AGENT_EDITING_INSTRUCTIONS.md`, `SINGLE_SOURCE_OF_TRUTH.md`)
+  - Prevents broken cross-references in generated copilot instructions
+  - Existing users can run `workflow update-templates` to add missing templates
+  - Now 7 mandatory templates (was 6): AGENT_EDITING_INSTRUCTIONS, BRANCHING_STRATEGY, TESTING_STRATEGY, SELF_IMPROVEMENT_MANDATE, PATTERN_ANALYSIS_WORKFLOW, SINGLE_SOURCE_OF_TRUTH, **LIBRARY_INVENTORY**
   - Scans all `.md` files for inline links `[text](path)`, images `![alt](path)`, and reference-style links `[ref]: path`
   - Detects broken local file references and missing files
   - Interactive fix mode with `--fix` flag to correct broken links
@@ -38,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Only installs if `guidelines/` directory doesn't exist (preserves user customizations)
   - Auto-detects project name from `package.json`
   - Uses sensible defaults for template variables when no `workflow.config.json` exists
-  - Mandatory templates: AGENT_EDITING_INSTRUCTIONS, BRANCHING_STRATEGY, TESTING_STRATEGY, SELF_IMPROVEMENT_MANDATE, PATTERN_ANALYSIS_WORKFLOW, SINGLE_SOURCE_OF_TRUTH
+  - Mandatory templates (originally 6, now 7 as of v2.9.0): AGENT_EDITING_INSTRUCTIONS, BRANCHING_STRATEGY, TESTING_STRATEGY, SELF_IMPROVEMENT_MANDATE, PATTERN_ANALYSIS_WORKFLOW, SINGLE_SOURCE_OF_TRUTH, LIBRARY_INVENTORY
 - **New CLI Command**: `workflow update-templates` for opt-in template updates
   - `--force` flag to overwrite existing template files
   - `--skip` flag to skip updates (useful in CI)
