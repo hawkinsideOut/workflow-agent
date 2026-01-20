@@ -81,6 +81,24 @@ vi.mock("../db/client", () => {
           duration_ms INTEGER,
           created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS community_patterns (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          pattern_id TEXT NOT NULL UNIQUE,
+          pattern_type TEXT NOT NULL CHECK(pattern_type IN ('fix', 'blueprint', 'solution')),
+          pattern_data TEXT NOT NULL,
+          contributor_id TEXT,
+          pattern_hash TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS contributor_rate_limits (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          contributor_id TEXT NOT NULL UNIQUE,
+          push_count INTEGER NOT NULL DEFAULT 0,
+          window_start TEXT NOT NULL DEFAULT (datetime('now')),
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
       `);
       return db;
     }),
@@ -116,6 +134,15 @@ import {
   getRecentWebhookEvents,
   recordHealAttempt,
   getHealHistory,
+  // Pattern registry queries
+  checkRateLimit,
+  incrementRateLimit,
+  getPatternById,
+  getPatternByHash,
+  createPattern,
+  batchCreatePatterns,
+  getPatterns,
+  getPatternsNewerThan,
 } from "../db/queries";
 import { initDatabase, closeDatabase } from "../db/client";
 
@@ -495,6 +522,306 @@ describe("Database Queries", () => {
 
       const history = getHealHistory(retry.id);
       expect(history.length).toBe(3);
+    });
+  });
+
+  // ============================================
+  // Community Patterns Tests
+  // ============================================
+
+  describe("Community Patterns", () => {
+    describe("createPattern", () => {
+      it("should create a new pattern", () => {
+        const pattern = createPattern(
+          "550e8400-e29b-41d4-a716-446655440000",
+          "fix",
+          JSON.stringify({ name: "Test Pattern" }),
+          "wf-contributor-123",
+        );
+
+        expect(pattern).toBeDefined();
+        expect(pattern.pattern_id).toBe("550e8400-e29b-41d4-a716-446655440000");
+        expect(pattern.pattern_type).toBe("fix");
+        expect(pattern.contributor_id).toBe("wf-contributor-123");
+      });
+
+      it("should create pattern with hash", () => {
+        const pattern = createPattern(
+          "550e8400-e29b-41d4-a716-446655440001",
+          "blueprint",
+          JSON.stringify({ name: "Blueprint" }),
+          "wf-contributor-123",
+          "hash-abc123",
+        );
+
+        expect(pattern.pattern_hash).toBe("hash-abc123");
+      });
+
+      it("should create pattern without contributor ID", () => {
+        const pattern = createPattern(
+          "550e8400-e29b-41d4-a716-446655440002",
+          "solution",
+          JSON.stringify({ name: "Solution" }),
+        );
+
+        expect(pattern.contributor_id).toBeNull();
+      });
+    });
+
+    describe("getPatternById", () => {
+      it("should return pattern by ID", () => {
+        createPattern(
+          "get-pattern-by-id-test",
+          "fix",
+          JSON.stringify({ name: "Test" }),
+        );
+
+        const pattern = getPatternById("get-pattern-by-id-test");
+        expect(pattern).not.toBeNull();
+        expect(pattern?.pattern_id).toBe("get-pattern-by-id-test");
+      });
+
+      it("should return null for non-existent pattern", () => {
+        const pattern = getPatternById("non-existent-id");
+        expect(pattern).toBeNull();
+      });
+    });
+
+    describe("getPatternByHash", () => {
+      it("should return pattern by hash", () => {
+        createPattern(
+          "get-by-hash-test",
+          "fix",
+          JSON.stringify({ name: "Test" }),
+          undefined,
+          "unique-hash-123",
+        );
+
+        const pattern = getPatternByHash("unique-hash-123");
+        expect(pattern).not.toBeNull();
+        expect(pattern?.pattern_hash).toBe("unique-hash-123");
+      });
+
+      it("should return null for non-existent hash", () => {
+        const pattern = getPatternByHash("non-existent-hash");
+        expect(pattern).toBeNull();
+      });
+    });
+
+    describe("getPatterns", () => {
+      it("should return all patterns with pagination", () => {
+        // Create some test patterns
+        createPattern("patterns-test-1", "fix", JSON.stringify({ name: "Fix 1" }));
+        createPattern("patterns-test-2", "blueprint", JSON.stringify({ name: "Blueprint 1" }));
+        createPattern("patterns-test-3", "fix", JSON.stringify({ name: "Fix 2" }));
+
+        const result = getPatterns(undefined, 50, 0);
+        expect(result.patterns.length).toBeGreaterThanOrEqual(3);
+        expect(result.total).toBeGreaterThanOrEqual(3);
+      });
+
+      it("should filter by pattern type", () => {
+        createPattern("filter-type-1", "fix", JSON.stringify({ name: "Fix" }));
+        createPattern("filter-type-2", "blueprint", JSON.stringify({ name: "Blueprint" }));
+
+        const fixResult = getPatterns("fix", 50, 0);
+        const bpResult = getPatterns("blueprint", 50, 0);
+
+        // All results should be of the correct type
+        expect(fixResult.patterns.every((p) => p.pattern_type === "fix")).toBe(true);
+        expect(bpResult.patterns.every((p) => p.pattern_type === "blueprint")).toBe(true);
+      });
+
+      it("should respect limit parameter", () => {
+        // Create more patterns
+        for (let i = 0; i < 5; i++) {
+          createPattern(`limit-test-${i}`, "fix", JSON.stringify({ name: `Pattern ${i}` }));
+        }
+
+        const result = getPatterns(undefined, 3, 0);
+        expect(result.patterns.length).toBeLessThanOrEqual(3);
+      });
+
+      it("should respect offset parameter", () => {
+        const result1 = getPatterns(undefined, 2, 0);
+        const result2 = getPatterns(undefined, 2, 2);
+
+        // Different patterns should be returned
+        if (result1.patterns.length > 0 && result2.patterns.length > 0) {
+          expect(result1.patterns[0].pattern_id).not.toBe(result2.patterns[0].pattern_id);
+        }
+      });
+    });
+
+    describe("batchCreatePatterns", () => {
+      it("should batch insert multiple patterns", () => {
+        const result = batchCreatePatterns([
+          {
+            patternId: "batch-1",
+            patternType: "fix",
+            patternData: JSON.stringify({ name: "Batch 1" }),
+            contributorId: "wf-batch-test",
+          },
+          {
+            patternId: "batch-2",
+            patternType: "blueprint",
+            patternData: JSON.stringify({ name: "Batch 2" }),
+            contributorId: "wf-batch-test",
+          },
+        ]);
+
+        expect(result.inserted).toBe(2);
+        expect(result.skipped).toBe(0);
+        expect(result.errors).toHaveLength(0);
+      });
+
+      it("should skip duplicate patterns by ID", () => {
+        createPattern("batch-dup-id", "fix", JSON.stringify({ name: "Original" }));
+
+        const result = batchCreatePatterns([
+          {
+            patternId: "batch-dup-id",
+            patternType: "fix",
+            patternData: JSON.stringify({ name: "Duplicate" }),
+          },
+        ]);
+
+        expect(result.inserted).toBe(0);
+        expect(result.skipped).toBe(1);
+      });
+
+      it("should skip duplicate patterns by hash", () => {
+        createPattern(
+          "batch-hash-original",
+          "fix",
+          JSON.stringify({ name: "Original" }),
+          undefined,
+          "duplicate-hash",
+        );
+
+        const result = batchCreatePatterns([
+          {
+            patternId: "batch-hash-new",
+            patternType: "fix",
+            patternData: JSON.stringify({ name: "New" }),
+            patternHash: "duplicate-hash",
+          },
+        ]);
+
+        expect(result.inserted).toBe(0);
+        expect(result.skipped).toBe(1);
+      });
+
+      it("should continue on individual errors", () => {
+        const result = batchCreatePatterns([
+          {
+            patternId: "batch-error-1",
+            patternType: "fix",
+            patternData: JSON.stringify({ name: "Valid" }),
+          },
+          {
+            patternId: "batch-error-2",
+            patternType: "fix",
+            patternData: JSON.stringify({ name: "Valid 2" }),
+          },
+        ]);
+
+        expect(result.inserted).toBe(2);
+      });
+    });
+
+    describe("getPatternsNewerThan", () => {
+      it("should return patterns newer than the given date", () => {
+        const oldDate = "2020-01-01T00:00:00.000Z";
+        createPattern("newer-than-test", "fix", JSON.stringify({ name: "New" }));
+
+        const patterns = getPatternsNewerThan(oldDate, 100);
+        expect(patterns.length).toBeGreaterThan(0);
+      });
+
+      it("should return empty array for future date", () => {
+        const futureDate = "2099-01-01T00:00:00.000Z";
+        const patterns = getPatternsNewerThan(futureDate, 100);
+        expect(patterns).toHaveLength(0);
+      });
+
+      it("should respect limit parameter", () => {
+        const oldDate = "2020-01-01T00:00:00.000Z";
+        const patterns = getPatternsNewerThan(oldDate, 1);
+        expect(patterns.length).toBeLessThanOrEqual(1);
+      });
+    });
+  });
+
+  // ============================================
+  // Rate Limiting Tests
+  // ============================================
+
+  describe("Rate Limiting", () => {
+    describe("checkRateLimit", () => {
+      it("should allow first request for new contributor", () => {
+        const result = checkRateLimit("new-contributor-123");
+        expect(result.allowed).toBe(true);
+        expect(result.remaining).toBe(100);
+        expect(result.resetAt).toBeNull();
+      });
+
+      it("should track remaining count after incrementing", () => {
+        const contributorId = "rate-limit-test-1";
+        incrementRateLimit(contributorId, 10);
+
+        const result = checkRateLimit(contributorId);
+        expect(result.allowed).toBe(true);
+        expect(result.remaining).toBe(90);
+      });
+
+      it("should block when limit is reached", () => {
+        const contributorId = "rate-limit-test-2";
+        incrementRateLimit(contributorId, 100);
+
+        const result = checkRateLimit(contributorId);
+        expect(result.allowed).toBe(false);
+        expect(result.remaining).toBe(0);
+        expect(result.resetAt).not.toBeNull();
+      });
+
+      it("should block when limit is exceeded", () => {
+        const contributorId = "rate-limit-test-3";
+        incrementRateLimit(contributorId, 150);
+
+        const result = checkRateLimit(contributorId);
+        expect(result.allowed).toBe(false);
+        expect(result.remaining).toBe(0);
+      });
+    });
+
+    describe("incrementRateLimit", () => {
+      it("should create new record for first increment", () => {
+        const contributorId = "increment-test-1";
+        incrementRateLimit(contributorId, 5);
+
+        const result = checkRateLimit(contributorId);
+        expect(result.remaining).toBe(95);
+      });
+
+      it("should update existing record", () => {
+        const contributorId = "increment-test-2";
+        incrementRateLimit(contributorId, 10);
+        incrementRateLimit(contributorId, 20);
+
+        const result = checkRateLimit(contributorId);
+        expect(result.remaining).toBe(70);
+      });
+
+      it("should handle single increment", () => {
+        const contributorId = "increment-test-3";
+        incrementRateLimit(contributorId);
+        incrementRateLimit(contributorId);
+        incrementRateLimit(contributorId);
+
+        const result = checkRateLimit(contributorId);
+        expect(result.remaining).toBe(97);
+      });
     });
   });
 });
