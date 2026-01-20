@@ -545,7 +545,308 @@ await telemetry.recordSuccess(patternId, "fix", "next", "14.0.0");
 
 ---
 
+## For AI Agents: Creating Blueprints Programmatically
+
+> **Important**: AI agents should use the `workflow learn:record` CLI command, not manually create JSON files. However, if you need to create blueprints programmatically, follow this guide precisely.
+
+### Common Mistakes
+
+❌ **Don't do this:**
+- Create files in `.workflow/patterns/` (wrong directory)
+- Use descriptive filenames like `next-app-router.json`
+- Skip required schema fields
+- Manually construct the schema
+
+✅ **Do this instead:**
+
+```typescript
+import crypto from "crypto";
+import { PatternStore } from "@hawkinside_out/workflow-improvement-tracker";
+
+// Use the PatternStore API
+const store = new PatternStore(process.cwd());
+await store.initialize();
+
+// Create blueprint with all required fields
+const blueprint = {
+  // Required identifiers
+  id: crypto.randomUUID(),
+  name: "Next.js 15 App Router Starter",
+  description: "Complete Next.js 15 setup with TypeScript, Tailwind CSS, and ESLint",
+  
+  // Required tags array (at least one framework tag)
+  tags: [
+    { category: "framework", name: "next" },
+    { category: "tool", name: "tailwind" },
+    { category: "tool", name: "eslint" }
+  ],
+  
+  // Required stack object
+  stack: {
+    framework: "next",
+    language: "typescript",
+    runtime: "node",
+    packageManager: "pnpm",
+    dependencies: [
+      {
+        name: "next",
+        version: "15.0.0",
+        compatibleRange: "^15.0.0"
+      },
+      {
+        name: "react",
+        version: "19.0.0",
+        compatibleRange: "^19.0.0"
+      },
+      {
+        name: "react-dom",
+        version: "19.0.0",
+        compatibleRange: "^19.0.0"
+      }
+    ],
+    devDependencies: [
+      {
+        name: "typescript",
+        version: "5.3.3",
+        compatibleRange: "^5.0.0"
+      },
+      {
+        name: "@types/react",
+        version: "18.2.45",
+        compatibleRange: "^18.0.0"
+      },
+      {
+        name: "@types/node",
+        version: "20.10.5",
+        compatibleRange: "^20.0.0"
+      },
+      {
+        name: "tailwindcss",
+        version: "3.4.0",
+        compatibleRange: "^3.4.0"
+      },
+      {
+        name: "eslint",
+        version: "8.56.0",
+        compatibleRange: "^8.0.0"
+      }
+    ]
+  },
+  
+  // Required structure object
+  structure: {
+    directories: [
+      { path: "app", purpose: "Next.js App Router pages" },
+      { path: "app/api", purpose: "API routes" },
+      { path: "components", purpose: "Reusable React components" },
+      { path: "lib", purpose: "Utility functions" },
+      { path: "public", purpose: "Static assets" }
+    ],
+    keyFiles: [
+      {
+        path: "app/layout.tsx",
+        purpose: "Root layout component",
+        template: `import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'App',
+  description: 'Generated with workflow-agent',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
+    </html>
+  )
+}`
+      },
+      {
+        path: "app/page.tsx",
+        purpose: "Home page",
+        template: `export default function Home() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      <h1 className="text-4xl font-bold">Welcome</h1>
+    </main>
+  )
+}`
+      },
+      {
+        path: "tailwind.config.ts",
+        purpose: "Tailwind CSS configuration"
+      }
+    ]
+  },
+  
+  // Required setup object
+  setup: {
+    prerequisites: ["Node.js 20+", "pnpm installed"],
+    steps: [
+      {
+        order: 1,
+        command: "pnpm install",
+        description: "Install dependencies",
+        optional: false
+      },
+      {
+        order: 2,
+        command: "pnpm run dev",
+        description: "Start development server",
+        optional: false
+      }
+    ],
+    configs: [
+      {
+        file: "tsconfig.json",
+        description: "TypeScript configuration",
+        content: JSON.stringify({
+          compilerOptions: {
+            target: "ES2020",
+            lib: ["ES2020", "DOM", "DOM.Iterable"],
+            jsx: "preserve",
+            module: "esnext",
+            moduleResolution: "bundler",
+            strict: true,
+            esModuleInterop: true,
+            skipLibCheck: true,
+            forceConsistentCasingInFileNames: true
+          },
+          include: ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+          exclude: ["node_modules"]
+        }, null, 2)
+      }
+    ],
+    postSetup: ["pnpm run build"]
+  },
+  
+  // Required compatibility object
+  compatibility: {
+    framework: "next",
+    frameworkVersion: "^15.0.0",
+    runtime: "node",
+    runtimeVersion: "^20.0.0",
+    dependencies: [
+      { name: "react", version: "19.0.0", compatibleRange: "^19.0.0" }
+    ]
+  },
+  
+  // Required metrics object
+  metrics: {
+    successRate: 100,
+    applications: 0,
+    successes: 0,
+    failures: 0
+  },
+  
+  // Required arrays (can be empty)
+  relatedPatterns: [],
+  
+  // Privacy flags (defaults to private)
+  isPrivate: true,
+  
+  // Required timestamps
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+};
+
+// Save using PatternStore (validates schema automatically)
+const result = await store.saveBlueprint(blueprint);
+
+if (result.success) {
+  console.log(`✅ Blueprint created: ${result.data.id}`);
+  console.log(`📁 Saved to: .workflow/patterns/blueprints/${result.data.id}.json`);
+} else {
+  console.error(`❌ Failed: ${result.error}`);
+}
+```
+
+### Key Points
+
+1. **Always use `PatternStore`** - It handles:
+   - Schema validation
+   - Directory creation (`.workflow/patterns/blueprints/`)
+   - UUID-based filenames
+   - Conflict detection
+
+2. **Required fields** - All blueprints must have:
+   - `id` (UUID)
+   - `name`, `description`
+   - `tags` array with at least one tag
+   - `stack` object (framework, language, runtime, dependencies)
+   - `structure` object (directories, keyFiles arrays)
+   - `setup` object (prerequisites, steps, configs arrays)
+   - `compatibility` object
+   - `metrics` object
+   - `relatedPatterns` array (can be empty)
+   - `createdAt`, `updatedAt` timestamps
+
+3. **Storage location**: `.workflow/patterns/blueprints/<uuid>.json`
+
+4. **Make patterns public** after creating:
+   ```bash
+   workflow learn:publish --all --yes
+   ```
+
+### Simpler Alternative: Use the CLI
+
+Instead of manual creation, prefer the interactive CLI:
+
+```bash
+workflow learn:record \
+  --type blueprint \
+  --name "Next.js 15 App Router" \
+  --description "Complete Next.js 15 setup" \
+  --framework next \
+  --version "^15.0.0"
+```
+
+The CLI handles all the schema complexity for you!
+
+---
+
 ## Troubleshooting
+
+### "Patterns not recognized by CLI"
+
+**Symptom**: Manually created blueprint JSON files in `.workflow/patterns/blueprints/` not showing up in `workflow learn:list`.
+
+**Common causes**:
+1. **Schema validation failure** - Blueprint doesn't match required schema
+2. **Missing required fields** - Check all required fields above
+3. **Invalid JSON** - Syntax error in the JSON file
+4. **Wrong filename format** - Must be `<uuid>.json` (e.g., `550e8400-e29b-41d4-a716-446655440000.json`)
+
+**Solution**:
+```bash
+# Verify schema with Node.js
+node -e "
+const { PatternStore } = require('@hawkinside_out/workflow-improvement-tracker');
+const fs = require('fs');
+
+const blueprint = JSON.parse(fs.readFileSync('.workflow/patterns/blueprints/<your-file>.json', 'utf-8'));
+const store = new PatternStore(process.cwd());
+
+store.saveBlueprint(blueprint).then(result => {
+  if (result.success) {
+    console.log('✅ Valid blueprint');
+  } else {
+    console.error('❌ Invalid:', result.error);
+  }
+});
+"
+
+# Or use the API to create properly:
+# See "For AI Agents: Creating Blueprints Programmatically" section above
+```
 
 ### Patterns not recording
 
