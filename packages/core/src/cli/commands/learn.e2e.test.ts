@@ -554,4 +554,180 @@ describe("workflow learn - E2E", () => {
       expect(result.data).toMatch(/^wf-[a-f0-9-]{36}$/);
     });
   });
+
+  // ============================================
+  // learn:publish Tests
+  // ============================================
+
+  describe("learn:publish", () => {
+    it("marks a private fix pattern as public", async () => {
+      // Create a private pattern
+      const store = new PatternStore(tempDir);
+      const pattern = createTestFixPattern({
+        name: "Private Pattern",
+        isPrivate: true,
+      });
+      const saveResult = await store.saveFixPattern(pattern);
+      expect(saveResult.success).toBe(true);
+
+      // Run the publish command (non-interactive)
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:publish", pattern.id, "--yes"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("public");
+
+      // Verify the pattern is now public
+      const updatedPattern = await store.getFixPattern(pattern.id);
+      expect(updatedPattern.success).toBe(true);
+      expect(updatedPattern.data?.isPrivate).toBe(false);
+    });
+
+    it("marks a public fix pattern as private with --private flag", async () => {
+      // Create a public pattern
+      const store = new PatternStore(tempDir);
+      const pattern = createTestFixPattern({
+        name: "Public Pattern",
+        isPrivate: false,
+      });
+      const saveResult = await store.saveFixPattern(pattern);
+      expect(saveResult.success).toBe(true);
+
+      // Run the publish command with --private
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:publish", pattern.id, "--private", "--yes"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("private");
+
+      // Verify the pattern is now private
+      const updatedPattern = await store.getFixPattern(pattern.id);
+      expect(updatedPattern.success).toBe(true);
+      expect(updatedPattern.data?.isPrivate).toBe(true);
+    });
+
+    it("marks all patterns as public with --all flag", async () => {
+      // Create multiple private patterns
+      const store = new PatternStore(tempDir);
+      const pattern1 = createTestFixPattern({
+        name: "Pattern 1",
+        isPrivate: true,
+      });
+      const pattern2 = createTestFixPattern({
+        name: "Pattern 2",
+        isPrivate: true,
+      });
+      await store.saveFixPattern(pattern1);
+      await store.saveFixPattern(pattern2);
+
+      // Run the publish command with --all
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:publish", "--all", "--yes"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Updated 2 pattern(s)");
+
+      // Verify all patterns are now public
+      const updated1 = await store.getFixPattern(pattern1.id);
+      const updated2 = await store.getFixPattern(pattern2.id);
+      expect(updated1.data?.isPrivate).toBe(false);
+      expect(updated2.data?.isPrivate).toBe(false);
+    });
+
+    it("reports nothing to do when pattern is already in target state", async () => {
+      // Create an already public pattern
+      const store = new PatternStore(tempDir);
+      const pattern = createTestFixPattern({
+        name: "Already Public Pattern",
+        isPrivate: false,
+      });
+      await store.saveFixPattern(pattern);
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:publish", pattern.id],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("already public");
+    });
+
+    it("fails with error when pattern ID not found", async () => {
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:publish", "nonexistent-id"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(1);
+      expect(stdout).toContain("Pattern not found");
+    });
+
+    it("requires pattern ID when not using --all", async () => {
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:publish"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(1);
+      expect(stdout).toContain("Pattern ID is required");
+    });
+
+    it("marks blueprint as public", async () => {
+      // Create a private blueprint
+      const store = new PatternStore(tempDir);
+      const blueprint = createTestBlueprint({
+        name: "Private Blueprint",
+        isPrivate: true,
+      });
+      const saveResult = await store.saveBlueprint(blueprint);
+      expect(saveResult.success).toBe(true);
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:publish", blueprint.id, "--yes"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("public");
+
+      // Verify the blueprint is now public
+      const updatedBlueprint = await store.getBlueprint(blueprint.id);
+      expect(updatedBlueprint.success).toBe(true);
+      expect(updatedBlueprint.data?.isPrivate).toBe(false);
+    });
+  });
 });

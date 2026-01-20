@@ -202,6 +202,27 @@ Deprecate a pattern:
 workflow learn:deprecate <pattern-id> --reason "Superseded by better solution"
 ```
 
+### `workflow learn:publish`
+
+Mark patterns as public (syncable) or private:
+
+```bash
+# Mark a single pattern as public
+workflow learn:publish <pattern-id>
+
+# Mark a single pattern as private
+workflow learn:publish <pattern-id> --private
+
+# Mark all patterns as public
+workflow learn:publish --all
+
+# Mark all patterns as private
+workflow learn:publish --all --private
+
+# Skip confirmation prompts (for CI/automation)
+workflow learn:publish --all --yes
+```
+
 ### `workflow learn:sync`
 
 Sync patterns with the community registry:
@@ -478,7 +499,7 @@ workflow learn:record \
 ### Sharing Patterns
 
 1. Enable sync: `workflow learn:config --enable-sync`
-2. Mark patterns public: Edit pattern JSON, set `isPrivate: false`
+2. Mark patterns public: `workflow learn:publish <pattern-id>` or `workflow learn:publish --all`
 3. Push to registry: `workflow learn:sync --push`
 
 ---

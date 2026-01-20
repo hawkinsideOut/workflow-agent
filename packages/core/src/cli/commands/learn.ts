@@ -782,6 +782,196 @@ export async function learnConfigCommand(options: LearnConfigOptions) {
 }
 
 // ============================================
+// learn:publish Command
+// ============================================
+
+interface LearnPublishOptions {
+  private?: boolean;
+  all?: boolean;
+  yes?: boolean;
+}
+
+/**
+ * Mark patterns as public (syncable) or private
+ */
+export async function learnPublishCommand(
+  patternId: string | undefined,
+  options: LearnPublishOptions,
+) {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+
+  const makePrivate = options.private ?? false;
+  const actionWord = makePrivate ? "private" : "public";
+  const emoji = makePrivate ? "🔒" : "🌐";
+
+  console.log(chalk.cyan(`\n${emoji} Mark Pattern(s) ${actionWord}\n`));
+
+  // Handle --all flag
+  if (options.all) {
+    const fixesResult = await store.listFixPatterns({});
+    const blueprintsResult = await store.listBlueprints({});
+
+    const allFixes = fixesResult.success && fixesResult.data ? fixesResult.data : [];
+    const allBlueprints = blueprintsResult.success && blueprintsResult.data ? blueprintsResult.data : [];
+
+    const fixesToUpdate = allFixes.filter((p) => p.isPrivate !== makePrivate);
+    const blueprintsToUpdate = allBlueprints.filter(
+      (p) => p.isPrivate !== makePrivate,
+    );
+
+    const totalToUpdate = fixesToUpdate.length + blueprintsToUpdate.length;
+
+    if (totalToUpdate === 0) {
+      console.log(
+        chalk.yellow(`  All patterns are already ${actionWord}. Nothing to do.`),
+      );
+      return;
+    }
+
+    console.log(
+      chalk.white(
+        `  Found ${totalToUpdate} pattern(s) to mark as ${actionWord}:`,
+      ),
+    );
+    console.log(chalk.dim(`    Fix Patterns: ${fixesToUpdate.length}`));
+    console.log(chalk.dim(`    Blueprints: ${blueprintsToUpdate.length}`));
+
+    // Skip confirmation if --yes flag is passed
+    if (!options.yes) {
+      const confirmed = await p.confirm({
+        message: `Mark all ${totalToUpdate} patterns as ${actionWord}?`,
+        initialValue: false,
+      });
+
+      if (p.isCancel(confirmed) || !confirmed) {
+        p.cancel("Cancelled");
+        return;
+      }
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const pattern of fixesToUpdate) {
+      const result = await store.saveFixPattern({
+        ...pattern,
+        isPrivate: makePrivate,
+        updatedAt: new Date().toISOString(),
+      });
+      if (result.success) {
+        successCount++;
+      } else {
+        failCount++;
+      }
+    }
+
+    for (const blueprint of blueprintsToUpdate) {
+      const result = await store.saveBlueprint({
+        ...blueprint,
+        isPrivate: makePrivate,
+        updatedAt: new Date().toISOString(),
+      });
+      if (result.success) {
+        successCount++;
+      } else {
+        failCount++;
+      }
+    }
+
+    console.log(
+      chalk.green(`\n✅ Updated ${successCount} pattern(s) to ${actionWord}`),
+    );
+    if (failCount > 0) {
+      console.log(chalk.red(`❌ Failed to update ${failCount} pattern(s)`));
+    }
+    return;
+  }
+
+  // Single pattern mode - require patternId
+  if (!patternId) {
+    console.log(chalk.red("❌ Pattern ID is required"));
+    console.log(
+      chalk.dim("  Usage: workflow learn:publish <patternId> [--private]"),
+    );
+    console.log(
+      chalk.dim("         workflow learn:publish --all [--private]"),
+    );
+    process.exit(1);
+  }
+
+  // Try to find the pattern
+  let patternType: "fix" | "blueprint" = "fix";
+  let pattern = await store.getFixPattern(patternId);
+
+  if (!pattern.success || !pattern.data) {
+    const bpResult = await store.getBlueprint(patternId);
+    if (bpResult.success && bpResult.data) {
+      pattern = bpResult as typeof pattern;
+      patternType = "blueprint";
+    } else {
+      console.log(chalk.red(`\n❌ Pattern not found: ${patternId}`));
+      console.log(
+        chalk.dim("  Use 'workflow learn:list' to see available patterns"),
+      );
+      process.exit(1);
+    }
+  }
+
+  const currentStatus = pattern.data!.isPrivate ? "private" : "public";
+
+  if (pattern.data!.isPrivate === makePrivate) {
+    console.log(
+      chalk.yellow(`  Pattern is already ${actionWord}. Nothing to do.`),
+    );
+    console.log(chalk.dim(`  Name: ${pattern.data!.name}`));
+    return;
+  }
+
+  console.log(chalk.white(`  Pattern: ${pattern.data!.name}`));
+  console.log(chalk.dim(`  Type: ${patternType}`));
+  console.log(chalk.dim(`  Current: ${currentStatus} → ${actionWord}`));
+
+  // Skip confirmation if --yes flag is passed
+  if (!options.yes) {
+    const confirmed = await p.confirm({
+      message: `Mark this pattern as ${actionWord}?`,
+      initialValue: true,
+    });
+
+    if (p.isCancel(confirmed) || !confirmed) {
+      p.cancel("Cancelled");
+      return;
+    }
+  }
+
+  const updatedPattern = {
+    ...pattern.data!,
+    isPrivate: makePrivate,
+    updatedAt: new Date().toISOString(),
+  };
+
+  let result;
+  if (patternType === "fix") {
+    result = await store.saveFixPattern(updatedPattern as FixPattern);
+  } else {
+    result = await store.saveBlueprint(updatedPattern as Blueprint);
+  }
+
+  if (result.success) {
+    console.log(chalk.green(`\n✅ Pattern marked as ${actionWord}`));
+    if (!makePrivate) {
+      console.log(
+        chalk.dim("  Run 'workflow learn:sync --push' to upload to registry"),
+      );
+    }
+  } else {
+    console.log(chalk.red(`\n❌ Failed: ${result.error}`));
+    process.exit(1);
+  }
+}
+
+// ============================================
 // learn:deprecate Command
 // ============================================
 

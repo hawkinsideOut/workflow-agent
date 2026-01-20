@@ -24,6 +24,7 @@ import {
   learnConfigCommand,
   learnDeprecateCommand,
   learnStatsCommand,
+  learnPublishCommand,
 } from "./commands/learn.js";
 import {
   solutionCaptureCommand,
@@ -294,6 +295,14 @@ program
   .argument("<patternId>", "Pattern ID to deprecate")
   .argument("<reason>", "Reason for deprecation")
   .action(learnDeprecateCommand);
+
+program
+  .command("learn:publish [patternId]")
+  .description("Mark pattern(s) as public for syncing")
+  .option("--private", "Mark as private instead of public")
+  .option("--all", "Apply to all patterns")
+  .option("-y, --yes", "Skip confirmation prompts")
+  .action(learnPublishCommand);
 
 program
   .command("learn:stats")
