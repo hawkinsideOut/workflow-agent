@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.13.1] - 2026-01-20
+
+### Added
+
+- **Blueprint Creation Guide**: New comprehensive documentation for AI agents creating blueprints programmatically
+  - Added "For AI Agents" section in agent-learning.mdx with complete TypeScript examples
+  - New template file BLUEPRINT_CREATION_GUIDE.md with copy-paste ready code
+  - Troubleshooting section for "patterns not recognized by CLI" issues
+  - Side-by-side comparison of wrong vs. correct approaches
+  - Full schema field requirements and enum value references
+  - Explains why PatternStore API should be used over manual JSON file creation
+  - Fixes common issues where manually created blueprint JSON files fail schema validation
+
 ## [2.13.0] - 2026-01-20
 
 ### Added
