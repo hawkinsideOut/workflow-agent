@@ -1,6 +1,6 @@
 # Deployment Strategy
 
-> **Purpose**: This document defines the deployment workflow, environment management, database migration strategy, and rollback procedures for ProjectHub.
+> **Purpose**: This document defines the deployment workflow, environment management, database migration strategy, and rollback procedures for {{projectName}}.
 
 ---
 
@@ -11,7 +11,7 @@
 3. [Environment Variables](#environment-variables)
 4. [Deployment Workflow](#deployment-workflow)
 5. [Database Migrations](#database-migrations)
-6. [Preview Deployments](#preview-deployments)
+6. [Preview/Staging Deployments](#previewstaging-deployments)
 7. [Production Deployment](#production-deployment)
 8. [Rollback Procedures](#rollback-procedures)
 9. [Monitoring](#monitoring)
@@ -20,29 +20,33 @@
 
 ## Deployment Overview
 
-ProjectHub uses **Vercel** for deployment with the following architecture:
+<!-- PROJECT-SPECIFIC: Define your deployment architecture below -->
+
+{{projectName}} uses the following deployment architecture:
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Git Push      │────▶│  Vercel Build    │────▶│  Deployment     │
-│   (GitHub)      │     │  (Next.js)       │     │  (Edge Network) │
+│   Git Push      │────▶│  Build System    │────▶│  Deployment     │
+│   (Repository)  │     │  (CI/CD)         │     │  (Hosting)      │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
                                                            │
                                                            ▼
                                                  ┌─────────────────┐
-                                                 │   Supabase      │
-                                                 │   (PostgreSQL)  │
+                                                 │   Data Layer    │
+                                                 │   (Database)    │
                                                  └─────────────────┘
 ```
 
 ### Key Components
 
-| Component      | Platform      | Purpose                                     |
-| -------------- | ------------- | ------------------------------------------- |
-| Frontend + API | Vercel        | Next.js app, server actions, edge functions |
-| Database       | Supabase      | PostgreSQL, RLS, real-time subscriptions    |
-| Auth           | Supabase Auth | Session management, OAuth providers         |
-| CDN            | Vercel Edge   | Static assets, caching                      |
+<!-- PROJECT-SPECIFIC: Update this table with your actual stack -->
+
+| Component      | Platform/Service | Purpose                          |
+| -------------- | ---------------- | -------------------------------- |
+| Application    | [HOSTING]        | Application runtime              |
+| Database       | [DATABASE]       | Data persistence                 |
+| Auth           | [AUTH_PROVIDER]  | Authentication & session mgmt    |
+| CDN/Assets     | [CDN]            | Static assets, caching           |
 
 ---
 
@@ -52,17 +56,20 @@ ProjectHub uses **Vercel** for deployment with the following architecture:
 
 | Environment | Branch           | Purpose              | URL Pattern                    |
 | ----------- | ---------------- | -------------------- | ------------------------------ |
-| Production  | `main`           | Live application     | `projecthub.vercel.app`        |
-| Preview     | Feature branches | PR previews, testing | `projecthub-<hash>.vercel.app` |
-| Local       | N/A              | Development          | `localhost:3000`               |
+| Production  | `main`           | Live application     | `[PROD_URL]`                   |
+| Staging     | `develop`        | Pre-prod testing     | `[STAGING_URL]`                |
+| Preview     | Feature branches | PR previews, testing | `[PREVIEW_URL_PATTERN]`        |
+| Local       | N/A              | Development          | `localhost:[PORT]`             |
 
-### Supabase Projects
+### Database Environments
 
-| Environment | Supabase Project     | Purpose                |
-| ----------- | -------------------- | ---------------------- |
-| Production  | `projecthub-prod`    | Live data              |
-| Staging     | `projecthub-staging` | Pre-production testing |
-| Local       | Local Docker         | Development            |
+<!-- PROJECT-SPECIFIC: Define your database environments -->
+
+| Environment | Database Instance  | Purpose                |
+| ----------- | ------------------ | ---------------------- |
+| Production  | `[prod-instance]`  | Live data              |
+| Staging     | `[stage-instance]` | Pre-production testing |
+| Local       | Local instance     | Development            |
 
 ---
 
@@ -70,37 +77,28 @@ ProjectHub uses **Vercel** for deployment with the following architecture:
 
 ### Required Variables
 
-| Variable                        | Description              | Source                              |
-| ------------------------------- | ------------------------ | ----------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL     | Supabase Dashboard → Settings → API |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase public anon key | Supabase Dashboard → Settings → API |
+<!-- PROJECT-SPECIFIC: List your required environment variables -->
+
+| Variable                  | Description              | Source                     |
+| ------------------------- | ------------------------ | -------------------------- |
+| `DATABASE_URL`            | Database connection      | Database provider dashboard |
+| `API_KEY`                 | API authentication       | Secret manager             |
 
 ### Optional Variables
 
-| Variable                    | Description                    | Default                   |
-| --------------------------- | ------------------------------ | ------------------------- |
-| `NEXT_PUBLIC_APP_URL`       | Application URL                | Auto-detected by Vercel   |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase admin key | Only for admin operations |
+| Variable              | Description                    | Default                   |
+| --------------------- | ------------------------------ | ------------------------- |
+| `APP_URL`             | Application URL                | Auto-detected             |
+| `LOG_LEVEL`           | Logging verbosity              | `info`                    |
 
 ### Secret Management
 
 1. **Never commit secrets** to the repository
-2. **Use Vercel environment variables** for all secrets
+2. **Use your platform's secret management** for all secrets
 3. **Scope secrets by environment**:
    - Production: Only production values
-   - Preview: Staging or development values
-   - Development: Local `.env.local` file
-
-### Setting Environment Variables
-
-```bash
-# Via Vercel CLI
-vercel env add NEXT_PUBLIC_SUPABASE_URL production
-vercel env add NEXT_PUBLIC_SUPABASE_URL preview
-
-# Or via Vercel Dashboard
-# Project → Settings → Environment Variables
-```
+   - Staging/Preview: Staging or development values
+   - Development: Local `.env.local` or `.env` file
 
 ---
 
@@ -110,27 +108,28 @@ vercel env add NEXT_PUBLIC_SUPABASE_URL preview
 
 ```
 1. Developer creates branch
-   └── feature/tasks/add-reminder
+   └── feature/[scope]/description
 
 2. Developer pushes changes
-   └── git push origin feature/tasks/add-reminder
+   └── git push origin feature/[scope]/description
 
-3. Vercel creates preview deployment
-   └── https://projecthub-abc123.vercel.app
+3. CI/CD creates preview deployment (if configured)
+   └── [preview-url]
 
 4. Developer creates PR
-   └── Title: feat(tasks): add reminder functionality
+   └── Title: feat([scope]): description
 
 5. Automated checks run
-   ├── Vercel build (Next.js compile)
-   ├── GitHub Actions (if configured)
-   └── Preview URL available
+   ├── Build verification
+   ├── Linting and type checks
+   ├── Test suite
+   └── Preview deployment
 
 6. Review and approval
    └── Code review, manual testing on preview
 
 7. Merge to main
-   └── Squash and merge
+   └── Squash and merge (recommended)
 
 8. Production deployment
    └── Automatic on merge to main
@@ -151,59 +150,48 @@ vercel env add NEXT_PUBLIC_SUPABASE_URL preview
 
 ### Migration File Location
 
+<!-- PROJECT-SPECIFIC: Define your migration directory -->
+
 ```
-supabase/
-└── migrations/
-    ├── 001_initial_schema.sql
-    ├── 002_add_sprints.sql
-    └── 003_add_notifications.sql
+migrations/
+├── 001_initial_schema.sql
+├── 002_add_users_table.sql
+└── 003_add_indexes.sql
 ```
 
 ### Creating Migrations
 
 ```bash
 # Create new migration file
-touch supabase/migrations/$(date +%Y%m%d%H%M%S)_description.sql
+touch migrations/$(date +%Y%m%d%H%M%S)_description.sql
 
-# Or using Supabase CLI
-supabase migration new add_feature_table
+# Or using your ORM's migration tool
+[orm] migrate:make description
 ```
 
 ### Migration File Format
 
 ```sql
--- supabase/migrations/20260108120000_add_due_date_reminders.sql
+-- migrations/20260108120000_add_feature.sql
 
--- Description: Add due date reminder functionality
+-- Description: Add feature table
 -- Author: Developer Name
 -- Date: 2026-01-08
 
 -- Up Migration
-CREATE TABLE IF NOT EXISTS task_reminders (
+CREATE TABLE IF NOT EXISTS features (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
-    remind_at TIMESTAMPTZ NOT NULL,
+    name VARCHAR(255) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Enable RLS
-ALTER TABLE task_reminders ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies
-CREATE POLICY "Users can manage their task reminders"
-ON task_reminders
-FOR ALL
-USING (
-    task_id IN (
-        SELECT id FROM tasks WHERE assignee = auth.uid()
-    )
-);
+CREATE INDEX idx_features_name ON features(name);
 
 -- ============================================
 -- ROLLBACK SQL (Keep at bottom of file)
 -- ============================================
--- DROP POLICY IF EXISTS "Users can manage their task reminders" ON task_reminders;
--- DROP TABLE IF EXISTS task_reminders;
+-- DROP INDEX IF EXISTS idx_features_name;
+-- DROP TABLE IF EXISTS features;
 ```
 
 ### Running Migrations
@@ -211,104 +199,44 @@ USING (
 #### Local Development
 
 ```bash
-# Start local Supabase
-supabase start
-
 # Run pending migrations
-supabase db push
+[migration-command] migrate
 
 # Reset database (warning: destroys data)
-supabase db reset
-```
+[migration-command] reset
 
-#### Staging/Production
-
-```bash
-# Link to Supabase project
-supabase link --project-ref your-project-ref
-
-# Push migrations to remote
-supabase db push
-
-# Or run manually in SQL Editor (Supabase Dashboard)
+# Check migration status
+[migration-command] status
 ```
 
 ### Migration Checklist
 
 Before deploying a migration:
 
-- [ ] **Test locally** with `supabase db push`
+- [ ] **Test locally** with sample data
 - [ ] **Include rollback SQL** in migration file
-- [ ] **Update types** - regenerate `types/supabase.ts`
-- [ ] **Check RLS policies** - ensure security
-- [ ] **Test with sample data** - verify queries work
+- [ ] **Update types/schemas** if using code generation
+- [ ] **Check indexes** for query performance
 - [ ] **Document breaking changes** - if any
-
-### Dual-Database Migration (REQUIRED)
-
-> **⚠️ MANDATORY**: All migrations MUST be run on both dev and prod databases.
-
-**Preferred Method (Automated):**
-
-```bash
-# Runs dev first, then prod (stops on dev failure)
-./scripts/db.sh migrate-both
-```
-
-**Manual Method (Step-by-Step):**
-
-```bash
-# Step 1: Run on DEV
-./scripts/db.sh link dev
-./scripts/db.sh migrate
-./scripts/db.sh status   # ✓ Verify migration applied
-
-# Step 2: Run on PROD (only if dev succeeded)
-./scripts/db.sh link prod
-./scripts/db.sh migrate
-./scripts/db.sh status   # ✓ Verify migration applied
-```
-
-**Migration Execution Checklist:**
-
-- [ ] DEV migration executed successfully
-- [ ] DEV migration status verified (`./scripts/db.sh status`)
-- [ ] PROD migration executed successfully
-- [ ] PROD migration status verified (`./scripts/db.sh status`)
 
 ---
 
-## Preview Deployments
+## Preview/Staging Deployments
 
-### Automatic Preview URLs
+### Purpose
 
-Every PR gets an automatic preview deployment:
-
-```
-https://projecthub-<hash>-<team>.vercel.app
-```
-
-### Preview Environment Configuration
-
-Preview deployments use:
-
-- **Preview environment variables** (from Vercel)
-- **Staging Supabase project** (recommended) OR
-- **Production Supabase** with read-only access
+Preview deployments allow testing changes before production:
+- Automatic deployments for each PR
+- Isolated environment for testing
+- Shareable URLs for review
 
 ### Testing on Preview
 
-1. Click preview URL in PR
+1. Access the preview URL from PR
 2. Test the specific feature
 3. Verify no regressions
-4. Check mobile responsiveness
+4. Check responsive behavior
 5. Test authentication flow
-
-### Preview Deployment Limitations
-
-- Preview deployments expire after inactivity
-- Database changes require separate staging environment
-- Real-time features may behave differently
 
 ---
 
@@ -318,38 +246,24 @@ Preview deployments use:
 
 Before merging to `main`:
 
-- [ ] All tests pass (`pnpm test`)
-- [ ] TypeScript compiles (`pnpm typecheck`)
-- [ ] Linting passes (`pnpm lint`)
+- [ ] All tests pass
+- [ ] Type checking passes
+- [ ] Linting passes
 - [ ] PR approved by required reviewers
 - [ ] Preview deployment tested
 - [ ] Database migrations tested (if any)
-- [ ] Environment variables set in Vercel
+- [ ] Environment variables configured
 - [ ] No breaking changes (or documented)
-
-### Deployment Process
-
-```bash
-# Automatic: Just merge PR to main
-# Vercel automatically deploys on merge
-
-# Manual: Using Vercel CLI
-vercel --prod
-
-# Manual: Using GitHub
-# 1. Go to Actions tab
-# 2. Run "Deploy to Production" workflow
-```
 
 ### Post-Deployment Verification
 
 After deployment:
 
 - [ ] Verify production URL is accessible
-- [ ] Test critical paths (login, create task, etc.)
-- [ ] Check Vercel function logs for errors
-- [ ] Monitor Supabase dashboard for issues
-- [ ] Verify real-time subscriptions work
+- [ ] Test critical paths (login, core features)
+- [ ] Check application logs for errors
+- [ ] Monitor database for issues
+- [ ] Verify integrations work
 
 ---
 
@@ -359,43 +273,24 @@ After deployment:
 
 - Critical bug affecting all users
 - Security vulnerability discovered
-- Database corruption
+- Data corruption
 - Performance degradation
 
-### Application Rollback (Vercel)
+### Application Rollback
 
-#### Via Dashboard
-
-1. Go to Vercel Dashboard → Project → Deployments
+1. Go to your deployment platform's dashboard
 2. Find the last working deployment
-3. Click "..." menu → "Promote to Production"
-
-#### Via CLI
-
-```bash
-# List recent deployments
-vercel ls
-
-# Rollback to specific deployment
-vercel rollback <deployment-url>
-```
+3. Click "Rollback" or "Promote to Production"
 
 ### Database Rollback
 
-#### If Migration Included Rollback SQL
+Run the rollback SQL from the migration file (usually commented at the bottom):
 
 ```sql
--- Run the rollback SQL from the migration file
--- Usually commented at the bottom
-
-DROP POLICY IF EXISTS "Users can manage their task reminders" ON task_reminders;
-DROP TABLE IF EXISTS task_reminders;
+-- Example rollback
+DROP INDEX IF EXISTS idx_features_name;
+DROP TABLE IF EXISTS features;
 ```
-
-#### If No Rollback SQL (Emergency)
-
-1. **Restore from backup** (Supabase Dashboard → Settings → Backups)
-2. Or **manually reverse changes** using SQL Editor
 
 ### Rollback Checklist
 
@@ -410,100 +305,27 @@ DROP TABLE IF EXISTS task_reminders;
 
 ## Monitoring
 
-### Vercel Monitoring
+### Application Monitoring
 
-| Metric            | Location         | Action Threshold |
-| ----------------- | ---------------- | ---------------- |
-| Build Time        | Deployments tab  | > 5 minutes      |
-| Function Duration | Functions tab    | > 10 seconds     |
-| Function Errors   | Functions → Logs | Any error        |
-| Edge Latency      | Analytics        | > 500ms          |
+| Metric            | Action Threshold |
+| ----------------- | ---------------- |
+| Build Time        | > 5 minutes      |
+| Response Time     | > 500ms          |
+| Error Rate        | > 1%             |
+| Uptime            | < 99.9%          |
 
-### Supabase Monitoring
+### Database Monitoring
 
-| Metric             | Location              | Action Threshold |
-| ------------------ | --------------------- | ---------------- |
-| Database Size      | Settings → Billing    | 80% of limit     |
-| Active Connections | Database → Roles      | 80% of limit     |
-| API Requests       | Settings → Billing    | Unusual spikes   |
-| Auth Events        | Authentication → Logs | Failed attempts  |
-
-### Recommended Integrations
-
-| Service          | Purpose                       |
-| ---------------- | ----------------------------- |
-| Sentry           | Error tracking, stack traces  |
-| Vercel Analytics | Web vitals, performance       |
-| Supabase Logs    | Database queries, auth events |
-
-### Setting Up Error Alerts
-
-```bash
-# Add Sentry (optional)
-pnpm add @sentry/nextjs
-
-# Configure in sentry.client.config.ts
-# Configure in sentry.server.config.ts
-# Add SENTRY_DSN to environment variables
-```
-
----
-
-## Quick Reference
-
-### Deploy Commands
-
-```bash
-# Local development
-pnpm dev
-
-# Build locally
-pnpm build
-
-# Deploy to preview
-vercel
-
-# Deploy to production
-vercel --prod
-
-# Check deployment status
-vercel ls
-```
-
-### Migration Commands
-
-```bash
-# Start local Supabase
-supabase start
-
-# Run migrations locally
-supabase db push
-
-# Generate types
-supabase gen types typescript --local > types/supabase.ts
-
-# Link to remote project
-supabase link --project-ref <ref>
-
-# Push migrations to remote
-supabase db push
-```
-
-### Rollback Commands
-
-```bash
-# Rollback to previous deployment
-vercel rollback
-
-# Rollback to specific deployment
-vercel rollback <deployment-url>
-```
+| Metric             | Action Threshold |
+| ------------------ | ---------------- |
+| Database Size      | 80% of limit     |
+| Active Connections | 80% of limit     |
+| Query Performance  | > 1 second       |
 
 ---
 
 ## Related Documents
 
-- [VERCEL_DEPLOYMENT_GUIDE.md](../VERCEL_DEPLOYMENT_GUIDE.md) - Initial setup guide
 - [BRANCHING_STRATEGY.md](BRANCHING_STRATEGY.md) - Branch and PR workflow
 - [TESTING_STRATEGY.md](TESTING_STRATEGY.md) - Testing requirements
 - [SINGLE_SOURCE_OF_TRUTH.md](SINGLE_SOURCE_OF_TRUTH.md) - Service locations

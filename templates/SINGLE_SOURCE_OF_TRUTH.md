@@ -1,509 +1,260 @@
 # Single Source of Truth
 
-> **Purpose**: This document defines the canonical locations for all imperative services, utilities, and architectural patterns in the codebase. When making changes, always reference the correct source files to maintain consistency.
+> **Purpose**: This document defines the canonical locations for all imperative services, utilities, and architectural patterns in {{projectName}}. Before creating any new file, check here first.
 
 ---
 
 ## Table of Contents
 
-1. [Supabase Clients](#supabase-clients)
+1. [Data Access Layer](#data-access-layer)
 2. [Authorization](#authorization)
 3. [Types & Schemas](#types--schemas)
-4. [Context Providers](#context-providers)
-5. [Server Actions](#server-actions)
-6. [Hooks](#hooks)
-7. [Components](#components)
-8. [Testing Infrastructure](#testing-infrastructure)
-9. [Configuration](#configuration)
+4. [Business Logic](#business-logic)
+5. [Utilities](#utilities)
+6. [Configuration](#configuration)
 
 ---
 
-## Supabase Clients
+## Core Principle
 
-All Supabase client creation MUST go through these files. Never create clients directly.
+> **NEVER duplicate functionality.** If something exists, use it. If it doesn't exist and should be reusable, create it in the canonical location.
 
-| File                         | Purpose                       | Usage Context                          |
-| ---------------------------- | ----------------------------- | -------------------------------------- |
-| `lib/supabase/client.ts`     | Browser client (singleton)    | Client components, hooks               |
-| `lib/supabase/server.ts`     | Server client (async cookies) | Server components, server actions      |
-| `lib/supabase/admin.ts`      | Admin client (bypasses RLS)   | Server actions needing elevated access |
-| `lib/supabase/middleware.ts` | Session refresh               | `middleware.ts` only                   |
+---
 
-### Usage Patterns
+## Data Access Layer
+
+All database/API access MUST go through designated modules. Never create clients directly.
+
+<!-- PROJECT-SPECIFIC: Define your data access patterns -->
+
+### Database Client
+
+| Location | Purpose | Usage Context |
+| -------- | ------- | ------------- |
+| `lib/db/client` | Database client singleton | All database operations |
+| `lib/db/queries/` | Reusable query functions | Common data access patterns |
+
+**Usage Pattern:**
 
 ```typescript
 // ❌ WRONG - Never create clients directly
-import { createClient } from "@supabase/supabase-js";
-const supabase = createClient(url, key);
+const db = new DatabaseClient(process.env.DATABASE_URL);
 
-// ✅ CORRECT - Use the appropriate helper
-// In client components:
-import { getSupabaseClient } from "@/lib/supabase/client";
-const supabase = getSupabaseClient();
-
-// In server actions/components:
-import { createServerClient } from "@/lib/supabase/server";
-const supabase = await createServerClient();
-
-// For admin operations (bypasses RLS):
-import { createAdminClient } from "@/lib/supabase/admin";
-const supabase = createAdminClient();
+// ✅ CORRECT - Use the centralized client
+import { db } from "@/lib/db/client";
+const users = await db.query("SELECT * FROM users");
 ```
+
+### External API Clients
+
+| Location | Purpose | Usage Context |
+| -------- | ------- | ------------- |
+| `lib/api/[service].ts` | External service clients | Third-party integrations |
 
 ---
 
 ## Authorization
 
-Authorization logic is centralized in these files. Never implement permission checks inline.
+Authorization logic is centralized. Never implement permission checks inline.
 
-| File                            | Purpose                                   | Usage Context     |
-| ------------------------------- | ----------------------------------------- | ----------------- |
-| `utils/authorization.ts`        | Role constants, hierarchy, client helpers | Client components |
-| `utils/authorization.server.ts` | Server-side verification functions        | Server actions    |
-| `hooks/useAuthorization.tsx`    | React hook for permission checks          | Client components |
+<!-- PROJECT-SPECIFIC: Define your authorization patterns -->
 
-### Role Constants (from `utils/authorization.ts`)
+### Authorization Utilities
 
-```typescript
-// Role types
-export type OrgRole =
-  | "super_admin"
-  | "owner"
-  | "admin"
-  | "manager"
-  | "developer"
-  | "viewer";
+| Location | Purpose | Usage Context |
+| -------- | ------- | ------------- |
+| `lib/auth/index.ts` | Auth helpers, session management | All auth operations |
+| `lib/auth/permissions.ts` | Permission constants, role checks | Access control |
 
-// Role hierarchy (higher index = more permissions)
-export const ROLE_HIERARCHY: OrgRole[] = [
-  "viewer",
-  "developer",
-  "manager",
-  "admin",
-  "owner",
-  "super_admin",
-];
-
-// Role groups for permission checks
-export const ADMIN_ROLES: OrgRole[] = ["super_admin", "owner", "admin"];
-export const PRIVILEGED_ROLES: OrgRole[] = [
-  "super_admin",
-  "owner",
-  "admin",
-  "manager",
-];
-export const CONTRIBUTOR_ROLES: OrgRole[] = [
-  "super_admin",
-  "owner",
-  "admin",
-  "manager",
-  "developer",
-];
-```
-
-### Server-Side Authorization (from `utils/authorization.server.ts`)
+**Usage Pattern:**
 
 ```typescript
-import {
-  verifyBoardAccess,
-  verifyTaskAccess,
-  verifyWorkspaceAccess,
-  requireAdminAccess,
-  requirePrivilegedAccess,
-  requireContributorAccess,
-} from "@/utils/authorization.server";
-
-// In server actions - always verify access FIRST
-export async function getTask(taskId: string) {
-  const access = await verifyTaskAccess(taskId);
-  if (!access.hasAccess) {
-    return { data: null, error: access.error || "Access denied" };
-  }
-  // ... proceed with data access
+// ❌ WRONG - Inline permission checks
+if (user.role === "admin" || user.role === "owner") {
+  // do something
 }
 
-// For role-restricted operations
-export async function deleteBoard(boardId: string) {
-  const { profile } = await requireAdminAccess(); // Throws if not admin
-  // ... proceed with deletion
+// ✅ CORRECT - Use centralized authorization
+import { canManageResource } from "@/lib/auth/permissions";
+if (canManageResource(user, resource)) {
+  // do something
 }
 ```
 
-### Client-Side Authorization (using `useAuthorization` hook)
+### Role Constants
 
 ```typescript
-import { useAuthorization } from "@/hooks/useAuthorization";
+// lib/auth/roles.ts
+export const ROLES = {
+  ADMIN: "admin",
+  MEMBER: "member",
+  VIEWER: "viewer",
+} as const;
 
-function TaskActions({ task }) {
-  const { can, currentUserRole, isRestricted } = useAuthorization();
-
-  return (
-    <>
-      {can.editTask() && <Button onClick={handleEdit}>Edit</Button>}
-      {can.deleteTask() && <Button onClick={handleDelete}>Delete</Button>}
-      {can.manageUsers() && <Button onClick={handleManage}>Manage</Button>}
-    </>
-  );
-}
+export type Role = (typeof ROLES)[keyof typeof ROLES];
 ```
 
 ---
 
 ## Types & Schemas
 
-### Type Definitions
+All shared types live in designated locations. Never define types inline for shared data structures.
 
-| File                | Contents                        | When to Update                            |
-| ------------------- | ------------------------------- | ----------------------------------------- |
-| `types/index.ts`    | Application types (camelCase)   | Adding new entities, changing data shapes |
-| `types/supabase.ts` | Database types (auto-generated) | After running `pnpm supabase:gen`         |
+<!-- PROJECT-SPECIFIC: Define your type locations -->
 
-### Key Types in `types/index.ts`
+| Location | Contents | When to Update |
+| -------- | -------- | -------------- |
+| `types/index.ts` | Application types | Adding new entities |
+| `types/api.ts` | API request/response types | API changes |
+| `types/database.ts` | Database types | After schema changes |
+| `lib/validations/` | Validation schemas (Zod, etc.) | Adding new inputs |
+
+**Usage Pattern:**
 
 ```typescript
-// Entity types
-export interface Task { id: string; title: string; ticketId: string; ... }
-export interface Board { id: string; name: string; columns: Column[]; ... }
-export interface Sprint { id: string; name: string; startDate: string; ... }
-export interface Epic { id: string; title: string; color: string; ... }
-export interface Organization { id: string; name: string; slug: string; ... }
-export interface Team { id: string; name: string; members?: TeamMember[]; ... }
-export interface Project { id: string; name: string; prefix: string; ... }
+// ❌ WRONG - Inline type definitions
+function createUser(data: { name: string; email: string }) {}
 
-// Role types
-export type UserRole = "super_admin" | "owner" | "admin" | "manager" | "developer" | "viewer";
-export type OrgRole = UserRole;
-export type TeamRole = "admin" | "member" | "viewer";
-
-// Status/Priority enums
-export type TaskStatus = "backlog" | "todo" | "in_progress" | "in_review" | "done" | "blocked" | "cancelled";
-export type Priority = "low" | "medium" | "high" | "critical";
-export type TaskType = "story" | "task" | "bug" | "epic";
+// ✅ CORRECT - Import from types
+import { CreateUserInput } from "@/types";
+function createUser(data: CreateUserInput) {}
 ```
 
-### Zod Schemas
+### Type Generation (if applicable)
 
-| Location                      | Purpose                                |
-| ----------------------------- | -------------------------------------- |
-| `lib/validations/*.schema.ts` | Validation schemas with type inference |
-| `lib/validations/index.ts`    | Central export of all schemas          |
+If using database type generation:
 
-```typescript
-// lib/validations/task.schema.ts
-import { z } from "zod";
-
-export const TaskSchema = z.object({
-  id: z.string().uuid(),
-  ticketId: z.string().regex(/^[A-Z]{1,6}-\d{4}$/),
-  title: z.string().min(1).max(255),
-  priority: z.enum(["low", "medium", "high", "critical"]),
-});
-
-export type Task = z.infer<typeof TaskSchema>;
-
-// lib/validations/index.ts
-export { TaskSchema, type Task } from "./task.schema";
+```bash
+# Regenerate types after schema changes
+[type-generation-command]
 ```
 
 ---
 
-## Context Providers
+## Business Logic
 
-### Current Structure (Monolithic)
+Core business logic lives in service modules, not in route handlers or UI components.
 
-Currently, all providers are in `app/providers.tsx` (2500+ lines). This file exports:
+<!-- PROJECT-SPECIFIC: Define your service patterns -->
 
-| Context                | Hook                 | Purpose                           |
-| ---------------------- | -------------------- | --------------------------------- |
-| `AuthContext`          | `useAuth()`          | User authentication state         |
-| `OrganizationContext`  | `useOrganization()`  | Current org, members, permissions |
-| `NotificationsContext` | `useNotifications()` | Notification state and actions    |
-| `TeamsContext`         | `useTeams()`         | Team membership and management    |
-| `PreferencesContext`   | `usePreferences()`   | User preferences                  |
-| `ImpersonationContext` | `useImpersonation()` | Super admin impersonation         |
-| `ProjectsContext`      | `useProjects()`      | Project management                |
+### Service Layer
 
-### Target Structure (Modular)
+| Location | Purpose |
+| -------- | ------- |
+| `lib/services/[entity].ts` | Entity-specific business logic |
+| `lib/services/[domain]/` | Domain-grouped services |
 
-The providers should be refactored into `app/providers/`:
-
-```
-app/providers/
-├── index.tsx                 # Composite provider (exports Providers)
-├── AuthProvider.tsx          # Authentication context
-├── OrganizationProvider.tsx  # Organization context
-├── NotificationProvider.tsx  # Notifications context
-├── PreferencesProvider.tsx   # User preferences context
-├── TeamsProvider.tsx         # Teams context
-├── ImpersonationProvider.tsx # Impersonation context
-├── ProjectsProvider.tsx      # Projects context
-└── types.ts                  # Shared provider types
-```
-
-### Usage Pattern
+**Service Pattern:**
 
 ```typescript
-// Always import hooks from the providers module
-import { useAuth, useOrganization, useNotifications } from "@/app/providers";
+// lib/services/users.ts
+export async function createUser(input: CreateUserInput): Promise<Result<User>> {
+  // 1. Validate input
+  const validated = userSchema.parse(input);
 
-function MyComponent() {
-  const { user, loading } = useAuth();
-  const { organization, canManageUsers } = useOrganization();
-  const { notifications, markAsRead } = useNotifications();
-  // ...
+  // 2. Business logic
+  const hashedPassword = await hashPassword(validated.password);
+
+  // 3. Data access
+  const user = await db.users.create({
+    ...validated,
+    password: hashedPassword,
+  });
+
+  // 4. Return result
+  return { data: user, error: null };
 }
 ```
 
----
+### Error Handling Pattern
 
-## Server Actions
-
-All server actions live in `app/actions/` with a central export.
-
-| File                            | Purpose                       |
-| ------------------------------- | ----------------------------- |
-| `app/actions/index.ts`          | Central export of all actions |
-| `app/actions/tasks.ts`          | Task CRUD operations          |
-| `app/actions/boards.ts`         | Board management              |
-| `app/actions/sprints.ts`        | Sprint management             |
-| `app/actions/epics.ts`          | Epic management               |
-| `app/actions/comments.ts`       | Comment operations            |
-| `app/actions/organizations.ts`  | Organization management       |
-| `app/actions/teams.ts`          | Team operations               |
-| `app/actions/projects.ts`       | Project management            |
-| `app/actions/projectMembers.ts` | Project membership            |
-| `app/actions/notifications.ts`  | Notification operations       |
-| `app/actions/invites.ts`        | Invite system                 |
-| `app/actions/profile.ts`        | User profile operations       |
-| `app/actions/impersonation.ts`  | Super admin impersonation     |
-| `app/actions/userManagement.ts` | User administration           |
-
-### Action Pattern
-
-Every action file MUST:
-
-1. Start with `'use server'` directive
-2. Verify authorization before data access
-3. Return `{ data, error }` or `{ success, error }` pattern
-4. Transform snake_case DB fields to camelCase
+Always return consistent error shapes:
 
 ```typescript
-"use server";
+// ❌ WRONG - Throwing errors
+throw new Error("User not found");
 
-import { createServerClient } from "@/lib/supabase/server";
-import { verifyBoardAccess } from "@/utils/authorization.server";
-import { revalidatePath } from "next/cache";
-
-export async function getTasks(boardId: string) {
-  const access = await verifyBoardAccess(boardId);
-  if (!access.hasAccess) {
-    return { data: null, error: access.error };
-  }
-
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("tasks")
-    .select("*")
-    .eq("board_id", boardId);
-
-  if (error) return { data: null, error: error.message };
-
-  return { data: data.map(transformTask), error: null };
-}
+// ✅ CORRECT - Return error objects
+return { data: null, error: "User not found" };
 ```
 
 ---
 
-## Hooks
+## Utilities
 
-Custom React hooks live in `hooks/`.
+Utility functions are organized by category in the utils directory.
 
-| Hook               | Purpose                          | File                         |
-| ------------------ | -------------------------------- | ---------------------------- |
-| `useAuthorization` | Permission checking              | `hooks/useAuthorization.tsx` |
-| `useTheme`         | Color theme management           | `hooks/useTheme.tsx`         |
-| `useRealtime`      | Supabase real-time subscriptions | `hooks/useRealtime.tsx`      |
-| `useMediaQuery`    | Responsive breakpoints           | `hooks/useMediaQuery.tsx`    |
-| `useMobile`        | Mobile device detection          | `hooks/useMobile.tsx`        |
-| `useDebounce`      | Debounced values                 | `hooks/useDebounce.tsx`      |
-| `useLocalStorage`  | Persistent local state           | `hooks/useLocalStorage.tsx`  |
+<!-- PROJECT-SPECIFIC: Define your utility locations -->
 
-### Hook Pattern
+| Location | Purpose |
+| -------- | ------- |
+| `lib/utils/string.ts` | String manipulation |
+| `lib/utils/date.ts` | Date formatting/parsing |
+| `lib/utils/validation.ts` | Validation helpers |
+| `lib/utils/formatting.ts` | Display formatting |
 
-```typescript
-import { useState, useEffect, useCallback } from "react";
+**Before Creating a New Utility:**
 
-export function useHookName(param: string) {
-  const [data, setData] = useState<DataType | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Effect logic
-  }, [param]);
-
-  const action = useCallback(() => {
-    // Action logic
-  }, []);
-
-  return { data, loading, error, action };
-}
-```
-
----
-
-## Components
-
-> **📚 Canonical Reference**: See `guidelines/COMPONENT_LIBRARY.md` for complete component documentation, usage patterns, and decision tree.
-
-### Component Library Resources
-
-| Resource                | Location                          | Purpose                                                   |
-| ----------------------- | --------------------------------- | --------------------------------------------------------- |
-| Component Library Guide | `guidelines/COMPONENT_LIBRARY.md` | Full component inventory, usage patterns, audit checklist |
-| Design Tokens           | `lib/design-tokens.ts`            | Centralized colors, sizes, gradients                      |
-| Feature Flags           | `lib/feature-flags.ts`            | Component rollout control                                 |
-| Storybook               | `pnpm storybook` (localhost:6006) | Visual component documentation                            |
-
-### Directory Structure
-
-| Directory                 | Purpose                           |
-| ------------------------- | --------------------------------- |
-| `components/`             | Feature components                |
-| `components/ui/`          | Base UI components (shadcn)       |
-| `components/auth/`        | Authentication-related components |
-| `components/settings/`    | Settings page components          |
-| `components/super-admin/` | Super admin panel components      |
-| `components/skeletons/`   | Loading skeleton components       |
-| `.storybook/`             | Storybook configuration           |
-
-### Component Testing
-
-| Pattern         | Location                          |
-| --------------- | --------------------------------- |
-| Component tests | `components/*.test.tsx`           |
-| Snapshot tests  | `components/__snapshots__/*.snap` |
-| Stories         | `components/*.stories.tsx`        |
-
-### Key Components
-
-| Component               | Purpose                               |
-| ----------------------- | ------------------------------------- |
-| `Dashboard.tsx`         | Main dashboard layout                 |
-| `DashboardApp.tsx`      | Dashboard application wrapper         |
-| `Header.tsx`            | Top navigation header                 |
-| `Sidebar.tsx`           | Navigation sidebar                    |
-| `KanbanBoardView.tsx`   | Kanban board display                  |
-| `TableView.tsx`         | Table view for tasks                  |
-| `TaskCard.tsx`          | Task card component                   |
-| `TaskDialog.tsx`        | Task creation/editing dialog          |
-| `TaskDetailPanel.tsx`   | Task detail side panel                |
-| `SprintDialog.tsx`      | Sprint management dialog              |
-| `BoardDialog.tsx`       | Board configuration                   |
-| `CommentsSection.tsx`   | Task comments                         |
-| `NotificationPanel.tsx` | Notifications dropdown                |
-| `ErrorBoundary.tsx`     | Error boundary wrapper                |
-| `PriorityBadge.tsx`     | Priority indicator badge              |
-| `StatusBadge.tsx`       | Status indicator badge (feature flag) |
-
----
-
-## Testing Infrastructure
-
-### Unit Testing
-
-| File/Directory             | Purpose                                      |
-| -------------------------- | -------------------------------------------- |
-| `vitest.config.ts`         | Vitest configuration (bail: 1 for fail-fast) |
-| `test/setup.ts`            | Test setup (mocks, MSW)                      |
-| `test/fixtures.tsx`        | Mock data factories                          |
-| `lib/test-utils/`          | Test utilities                               |
-| `lib/test-utils/handlers/` | MSW API handlers                             |
-| `lib/test-utils/db.ts`     | Mock database                                |
-
-### Component Testing
-
-| File/Directory              | Purpose                                      |
-| --------------------------- | -------------------------------------------- |
-| `components/*.test.tsx`     | Component unit tests                         |
-| `components/__snapshots__/` | Snapshot test files                          |
-| `lib/*.test.ts`             | Utility tests (design tokens, feature flags) |
-
-### E2E Testing
-
-| File/Directory               | Purpose                  |
-| ---------------------------- | ------------------------ |
-| `playwright.config.ts`       | Playwright configuration |
-| `e2e/`                       | E2E test files           |
-| `e2e/critical-tests.spec.ts` | Critical path tests      |
-| `e2e/impersonation.spec.ts`  | Impersonation flow tests |
+1. Check if it already exists in `lib/utils/`
+2. Check if a library already provides this functionality
+3. If truly new, add to the appropriate category file
 
 ---
 
 ## Configuration
 
-### Application Config
+Application configuration is centralized.
 
-| File             | Purpose                           |
-| ---------------- | --------------------------------- |
-| `next.config.ts` | Next.js configuration             |
-| `middleware.ts`  | Route middleware (auth redirects) |
-| `tsconfig.json`  | TypeScript configuration          |
-| `vercel.json`    | Vercel deployment config          |
+<!-- PROJECT-SPECIFIC: Define your config locations -->
 
-### Styling Config
+| Location | Purpose |
+| -------- | ------- |
+| `config/index.ts` | Application configuration |
+| `config/constants.ts` | Application constants |
+| `.env` / `.env.local` | Environment variables |
 
-| File                 | Purpose                         |
-| -------------------- | ------------------------------- |
-| `postcss.config.mjs` | PostCSS/Tailwind config         |
-| `app/globals.css`    | Global CSS variables and styles |
+**Usage Pattern:**
 
-### Database
+```typescript
+// ❌ WRONG - Hardcoded values
+const API_URL = "https://api.example.com";
 
-| Directory              | Purpose               |
-| ---------------------- | --------------------- |
-| `supabase/migrations/` | SQL migration files   |
-| `supabase/config.toml` | Supabase local config |
+// ✅ CORRECT - Use configuration
+import { config } from "@/config";
+const API_URL = config.apiUrl;
+```
 
 ---
 
-## Quick Reference: Import Paths
+## Quick Reference: Where Does It Go?
 
-```typescript
-// Supabase clients
-import { getSupabaseClient } from "@/lib/supabase/client";
-import { createServerClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+| I need to create... | Location |
+| ------------------- | -------- |
+| Database query function | `lib/db/queries/` |
+| API route handler | `app/api/` or `routes/` |
+| Business logic | `lib/services/` |
+| Shared type | `types/` |
+| Validation schema | `lib/validations/` |
+| Utility function | `lib/utils/` |
+| Configuration | `config/` |
+| Auth helper | `lib/auth/` |
+| External API client | `lib/api/` |
 
-// Authorization
-import { ROLE_HIERARCHY, ADMIN_ROLES } from "@/utils/authorization";
-import {
-  verifyBoardAccess,
-  requireAdminAccess,
-} from "@/utils/authorization.server";
-import { useAuthorization } from "@/hooks/useAuthorization";
+---
 
-// Types
-import type { Task, Board, Sprint, Organization } from "@/types";
-import type { Database } from "@/types/supabase";
+## Adding New Canonical Locations
 
-// Providers/Context
-import { useAuth, useOrganization, useTeams } from "@/app/providers";
+When adding a new canonical location:
 
-// UI Components
-import { Button, Input, Dialog } from "@/components/ui";
-
-// Schemas
-import { TaskSchema, CreateTaskSchema } from "@/lib/validations";
-
-// Test utilities
-import { mockTasks, createMockTask, seedTasks } from "@test/fixtures";
-```
+1. Document it in this file
+2. Create the directory/file with a README or comment
+3. Update any related tooling (path aliases, etc.)
+4. Announce to the team
 
 ---
 
 ## Related Documents
 
-- [AGENT_EDITING_INSTRUCTIONS.md](AGENT_EDITING_INSTRUCTIONS.md) - Editing rules and patterns
-- [LIBRARY_INVENTORY.md](LIBRARY_INVENTORY.md) - Approved dependencies
+- [LIBRARY_INVENTORY.md](LIBRARY_INVENTORY.md) - Approved libraries
+- [AGENT_EDITING_INSTRUCTIONS.md](AGENT_EDITING_INSTRUCTIONS.md) - Coding standards
 - [TESTING_STRATEGY.md](TESTING_STRATEGY.md) - Testing patterns

@@ -1,961 +1,366 @@
 # Testing Strategy
 
-> **Purpose**: This document defines the testing strategy, patterns, and requirements for the project. Following these guidelines ensures comprehensive test coverage and prevents regressions.
+> **Purpose**: This document defines the testing strategy, patterns, and requirements for {{projectName}}.
 
 ---
 
 ## Table of Contents
 
-1. [Testing Pyramid](#testing-pyramid)
-2. [Unit Testing with Vitest](#unit-testing-with-vitest)
-3. [Component Library Testing](#component-library-testing)
-4. [E2E Testing with Playwright](#e2e-testing-with-playwright)
-5. [Accessibility Testing](#accessibility-testing)
-6. [Test Infrastructure](#test-infrastructure)
-7. [When Tests Are Required](#when-tests-are-required)
-8. [Pre-Merge Checklist](#pre-merge-checklist)
+1. [Testing Philosophy](#testing-philosophy)
+2. [Testing Pyramid](#testing-pyramid)
+3. [Unit Testing](#unit-testing)
+4. [Integration Testing](#integration-testing)
+5. [End-to-End Testing](#end-to-end-testing)
+6. [When Tests Are Required](#when-tests-are-required)
+7. [Mocking Patterns](#mocking-patterns)
+8. [Test Organization](#test-organization)
+
+---
+
+## Testing Philosophy
+
+1. **Write tests that give confidence**, not tests that check boxes
+2. **Test behavior, not implementation** - Tests should survive refactoring
+3. **Fast feedback loop** - Unit tests should run in milliseconds
+4. **Readable tests are maintainable tests** - Tests are documentation
+5. **Test the unhappy path** - Error cases matter more than happy paths
 
 ---
 
 ## Testing Pyramid
 
-Our testing strategy follows the testing pyramid model:
-
 ```
           /\
          /  \
-        / E2E \        ← Few, slow, comprehensive user journey tests
+        / E2E \        ← Few, slow, comprehensive journey tests
        /--------\
       /          \
-     / Integration \   ← Component + hook integration tests
+     / Integration \   ← Component/module integration tests
     /--------------\
    /                \
   /    Unit Tests    \ ← Many, fast, focused tests
  /--------------------\
 ```
 
-| Layer       | Tool                     | Quantity | Speed  | Purpose                                                       |
-| ----------- | ------------------------ | -------- | ------ | ------------------------------------------------------------- |
-| Unit        | Vitest                   | Many     | Fast   | Test individual functions, utilities, components in isolation |
-| Integration | Vitest + Testing Library | Some     | Medium | Test component interactions, hooks with mocked services       |
-| E2E         | Playwright               | Few      | Slow   | Test critical user journeys end-to-end                        |
+| Layer       | Tool               | Quantity | Speed  | Purpose                               |
+| ----------- | ------------------ | -------- | ------ | ------------------------------------- |
+| Unit        | [TEST_FRAMEWORK]   | Many     | Fast   | Test functions/modules in isolation   |
+| Integration | [TEST_FRAMEWORK]   | Some     | Medium | Test module interactions              |
+| E2E         | [E2E_FRAMEWORK]    | Few      | Slow   | Test critical user/system journeys    |
 
 ---
 
-## Unit Testing with Vitest
+## Unit Testing
 
 ### Configuration
 
-Located in `vitest.config.ts`:
+<!-- PROJECT-SPECIFIC: Define your test configuration -->
 
-```typescript
-export default defineConfig({
-  test: {
-    globals: true,
-    environment: "jsdom",
-    setupFiles: ["./test/setup.ts"],
-    include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-    coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html"],
-    },
-  },
-});
-```
+Test configuration file: `[vitest.config.ts / jest.config.js / etc.]`
 
 ### Running Tests
 
 ```bash
 # Run all tests once
-pnpm test
+[test-command]
 
-# Watch mode (re-runs on file changes)
-pnpm test:watch
+# Watch mode
+[test-command] --watch
 
-# Visual UI for test results
-pnpm test:ui
+# With coverage
+[test-command] --coverage
 
-# With coverage report
-pnpm test:coverage
+# Run specific file
+[test-command] path/to/file.test.ts
 ```
 
 ### Test File Naming & Location
 
-| Source File                      | Test File Location                    |
-| -------------------------------- | ------------------------------------- |
-| `components/TaskCard.tsx`        | `components/TaskCard.test.tsx`        |
-| `hooks/useDebounce.tsx`          | `hooks/useDebounce.test.tsx`          |
-| `utils/authorization.ts`         | `utils/authorization.test.ts`         |
-| `lib/validations/task.schema.ts` | `lib/validations/task.schema.test.ts` |
+| Source File | Test File Location |
+| ----------- | ------------------ |
+| `src/utils/helper.ts` | `src/utils/helper.test.ts` |
+| `src/services/user.ts` | `src/services/user.test.ts` |
+| `lib/auth/permissions.ts` | `lib/auth/permissions.test.ts` |
 
 ### Test Structure Pattern
 
 ```typescript
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import {
-  mockTasks,
-  createMockTask,
-  seedTasks,
-  clearLocalStorage,
-} from "@test/fixtures";
-import { TaskCard } from "./TaskCard";
-
-describe("TaskCard", () => {
+describe("ModuleName", () => {
+  // Setup that applies to all tests
   beforeEach(() => {
-    clearLocalStorage();
-    seedTasks();
+    // Reset mocks, setup test data
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    // Cleanup
   });
 
-  describe("rendering", () => {
-    it("should display task title and ticket ID", () => {
-      const task = createMockTask({ title: "Test Task", ticketId: "TEST-0001" });
-      render(<TaskCard task={task} />);
+  describe("functionName", () => {
+    it("should return X when given Y", () => {
+      // Arrange
+      const input = "test";
 
-      expect(screen.getByText("Test Task")).toBeInTheDocument();
-      expect(screen.getByText("TEST-0001")).toBeInTheDocument();
+      // Act
+      const result = functionName(input);
+
+      // Assert
+      expect(result).toBe("expected");
     });
 
-    it("should show priority badge", () => {
-      const task = createMockTask({ priority: "high" });
-      render(<TaskCard task={task} />);
+    it("should throw error when given invalid input", () => {
+      // Arrange
+      const invalidInput = null;
 
-      expect(screen.getByTestId("priority-badge")).toHaveTextContent("High");
-    });
-  });
-
-  describe("interactions", () => {
-    it("should call onEdit when edit button is clicked", async () => {
-      const user = userEvent.setup();
-      const onEdit = vi.fn();
-      const task = createMockTask();
-
-      render(<TaskCard task={task} onEdit={onEdit} />);
-
-      await user.click(screen.getByTestId("edit-task-btn"));
-
-      expect(onEdit).toHaveBeenCalledWith(task);
+      // Act & Assert
+      expect(() => functionName(invalidInput)).toThrow("Invalid input");
     });
   });
 });
 ```
 
-### Mocking Patterns
+### Naming Conventions
 
-#### Mocking Hooks
+- **Describe blocks**: Use the function/module name
+- **Test cases**: Start with "should" and describe the behavior
+- **Be specific**: "should return user when ID exists" not "should work"
 
-```typescript
-import { vi } from "vitest";
+---
 
-// Mock a custom hook
-vi.mock("@/hooks/useAuthorization", () => ({
-  useAuthorization: () => ({
-    can: {
-      editTask: () => true,
-      deleteTask: () => false,
-    },
-    currentUserRole: "developer",
-  }),
-}));
-```
+## Integration Testing
 
-#### Mocking Supabase Client
+Integration tests verify that modules work together correctly.
 
-```typescript
-// Already set up in test/setup.ts - uses MSW for API mocking
-// For unit tests, you can also mock directly:
+### What to Integration Test
 
-vi.mock("@/lib/supabase/client", () => ({
-  getSupabaseClient: vi.fn(() => ({
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: "test-user-id", email: "test@example.com" } },
-        error: null,
-      }),
-    },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({ data: mockTask, error: null }),
-        })),
-      })),
-    })),
-  })),
-}));
-```
+- API endpoints with database interactions
+- Service functions with external dependencies
+- Authentication/authorization flows
+- Complex workflows spanning multiple modules
 
-#### Mocking Server Actions
+### Integration Test Pattern
 
 ```typescript
-vi.mock("@/app/actions/tasks", () => ({
-  getTasks: vi.fn().mockResolvedValue({ data: mockTasks, error: null }),
-  createTask: vi.fn().mockResolvedValue({ data: mockTask, error: null }),
-  deleteTask: vi.fn().mockResolvedValue({ success: true, error: null }),
-}));
+describe("UserService Integration", () => {
+  // Use real database (test instance)
+  beforeAll(async () => {
+    await setupTestDatabase();
+  });
+
+  afterAll(async () => {
+    await teardownTestDatabase();
+  });
+
+  beforeEach(async () => {
+    await clearTestData();
+  });
+
+  it("should create user and send welcome email", async () => {
+    // Arrange
+    const input = { email: "test@example.com", name: "Test User" };
+
+    // Act
+    const result = await userService.createUser(input);
+
+    // Assert
+    expect(result.data).toBeDefined();
+    expect(result.data.email).toBe(input.email);
+    // Verify side effects
+    expect(mockEmailService.send).toHaveBeenCalledWith(
+      expect.objectContaining({ to: input.email })
+    );
+  });
+});
 ```
 
 ---
 
-## Component Library Testing
+## End-to-End Testing
 
-> **Reference**: See `guidelines/COMPONENT_LIBRARY.md` for component inventory and requirements.
+E2E tests verify complete user journeys through the application.
 
-Component library components require comprehensive testing with a **fail-fast approach**.
+### What to E2E Test
 
-### Configuration
+- Critical user flows (signup, login, core features)
+- Payment/checkout flows
+- Data integrity across the full stack
+- Cross-browser compatibility (if applicable)
 
-Vitest is configured with `bail: 1` to stop on first failure:
-
-```typescript
-// vitest.config.ts
-export default defineConfig({
-  test: {
-    bail: 1, // Stop on first failure
-    snapshotFormat: {
-      escapeString: false,
-      printBasicPrototype: false,
-    },
-  },
-});
-```
-
-### Running Component Tests
-
-```bash
-# Run component library tests only
-pnpm test:components
-
-# Watch mode for development
-pnpm test:components:watch
-
-# Update snapshots after intentional changes
-pnpm test:update-snapshots
-```
-
-### Test File Structure
-
-Every component in the library requires three files:
-
-```
-components/
-├── StatusBadge.tsx           # Component implementation
-├── StatusBadge.stories.tsx   # Storybook story
-├── StatusBadge.test.tsx      # Unit + snapshot tests
-└── __snapshots__/
-    └── StatusBadge.test.tsx.snap
-```
-
-### Required Test Coverage
-
-#### 1. Behavioral Tests
-
-Test all logic and interactions:
+### E2E Test Pattern
 
 ```typescript
-import { describe, it, expect, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { StatusBadge } from "./StatusBadge";
-import { mockFeatureFlag, clearFeatureFlagMocks, FeatureFlag } from "@/lib/feature-flags";
-
-describe("StatusBadge", () => {
-  afterEach(() => {
-    clearFeatureFlagMocks();
-  });
-
-  it("should render without crashing", () => {
-    mockFeatureFlag(FeatureFlag.STATUS_BADGE, true);
-    render(<StatusBadge status="todo" />);
-    expect(screen.getByText("To Do")).toBeInTheDocument();
-  });
-
-  it("should apply correct color for each status", () => {
-    mockFeatureFlag(FeatureFlag.STATUS_BADGE, true);
-    const { container } = render(<StatusBadge status="in-progress" />);
-    expect(container.firstChild).toHaveClass("bg-sky-50");
-  });
-
-  it("should respect size prop", () => {
-    mockFeatureFlag(FeatureFlag.STATUS_BADGE, true);
-    const { container } = render(<StatusBadge status="todo" size="lg" />);
-    expect(container.firstChild).toHaveClass("text-base");
-  });
-
-  it("should apply custom className", () => {
-    mockFeatureFlag(FeatureFlag.STATUS_BADGE, true);
-    const { container } = render(<StatusBadge status="todo" className="custom" />);
-    expect(container.firstChild).toHaveClass("custom");
-  });
-});
-```
-
-#### 2. Feature Flag Tests
-
-Test both enabled and disabled states:
-
-```typescript
-describe("Feature Flag Behavior", () => {
-  afterEach(() => {
-    clearFeatureFlagMocks();
-  });
-
-  it("should return null when feature flag is disabled", () => {
-    mockFeatureFlag(FeatureFlag.STATUS_BADGE, false);
-    const { container } = render(<StatusBadge status="todo" />);
-    expect(container.firstChild).toBeNull();
-  });
-
-  it("should render component when feature flag is enabled", () => {
-    mockFeatureFlag(FeatureFlag.STATUS_BADGE, true);
-    const { container } = render(<StatusBadge status="todo" />);
-    expect(container.firstChild).not.toBeNull();
-  });
-});
-```
-
-#### 3. Snapshot Tests
-
-Capture visual output for all variants:
-
-```typescript
-describe("Snapshots", () => {
-  beforeEach(() => {
-    mockFeatureFlag(FeatureFlag.STATUS_BADGE, true);
-  });
-
-  afterEach(() => {
-    clearFeatureFlagMocks();
-  });
-
-  // Test each status
-  it.each(["todo", "in-progress", "review", "done"] as const)(
-    "should match snapshot for status: %s",
-    (status) => {
-      const { container } = render(<StatusBadge status={status} />);
-      expect(container).toMatchSnapshot();
-    }
-  );
-
-  // Test each size
-  it.each(["sm", "md", "lg"] as const)(
-    "should match snapshot for size: %s",
-    (size) => {
-      const { container } = render(<StatusBadge status="todo" size={size} />);
-      expect(container).toMatchSnapshot();
-    }
-  );
-
-  // Test with icon hidden
-  it("should match snapshot without icon", () => {
-    const { container } = render(<StatusBadge status="todo" showIcon={false} />);
-    expect(container).toMatchSnapshot();
-  });
-});
-```
-
-### Snapshot Update Workflow
-
-When snapshots fail:
-
-1. **Unintentional change?** → Fix the code, snapshots should pass
-2. **Intentional change?** → Review the diff carefully:
-
-   ```bash
-   # View snapshot diff
-   pnpm test:components
-
-   # If changes are correct, update snapshots
-   pnpm test:update-snapshots
-
-   # Commit updated snapshots with explanation
-   git add -A
-   git commit -m "test: update StatusBadge snapshots for new size variant"
-   ```
-
-### Component Test Checklist
-
-Before submitting PR:
-
-- [ ] All behavioral tests pass
-- [ ] All variants have snapshot tests
-- [ ] Feature flag enabled/disabled tested
-- [ ] Custom className prop tested
-- [ ] Edge cases handled (empty, null, undefined)
-- [ ] Accessibility: ARIA attributes present (where applicable)
-- [ ] Storybook story renders correctly
-
----
-
-## E2E Testing with Playwright
-
-### Configuration
-
-Located in `playwright.config.ts`:
-
-```typescript
-export default defineConfig({
-  testDir: "./e2e",
-  fullyParallel: true,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: "html",
-  use: {
-    baseURL: "http://localhost:5173",
-    trace: "on-first-retry",
-  },
-  projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
-    { name: "webkit", use: { ...devices["Desktop Safari"] } },
-    { name: "Mobile Chrome", use: { ...devices["Pixel 5"] } },
-    { name: "Mobile Safari", use: { ...devices["iPhone 12"] } },
-  ],
-  webServer: {
-    command: "pnpm dev",
-    url: "http://localhost:5173",
-    reuseExistingServer: !process.env.CI,
-  },
-});
-```
-
-### Running E2E Tests
-
-```bash
-# Run all E2E tests
-pnpm test:e2e
-
-# Run with UI
-npx playwright test --ui
-
-# Run specific test file
-npx playwright test e2e/critical-tests.spec.ts
-
-# Run with headed browser
-npx playwright test --headed
-
-# Generate test report
-npx playwright show-report
-```
-
-### E2E Test Structure
-
-```typescript
-import { test, expect } from "@playwright/test";
-
-test.describe("Task Management", () => {
-  test.beforeEach(async ({ page }) => {
-    // Login or set up authenticated state
-    await page.goto("/login");
-    await page.fill('[data-testid="email-input"]', "test@example.com");
-    await page.fill('[data-testid="password-input"]', "password");
-    await page.click('[data-testid="login-button"]');
-    await page.waitForURL("/dashboard");
-  });
-
-  test("should create a new task", async ({ page }) => {
-    // Navigate to board
-    await page.click('[data-testid="nav-boards"]');
-
-    // Open create dialog
-    await page.click('[data-testid="create-task-btn"]');
+// e2e/auth.spec.ts
+describe("Authentication", () => {
+  it("should allow user to sign up and log in", async () => {
+    // Navigate to signup
+    await page.goto("/signup");
 
     // Fill form
-    await page.fill('[data-testid="task-title-input"]', "New E2E Task");
-    await page.selectOption('[data-testid="priority-select"]', "high");
+    await page.fill('[name="email"]', "newuser@example.com");
+    await page.fill('[name="password"]', "securePassword123");
+    await page.click('button[type="submit"]');
 
-    // Submit
-    await page.click('[data-testid="submit-task-btn"]');
+    // Verify redirect to dashboard
+    await expect(page).toHaveURL("/dashboard");
 
-    // Verify creation
-    await expect(
-      page
-        .locator('[data-testid="task-card"]')
-        .filter({ hasText: "New E2E Task" }),
-    ).toBeVisible();
-  });
-
-  test("should move task between columns", async ({ page }) => {
-    // Navigate to kanban board
-    await page.goto("/dashboard?view=kanban");
-
-    // Get task card
-    const taskCard = page.locator('[data-testid="task-card-TASK-0001"]');
-    const targetColumn = page.locator('[data-testid="column-in-progress"]');
-
-    // Drag and drop
-    await taskCard.dragTo(targetColumn);
-
-    // Verify move
-    await expect(
-      targetColumn.locator('[data-testid="task-card-TASK-0001"]'),
-    ).toBeVisible();
+    // Verify user is logged in
+    await expect(page.locator('[data-testid="user-menu"]')).toBeVisible();
   });
 });
-```
-
-### Critical Test Paths
-
-The following user journeys MUST have E2E tests (`e2e/critical-tests.spec.ts`):
-
-1. **Authentication Flow**
-   - Login with valid credentials
-   - Login with invalid credentials (error handling)
-   - Logout
-
-2. **Task CRUD**
-   - Create task with required fields
-   - View task details
-   - Edit task
-   - Delete task
-
-3. **Board Management**
-   - View kanban board
-   - Move task between columns
-   - Create new column
-
-4. **Sprint Management**
-   - Create sprint
-   - Add tasks to sprint
-   - Complete sprint
-
-5. **User Management (Admin)**
-   - View user list
-   - Change user role
-   - Suspend user
-
----
-
-## Test Infrastructure
-
-### Test Setup (`test/setup.ts`)
-
-The setup file initializes:
-
-1. **MSW Server** - Mocks API responses
-2. **Next.js Mocks** - Router, cache, navigation
-3. **Supabase Mocks** - Client initialization
-4. **jsdom Environment** - DOM simulation
-
-```typescript
-import { beforeAll, afterAll, afterEach, vi } from "vitest";
-import { server } from "@/lib/test-utils/server";
-import "@testing-library/jest-dom";
-
-// Start MSW server
-beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
-
-// Mock Next.js
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-  usePathname: () => "/dashboard",
-  useSearchParams: () => new URLSearchParams(),
-}));
-
-vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
-  revalidateTag: vi.fn(),
-}));
-```
-
-### Test Fixtures (`test/fixtures.tsx`)
-
-Provides mock data factories and seeding utilities:
-
-```typescript
-import type { Task, Board, Sprint, User } from "@/types";
-
-// ============== Mock Data ==============
-export const mockUser: User = {
-  id: "user-001",
-  email: "test@example.com",
-  name: "Test User",
-  role: "developer",
-};
-
-export const mockTasks: Task[] = [
-  {
-    id: "task-001",
-    ticketId: "TEST-0001",
-    title: "First Task",
-    priority: "high",
-    status: "todo",
-  },
-  {
-    id: "task-002",
-    ticketId: "TEST-0002",
-    title: "Second Task",
-    priority: "medium",
-    status: "in_progress",
-  },
-];
-
-// ============== Factory Functions ==============
-export function createMockTask(overrides: Partial<Task> = {}): Task {
-  return {
-    id: `task-${Date.now()}`,
-    ticketId: `TEST-${Math.floor(Math.random() * 9999)
-      .toString()
-      .padStart(4, "0")}`,
-    title: "Mock Task",
-    description: "",
-    priority: "medium",
-    status: "todo",
-    type: "task",
-    boardId: "board-001",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    ...overrides,
-  };
-}
-
-export function createMockBoard(overrides: Partial<Board> = {}): Board {
-  /* ... */
-}
-export function createMockSprint(overrides: Partial<Sprint> = {}): Sprint {
-  /* ... */
-}
-
-// ============== Seeding Functions ==============
-export function seedTasks(tasks: Task[] = mockTasks): void {
-  localStorage.setItem("pm_tasks", JSON.stringify(tasks));
-}
-
-export function seedBoards(): void {
-  /* ... */
-}
-export function seedSprints(): void {
-  /* ... */
-}
-
-export function clearLocalStorage(): void {
-  localStorage.clear();
-}
-
-// ============== Known Gaps ==============
-// Document areas that don't have full test coverage yet
-export const KNOWN_GAPS = {
-  dragAndDrop: "Drag-and-drop testing requires special handling with react-dnd",
-  realTime: "Real-time subscription testing not fully implemented",
-  fileUpload: "File upload testing requires MSW file handling",
-};
-```
-
-### MSW Handlers (`lib/test-utils/handlers/`)
-
-API mocking handlers organized by domain:
-
-```
-lib/test-utils/
-├── handlers/
-│   ├── index.ts      # Combines all handlers
-│   ├── tasks.ts      # Task API handlers
-│   ├── boards.ts     # Board API handlers
-│   ├── sprints.ts    # Sprint API handlers
-│   └── auth.ts       # Auth API handlers
-├── server.ts         # MSW server setup
-└── db.ts             # Mock database state
-```
-
-Example handler (`lib/test-utils/handlers/tasks.ts`):
-
-```typescript
-import { http, HttpResponse } from "msw";
-import { mockTasks } from "@test/fixtures";
-
-export const taskHandlers = [
-  http.get("*/rest/v1/tasks*", () => {
-    return HttpResponse.json(mockTasks);
-  }),
-
-  http.post("*/rest/v1/tasks", async ({ request }) => {
-    const body = await request.json();
-    const newTask = { id: `task-${Date.now()}`, ...body };
-    return HttpResponse.json(newTask, { status: 201 });
-  }),
-
-  http.delete("*/rest/v1/tasks*", () => {
-    return new HttpResponse(null, { status: 204 });
-  }),
-];
 ```
 
 ---
 
 ## When Tests Are Required
 
-### Required Tests
+| Change Type          | Unit Test     | Integration Test | E2E Test       |
+| -------------------- | ------------- | ---------------- | -------------- |
+| New utility function | ✅ Required   | ❌ Not needed    | ❌ Not needed  |
+| New service function | ✅ Required   | ⚠️ Recommended   | ❌ Not needed  |
+| New API endpoint     | ✅ Required   | ✅ Required      | ⚠️ If critical |
+| New feature          | ✅ Required   | ✅ Required      | ✅ Critical paths |
+| Bug fix              | ✅ Regression | ⚠️ If applicable | ⚠️ If E2E exists |
+| Refactoring          | ✅ Verify existing pass | ❌ Not needed | ❌ Not needed |
 
-| Change Type                           | Unit Test              | E2E Test               |
-| ------------------------------------- | ---------------------- | ---------------------- |
-| New component (complex)               | ✅ Required            | ⚠️ If critical path    |
-| New component (simple/presentational) | ⚠️ Recommended         | ❌ Not required        |
-| New hook                              | ✅ Required            | ❌ Not required        |
-| New server action                     | ⚠️ Recommended         | ❌ Not required        |
-| New utility function                  | ✅ Required            | ❌ Not required        |
-| New feature                           | ✅ Required            | ✅ Required            |
-| Bug fix                               | ✅ Regression test     | ⚠️ If E2E exists       |
-| Refactor                              | ✅ Existing tests pass | ✅ Existing tests pass |
+### Minimum Coverage Requirements
 
-### Definition of "Complex Component"
+<!-- PROJECT-SPECIFIC: Adjust these thresholds -->
 
-A component is considered complex if it has:
-
-- State management (`useState`, `useReducer`)
-- Side effects (`useEffect`)
-- Event handlers that modify data
-- Conditional rendering based on props/state
-- Integration with context providers
-- Form handling
-
-### Test Coverage Targets
-
-| Metric          | Target |
-| --------------- | ------ |
-| Line Coverage   | 70%+   |
-| Branch Coverage | 60%+   |
-| Critical Paths  | 100%   |
+| Metric     | Minimum |
+| ---------- | ------- |
+| Statements | 80%     |
+| Branches   | 80%     |
+| Functions  | 80%     |
+| Lines      | 80%     |
 
 ---
 
-## Pre-Merge Checklist
+## Mocking Patterns
 
-Before creating a PR, ensure:
+### When to Mock
 
-### Unit Tests
+- External services (APIs, databases in unit tests)
+- Time-dependent functions
+- Non-deterministic behavior (random, uuid)
+- Expensive operations
 
-- [ ] All new functions/components have tests
-- [ ] Tests cover happy path and error cases
-- [ ] `pnpm test` passes locally
-- [ ] No skipped tests (`.skip`) without justification
+### When NOT to Mock
 
-### E2E Tests
+- The module under test
+- Simple utility functions
+- In integration tests (use real implementations)
 
-- [ ] Critical user journeys covered
-- [ ] `data-testid` attributes added to new interactive elements
-- [ ] `pnpm test:e2e` passes locally (or on CI)
+### Mock Examples
 
-### Test Quality
+```typescript
+// Mock a module
+vi.mock("@/lib/email", () => ({
+  sendEmail: vi.fn().mockResolvedValue({ success: true }),
+}));
 
-- [ ] Tests are isolated (don't depend on other tests)
-- [ ] Tests clean up after themselves
-- [ ] No flaky tests (tests that sometimes pass/fail)
-- [ ] Descriptive test names (`should do X when Y`)
+// Mock a specific function
+const mockFn = vi.fn().mockReturnValue("mocked value");
+
+// Mock time
+vi.useFakeTimers();
+vi.setSystemTime(new Date("2026-01-19"));
+
+// Restore
+vi.useRealTimers();
+vi.restoreAllMocks();
+```
+
+### Database Mocking vs Test Database
+
+| Approach | Use When |
+| -------- | -------- |
+| Mock database | Unit tests, testing error handling |
+| Test database | Integration tests, testing queries |
 
 ---
 
-## `data-testid` Conventions
+## Test Organization
 
-Add `data-testid` attributes to elements that E2E tests need to interact with.
-
-### Naming Pattern
+### Directory Structure
 
 ```
-<element>-<purpose>[-<identifier>]
+src/
+├── services/
+│   ├── user.ts
+│   └── user.test.ts          # Co-located unit tests
+├── utils/
+│   ├── string.ts
+│   └── string.test.ts
+tests/
+├── integration/               # Integration tests
+│   └── api/
+│       └── users.test.ts
+├── e2e/                       # End-to-end tests
+│   └── auth.spec.ts
+├── fixtures/                  # Shared test data
+│   └── users.ts
+└── helpers/                   # Test utilities
+    └── setup.ts
 ```
 
-### Examples
+### Test Fixtures
 
-```tsx
-// Buttons
-<button data-testid="create-task-btn">Create</button>
-<button data-testid="delete-task-btn">Delete</button>
-<button data-testid="submit-form-btn">Submit</button>
+Create reusable test data:
 
-// Inputs
-<input data-testid="task-title-input" />
-<input data-testid="email-input" />
-<select data-testid="priority-select" />
+```typescript
+// tests/fixtures/users.ts
+export const testUser = {
+  id: "test-id",
+  email: "test@example.com",
+  name: "Test User",
+};
 
-// Cards/Items with IDs
-<div data-testid={`task-card-${task.id}`}>...</div>
-<div data-testid={`task-card-${task.ticketId}`}>...</div>
-
-// Containers
-<div data-testid="column-todo">...</div>
-<div data-testid="column-in-progress">...</div>
-<nav data-testid="main-sidebar">...</nav>
-
-// Modal/Dialog
-<div data-testid="task-dialog">...</div>
-<div data-testid="confirm-dialog">...</div>
+export function createTestUser(overrides = {}) {
+  return { ...testUser, ...overrides };
+}
 ```
 
-### Anti-patterns
+### Test Helpers
 
-```tsx
-// ❌ Don't use generic IDs
-<button data-testid="button">...</button>
-<input data-testid="input" />
+Create reusable test utilities:
 
-// ❌ Don't use CSS class-like naming
-<div data-testid="task-card-container-wrapper">...</div>
+```typescript
+// tests/helpers/setup.ts
+export async function setupTestDatabase() {
+  // Initialize test database
+}
 
-// ❌ Don't use dynamic content in IDs (use stable identifiers)
-<div data-testid={`task-${task.title.toLowerCase()}`}>...</div>
-
-// ✅ Use stable identifiers
-<div data-testid={`task-card-${task.id}`}>...</div>
+export async function clearTestData() {
+  // Clear all test data
+}
 ```
 
 ---
 
-## Accessibility Testing
+## CI/CD Integration
 
-> **Requirement**: All UI components MUST pass automated accessibility tests before merge. See [ACCESSIBILITY_STANDARDS.md](ACCESSIBILITY_STANDARDS.md) for full compliance requirements.
-
-### axe-core Integration
-
-We use `jest-axe` with Vitest for automated accessibility testing.
-
-#### Installation
+### Pre-commit
 
 ```bash
-pnpm add -D jest-axe @axe-core/playwright
+# Run before every commit
+[test-command] --changed    # Only test changed files
 ```
 
-#### Test Setup
-
-```typescript
-// test/setup.ts
-import { configureAxe, toHaveNoViolations } from "jest-axe";
-
-expect.extend(toHaveNoViolations);
-
-// Configure axe for WCAG 2.1 AA compliance
-export const axe = configureAxe({
-  rules: {
-    "color-contrast": { enabled: true },
-    "aria-allowed-attr": { enabled: true },
-    "aria-valid-attr-value": { enabled: true },
-    "button-name": { enabled: true },
-    "image-alt": { enabled: true },
-    label: { enabled: true },
-  },
-});
-```
-
-### Component Accessibility Tests
-
-Every UI component MUST include accessibility tests:
-
-```typescript
-import { render } from "@testing-library/react";
-import { axe } from "@/test/setup";
-import { Button } from "./button";
-
-describe("Button accessibility", () => {
-  it("should have no accessibility violations", async () => {
-    const { container } = render(<Button>Click me</Button>);
-    const results = await axe(container);
-    expect(results).toHaveNoViolations();
-  });
-
-  it("should have no violations when disabled", async () => {
-    const { container } = render(<Button disabled>Disabled</Button>);
-    const results = await axe(container);
-    expect(results).toHaveNoViolations();
-  });
-
-  it("should have no violations as icon button", async () => {
-    const { container } = render(
-      <Button aria-label="Close dialog">
-        <XIcon aria-hidden="true" />
-      </Button>
-    );
-    const results = await axe(container);
-    expect(results).toHaveNoViolations();
-  });
-});
-```
-
-### E2E Accessibility Testing with Playwright
-
-Critical user flows MUST include accessibility scans:
-
-```typescript
-// e2e/accessibility.spec.ts
-import { test, expect } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
-
-test.describe("Accessibility", () => {
-  test("homepage should have no accessibility violations", async ({ page }) => {
-    await page.goto("/");
-
-    const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-      .analyze();
-
-    expect(accessibilityScanResults.violations).toEqual([]);
-  });
-
-  test("should maintain accessibility during interactions", async ({
-    page,
-  }) => {
-    await page.goto("/dashboard");
-
-    // Open a modal
-    await page.getByRole("button", { name: /create task/i }).click();
-
-    // Scan with modal open
-    const results = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-      .analyze();
-
-    expect(results.violations).toEqual([]);
-  });
-});
-```
-
-### Running Accessibility Tests
+### Pull Request
 
 ```bash
-# Run all tests including a11y
-pnpm test
-
-# Run only accessibility tests
-pnpm test -- --grep "accessibility"
-
-# E2E accessibility tests
-pnpm test:e2e:a11y
+# Run on every PR
+[test-command] --coverage   # Full test suite with coverage
 ```
 
-### CI Pipeline Integration
+### Required Checks
 
-```yaml
-# .github/workflows/ci.yml
-jobs:
-  test:
-    steps:
-      - name: Run accessibility tests
-        run: pnpm test -- --grep "accessibility"
-
-      - name: Run E2E accessibility tests
-        run: pnpm test:e2e:a11y
-```
-
-### Accessibility Test Checklist
-
-Before submitting a UI PR:
-
-- [ ] Component has `*.a11y.test.tsx` or accessibility tests in main test file
-- [ ] All variants tested with axe-core
-- [ ] Icon buttons have `aria-label`
-- [ ] Form inputs have associated labels
-- [ ] Interactive elements are keyboard accessible
-- [ ] Color contrast meets WCAG AA (4.5:1 for text)
-- [ ] Focus states are visible
+- [ ] All tests pass
+- [ ] Coverage thresholds met
+- [ ] No snapshot mismatches (if using snapshots)
 
 ---
 
 ## Related Documents
 
-- [ACCESSIBILITY_STANDARDS.md](ACCESSIBILITY_STANDARDS.md) - WCAG 2.1 AA compliance requirements
-- [AGENT_EDITING_INSTRUCTIONS.md](AGENT_EDITING_INSTRUCTIONS.md) - Required files for each change type
-- [TESTING_GUIDE.md](../TESTING_GUIDE.md) - Manual testing checklist
-- [QUICK_START_TESTING.md](../QUICK_START_TESTING.md) - Getting started with testing
+- [AGENT_EDITING_INSTRUCTIONS.md](AGENT_EDITING_INSTRUCTIONS.md) - Coding standards
+- [SINGLE_SOURCE_OF_TRUTH.md](SINGLE_SOURCE_OF_TRUTH.md) - Canonical locations
