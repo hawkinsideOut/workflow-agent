@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.0] - 2026-01-20
+
+### Added
+
+- **Pattern Publishing Command**: New `workflow learn:publish` command to toggle pattern visibility for cross-project sharing
+  - Mark patterns as public with `workflow learn:publish <patternId>` to make them available for `learn:sync`
+  - Mark patterns as private with `workflow learn:publish <patternId> --private`
+  - Batch update all patterns with `--all` flag: `workflow learn:publish --all` or `workflow learn:publish --all --private`
+  - Skip confirmation prompts with `-y, --yes` flag for CI/automation
+  - Fixes issue where `learn:sync --dry-run` showed 0 patterns (patterns default to `isPrivate: true`)
+  - Works with both fix patterns and blueprints
+
 ## [2.9.0] - 2026-01-20
 
 ### Added
