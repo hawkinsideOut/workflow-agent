@@ -27,6 +27,39 @@ vi.mock("../db/queries", () => ({
   markWebhookProcessed: vi.fn(),
   getRecentWebhookEvents: vi.fn(() => []),
   getActiveAttempts: vi.fn(() => []),
+  checkRateLimit: vi.fn(() => ({ allowed: true, remaining: 100, resetAt: null })),
+  incrementRateLimit: vi.fn(),
+  batchCreatePatterns: vi.fn(() => ({ inserted: 2, skipped: 0, errors: [] })),
+  getPatterns: vi.fn(() => ({
+    patterns: [
+      {
+        id: 1,
+        pattern_id: "test-uuid-1",
+        pattern_type: "fix",
+        pattern_data: '{"name":"Test Fix"}',
+        contributor_id: "wf-test-123",
+        pattern_hash: null,
+        created_at: "2026-01-20T00:00:00.000Z",
+        updated_at: "2026-01-20T00:00:00.000Z",
+      },
+    ],
+    total: 1,
+  })),
+  getPatternById: vi.fn((id: string) =>
+    id === "test-uuid-1"
+      ? {
+          id: 1,
+          pattern_id: "test-uuid-1",
+          pattern_type: "fix",
+          pattern_data: '{"name":"Test Fix"}',
+          contributor_id: "wf-test-123",
+          pattern_hash: null,
+          created_at: "2026-01-20T00:00:00.000Z",
+          updated_at: "2026-01-20T00:00:00.000Z",
+        }
+      : null
+  ),
+  getPatternsNewerThan: vi.fn(() => []),
 }));
 
 vi.mock("../webhooks/index", () => ({
@@ -145,6 +178,124 @@ describe("HTTP Server", () => {
 
       expect(res.status).toBe(204);
       expect(res.headers.get("Access-Control-Allow-Origin")).toBeDefined();
+    });
+  });
+
+  describe("Pattern Registry - POST /patterns/push", () => {
+    it("should reject missing contributor ID header", async () => {
+      const res = await app.request("/patterns/push", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ patterns: [] }),
+      });
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toBe("Missing x-contributor-id header");
+    });
+
+    it("should accept valid pattern push", async () => {
+      const res = await app.request("/patterns/push", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-contributor-id": "wf-test-123",
+        },
+        body: JSON.stringify({
+          patterns: [
+            {
+              id: "550e8400-e29b-41d4-a716-446655440000",
+              type: "fix",
+              data: { name: "Test Pattern" },
+            },
+            {
+              id: "550e8400-e29b-41d4-a716-446655440001",
+              type: "blueprint",
+              data: { name: "Test Blueprint" },
+            },
+          ],
+        }),
+      });
+
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.status).toBe("ok");
+      expect(body.pushed).toBe(2);
+      expect(body.rateLimit).toBeDefined();
+      expect(body.rateLimit.remaining).toBe(100);
+    });
+
+    it("should reject invalid pattern data", async () => {
+      const res = await app.request("/patterns/push", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-contributor-id": "wf-test-123",
+        },
+        body: JSON.stringify({
+          patterns: [
+            {
+              id: "not-a-uuid",
+              type: "invalid-type",
+              data: {},
+            },
+          ],
+        }),
+      });
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toBe("Validation failed");
+    });
+  });
+
+  describe("Pattern Registry - GET /patterns/pull", () => {
+    it("should return patterns list", async () => {
+      const res = await app.request("/patterns/pull");
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.patterns).toBeDefined();
+      expect(Array.isArray(body.patterns)).toBe(true);
+      expect(body.pagination).toBeDefined();
+    });
+
+    it("should support type filter", async () => {
+      const res = await app.request("/patterns/pull?type=fix");
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.patterns).toBeDefined();
+    });
+
+    it("should support pagination parameters", async () => {
+      const res = await app.request("/patterns/pull?limit=10&offset=5");
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.pagination.limit).toBe(10);
+      expect(body.pagination.offset).toBe(5);
+    });
+  });
+
+  describe("Pattern Registry - GET /patterns/:id", () => {
+    it("should return pattern by ID", async () => {
+      const res = await app.request("/patterns/test-uuid-1");
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.id).toBe("test-uuid-1");
+      expect(body.type).toBe("fix");
+    });
+
+    it("should return 404 for non-existent pattern", async () => {
+      const res = await app.request("/patterns/non-existent-uuid");
+
+      expect(res.status).toBe(404);
+      const body = await res.json();
+      expect(body.error).toBe("Pattern not found");
     });
   });
 });

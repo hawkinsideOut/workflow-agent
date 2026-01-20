@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.0] - 2026-01-20
+
+### Added
+
+- **Pattern Registry Push/Pull**: Complete implementation of community pattern sharing
+  - `workflow learn:sync --push` now actually pushes anonymized patterns to the registry
+  - `workflow learn:sync --pull` downloads community patterns and merges into local store
+  - New `RegistryClient` HTTP client with automatic retry and timeout handling
+  - Rate limiting: 100 patterns per hour per contributor (returns 429 with reset time)
+  - Contributor ID header for anonymous attribution
+  - Patterns marked as synced (`syncedAt` timestamp) after successful push
+  - Pulled patterns saved with `source: "community"` and default private visibility
+  
+- **GitHub App Registry Endpoints**: New pattern registry API in github-app server
+  - `POST /patterns/push` - Submit anonymized patterns to the community registry
+  - `GET /patterns/pull` - Fetch patterns with pagination and type filtering
+  - `GET /patterns/:id` - Get single pattern by UUID
+  - SQLite database schema for `community_patterns` and `contributor_rate_limits` tables
+  - Pattern deduplication by hash to avoid duplicates
+
+- **New npm Scripts**: Added convenience scripts for sync operations (40 total scripts)
+  - `workflow:learn:sync:push` - Push patterns to registry
+  - `workflow:learn:sync:pull` - Pull patterns from registry
+
+### Changed
+
+- **Environment Configuration**: New `WORKFLOW_REGISTRY_URL` environment variable
+  - Default: `https://patterns.workflow-agent.dev`
+  - Override for local development: `WORKFLOW_REGISTRY_URL=http://localhost:3000`
+
 ## [2.13.1] - 2026-01-20
 
 ### Added

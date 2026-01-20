@@ -10,6 +10,8 @@ import type {
   VisualComparison,
   WebhookEvent,
   AutoHealHistory,
+  CommunityPattern,
+  ContributorRateLimit,
 } from "./schema.js";
 
 // =============================================================================
@@ -469,3 +471,235 @@ export function getHealHistory(retryAttemptId: number): AutoHealHistory[] {
     [retryAttemptId],
   );
 }
+
+// =============================================================================
+// Community Patterns Queries
+// =============================================================================
+
+/**
+ * Rate limiting constants
+ */
+const RATE_LIMIT_MAX = 100; // Max patterns per window
+const RATE_LIMIT_WINDOW_HOURS = 1; // Window duration in hours
+
+/**
+ * Check if a contributor has exceeded their rate limit
+ * Returns { allowed: boolean, remaining: number, resetAt: string | null }
+ */
+export function checkRateLimit(contributorId: string): {
+  allowed: boolean;
+  remaining: number;
+  resetAt: string | null;
+} {
+  const limit = queryOne<ContributorRateLimit>(
+    `SELECT * FROM contributor_rate_limits WHERE contributor_id = ?`,
+    [contributorId],
+  );
+
+  if (!limit) {
+    // No record = not rate limited
+    return { allowed: true, remaining: RATE_LIMIT_MAX, resetAt: null };
+  }
+
+  // Check if window has expired
+  const windowStart = new Date(limit.window_start);
+  const windowEnd = new Date(
+    windowStart.getTime() + RATE_LIMIT_WINDOW_HOURS * 60 * 60 * 1000,
+  );
+  const now = new Date();
+
+  if (now > windowEnd) {
+    // Window expired, reset the counter
+    execute(
+      `UPDATE contributor_rate_limits 
+       SET push_count = 0, window_start = datetime('now'), updated_at = datetime('now')
+       WHERE contributor_id = ?`,
+      [contributorId],
+    );
+    return { allowed: true, remaining: RATE_LIMIT_MAX, resetAt: null };
+  }
+
+  // Window still active
+  const remaining = Math.max(0, RATE_LIMIT_MAX - limit.push_count);
+  return {
+    allowed: remaining > 0,
+    remaining,
+    resetAt: windowEnd.toISOString(),
+  };
+}
+
+/**
+ * Increment rate limit counter for a contributor
+ */
+export function incrementRateLimit(
+  contributorId: string,
+  count: number = 1,
+): void {
+  const existing = queryOne<ContributorRateLimit>(
+    `SELECT * FROM contributor_rate_limits WHERE contributor_id = ?`,
+    [contributorId],
+  );
+
+  if (!existing) {
+    // Create new record
+    execute(
+      `INSERT INTO contributor_rate_limits (contributor_id, push_count, window_start)
+       VALUES (?, ?, datetime('now'))`,
+      [contributorId, count],
+    );
+  } else {
+    // Update existing
+    execute(
+      `UPDATE contributor_rate_limits 
+       SET push_count = push_count + ?, updated_at = datetime('now')
+       WHERE contributor_id = ?`,
+      [count, contributorId],
+    );
+  }
+}
+
+/**
+ * Get a pattern by its UUID
+ */
+export function getPatternById(patternId: string): CommunityPattern | null {
+  return queryOne<CommunityPattern>(
+    `SELECT * FROM community_patterns WHERE pattern_id = ?`,
+    [patternId],
+  );
+}
+
+/**
+ * Get a pattern by its hash (for deduplication)
+ */
+export function getPatternByHash(hash: string): CommunityPattern | null {
+  return queryOne<CommunityPattern>(
+    `SELECT * FROM community_patterns WHERE pattern_hash = ?`,
+    [hash],
+  );
+}
+
+/**
+ * Create a new community pattern
+ */
+export function createPattern(
+  patternId: string,
+  patternType: "fix" | "blueprint" | "solution",
+  patternData: string,
+  contributorId?: string,
+  patternHash?: string,
+): CommunityPattern {
+  return insertAndReturn<CommunityPattern>(
+    `INSERT INTO community_patterns (pattern_id, pattern_type, pattern_data, contributor_id, pattern_hash)
+     VALUES (?, ?, ?, ?, ?)`,
+    [patternId, patternType, patternData, contributorId ?? null, patternHash ?? null],
+  );
+}
+
+/**
+ * Batch create multiple patterns (within a transaction-like flow)
+ * Returns count of successfully inserted patterns
+ */
+export function batchCreatePatterns(
+  patterns: Array<{
+    patternId: string;
+    patternType: "fix" | "blueprint" | "solution";
+    patternData: string;
+    contributorId?: string;
+    patternHash?: string;
+  }>,
+): { inserted: number; skipped: number; errors: string[] } {
+  let inserted = 0;
+  let skipped = 0;
+  const errors: string[] = [];
+
+  for (const p of patterns) {
+    try {
+      // Check for duplicate by ID or hash
+      const existingById = getPatternById(p.patternId);
+      if (existingById) {
+        skipped++;
+        continue;
+      }
+
+      if (p.patternHash) {
+        const existingByHash = getPatternByHash(p.patternHash);
+        if (existingByHash) {
+          skipped++;
+          continue;
+        }
+      }
+
+      createPattern(
+        p.patternId,
+        p.patternType,
+        p.patternData,
+        p.contributorId,
+        p.patternHash,
+      );
+      inserted++;
+    } catch (error) {
+      errors.push(
+        `Failed to insert ${p.patternId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  return { inserted, skipped, errors };
+}
+
+/**
+ * Get patterns with pagination
+ */
+export function getPatterns(
+  patternType?: "fix" | "blueprint" | "solution",
+  limit: number = 50,
+  offset: number = 0,
+): { patterns: CommunityPattern[]; total: number } {
+  let patterns: CommunityPattern[];
+  let total: number;
+
+  if (patternType) {
+    patterns = queryAll<CommunityPattern>(
+      `SELECT * FROM community_patterns 
+       WHERE pattern_type = ?
+       ORDER BY created_at DESC 
+       LIMIT ? OFFSET ?`,
+      [patternType, limit, offset],
+    );
+    const countResult = queryOne<{ count: number }>(
+      `SELECT COUNT(*) as count FROM community_patterns WHERE pattern_type = ?`,
+      [patternType],
+    );
+    total = countResult?.count ?? 0;
+  } else {
+    patterns = queryAll<CommunityPattern>(
+      `SELECT * FROM community_patterns 
+       ORDER BY created_at DESC 
+       LIMIT ? OFFSET ?`,
+      [limit, offset],
+    );
+    const countResult = queryOne<{ count: number }>(
+      `SELECT COUNT(*) as count FROM community_patterns`,
+    );
+    total = countResult?.count ?? 0;
+  }
+
+  return { patterns, total };
+}
+
+/**
+ * Get patterns newer than a given date (for incremental pulls)
+ */
+export function getPatternsNewerThan(
+  since: string,
+  limit: number = 100,
+): CommunityPattern[] {
+  return queryAll<CommunityPattern>(
+    `SELECT * FROM community_patterns 
+     WHERE created_at > ?
+     ORDER BY created_at ASC 
+     LIMIT ?`,
+    [since, limit],
+  );
+}
+

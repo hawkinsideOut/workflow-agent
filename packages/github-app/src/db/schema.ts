@@ -100,6 +100,36 @@ CREATE TABLE IF NOT EXISTS auto_heal_history (
 
 -- Index for heal history
 CREATE INDEX IF NOT EXISTS idx_heal_retry ON auto_heal_history(retry_attempt_id);
+
+-- Community patterns registry
+CREATE TABLE IF NOT EXISTS community_patterns (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pattern_id TEXT NOT NULL UNIQUE,
+  pattern_type TEXT NOT NULL CHECK(pattern_type IN ('fix', 'blueprint', 'solution')),
+  pattern_data TEXT NOT NULL,
+  contributor_id TEXT,
+  pattern_hash TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Index for pattern lookups
+CREATE INDEX IF NOT EXISTS idx_pattern_type ON community_patterns(pattern_type);
+CREATE INDEX IF NOT EXISTS idx_pattern_contributor ON community_patterns(contributor_id);
+CREATE INDEX IF NOT EXISTS idx_pattern_hash ON community_patterns(pattern_hash);
+
+-- Rate limiting for pattern push
+CREATE TABLE IF NOT EXISTS contributor_rate_limits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  contributor_id TEXT NOT NULL UNIQUE,
+  push_count INTEGER NOT NULL DEFAULT 0,
+  window_start TEXT NOT NULL DEFAULT (datetime('now')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Index for rate limit lookups
+CREATE INDEX IF NOT EXISTS idx_rate_limit_contributor ON contributor_rate_limits(contributor_id);
 `;
 
 /**
@@ -170,4 +200,24 @@ export interface AutoHealHistory {
   success: number;
   duration_ms: number | null;
   created_at: string;
+}
+
+export interface CommunityPattern {
+  id: number;
+  pattern_id: string;
+  pattern_type: "fix" | "blueprint" | "solution";
+  pattern_data: string;
+  contributor_id: string | null;
+  pattern_hash: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContributorRateLimit {
+  id: number;
+  contributor_id: string;
+  push_count: number;
+  window_start: string;
+  created_at: string;
+  updated_at: string;
 }

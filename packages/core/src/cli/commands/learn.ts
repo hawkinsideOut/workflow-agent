@@ -11,6 +11,11 @@ import {
   type Blueprint,
   type PatternTag,
 } from "@hawkinside_out/workflow-improvement-tracker";
+import {
+  RegistryClient,
+  RateLimitedException,
+  RegistryError,
+} from "../../sync/index.js";
 
 // ============================================
 // Types
@@ -623,42 +628,250 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
     console.log(chalk.cyan("\n📤 Pushing patterns...\n"));
 
     // Anonymize patterns before sync
-    let anonymizedFixes = 0;
-    let anonymizedBlueprints = 0;
+    const anonymizedPatterns: Array<{
+      pattern: FixPattern | Blueprint;
+      type: "fix" | "blueprint";
+      originalId: string;
+    }> = [];
 
     for (const fix of fixes) {
       const result = anonymizer.anonymizeFixPattern(fix);
-      if (result.success) {
-        anonymizedFixes++;
-        if (!options.dryRun) {
-          // TODO: Actually push to registry when implemented
-          console.log(chalk.dim(`  ✓ Anonymized: ${fix.name}`));
-        }
+      if (result.success && result.data) {
+        anonymizedPatterns.push({
+          pattern: result.data,
+          type: "fix",
+          originalId: fix.id,
+        });
+        console.log(chalk.dim(`  ✓ Anonymized: ${fix.name}`));
       }
     }
 
     for (const bp of blueprints) {
       const result = anonymizer.anonymizeBlueprint(bp);
-      if (result.success) {
-        anonymizedBlueprints++;
-        if (!options.dryRun) {
-          // TODO: Actually push to registry when implemented
-          console.log(chalk.dim(`  ✓ Anonymized: ${bp.name}`));
-        }
+      if (result.success && result.data) {
+        anonymizedPatterns.push({
+          pattern: result.data,
+          type: "blueprint",
+          originalId: bp.id,
+        });
+        console.log(chalk.dim(`  ✓ Anonymized: ${bp.name}`));
       }
     }
 
+    const fixCount = anonymizedPatterns.filter((p) => p.type === "fix").length;
+    const bpCount = anonymizedPatterns.filter((p) => p.type === "blueprint").length;
+
+    if (anonymizedPatterns.length === 0) {
+      console.log(chalk.yellow("\n⚠️ No patterns to push"));
+      return;
+    }
+
     console.log(
-      chalk.green(
-        `\n✅ Ready to push ${anonymizedFixes} fixes and ${anonymizedBlueprints} blueprints`,
+      chalk.dim(
+        `\n  Ready to push ${fixCount} fixes and ${bpCount} blueprints`,
       ),
     );
-    console.log(chalk.dim("  (Registry push not yet implemented)"));
+
+    if (options.dryRun) {
+      console.log(chalk.yellow("\n📋 DRY-RUN: Patterns would be pushed (no actual changes)"));
+      return;
+    }
+
+    // Get contributor ID
+    const contributorResult = await contributorManager.getOrCreateId();
+    if (!contributorResult.success || !contributorResult.data) {
+      console.log(chalk.red("\n❌ Failed to get contributor ID"));
+      return;
+    }
+
+    // Push to registry
+    const registryClient = new RegistryClient();
+
+    try {
+      console.log(chalk.dim("\n  Connecting to registry..."));
+
+      const pushResult = await registryClient.push(
+        anonymizedPatterns.map((p) => ({
+          pattern: p.pattern,
+          type: p.type,
+        })),
+        contributorResult.data,
+      );
+
+      // Mark pushed patterns as synced
+      if (pushResult.pushed > 0) {
+        const pushedFixIds = anonymizedPatterns
+          .filter((p) => p.type === "fix")
+          .map((p) => p.originalId);
+        const pushedBpIds = anonymizedPatterns
+          .filter((p) => p.type === "blueprint")
+          .map((p) => p.originalId);
+
+        if (pushedFixIds.length > 0) {
+          await store.markAsSynced(pushedFixIds, "fix");
+        }
+        if (pushedBpIds.length > 0) {
+          await store.markAsSynced(pushedBpIds, "blueprint");
+        }
+      }
+
+      console.log(
+        chalk.green(`\n✅ Successfully pushed ${pushResult.pushed} patterns to registry`),
+      );
+
+      if (pushResult.skipped > 0) {
+        console.log(
+          chalk.dim(`   (${pushResult.skipped} patterns already existed)`),
+        );
+      }
+
+      if (pushResult.errors && pushResult.errors.length > 0) {
+        console.log(chalk.yellow(`\n⚠️ Some patterns had errors:`));
+        for (const err of pushResult.errors) {
+          console.log(chalk.dim(`   - ${err}`));
+        }
+      }
+
+      console.log(
+        chalk.dim(
+          `\n  Rate limit: ${pushResult.rateLimit.remaining} patterns remaining this hour`,
+        ),
+      );
+    } catch (error) {
+      if (error instanceof RateLimitedException) {
+        console.log(chalk.red("\n❌ Rate limit exceeded"));
+        console.log(
+          chalk.dim(
+            `   Try again in ${error.getTimeUntilReset()}`,
+          ),
+        );
+      } else if (error instanceof RegistryError) {
+        console.log(chalk.red(`\n❌ Registry error: ${error.message}`));
+      } else {
+        console.log(
+          chalk.red(
+            `\n❌ Failed to push: ${error instanceof Error ? error.message : String(error)}`,
+          ),
+        );
+      }
+      process.exit(1);
+    }
   }
 
   if (options.pull) {
     console.log(chalk.cyan("\n📥 Pulling patterns from registry...\n"));
-    console.log(chalk.dim("  (Registry pull not yet implemented)"));
+
+    if (options.dryRun) {
+      console.log(chalk.yellow("📋 DRY-RUN: Would pull patterns (no actual changes)\n"));
+
+      // Show what would be pulled
+      const registryClient = new RegistryClient();
+      try {
+        const result = await registryClient.pull({ limit: 10 });
+        console.log(chalk.dim(`  Registry has ${result.pagination.total} patterns available`));
+        if (result.patterns.length > 0) {
+          console.log(chalk.dim("\n  First 10 patterns:"));
+          for (const p of result.patterns) {
+            console.log(chalk.dim(`    - [${p.type}] ${(p.data as { name?: string }).name || p.id}`));
+          }
+          if (result.pagination.hasMore) {
+            console.log(chalk.dim(`    ... and ${result.pagination.total - 10} more`));
+          }
+        }
+      } catch (error) {
+        console.log(
+          chalk.red(
+            `  Failed to connect: ${error instanceof Error ? error.message : String(error)}`,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Pull patterns from registry
+    const registryClient = new RegistryClient();
+
+    try {
+      console.log(chalk.dim("  Connecting to registry..."));
+
+      let totalPulled = 0;
+      let totalSkipped = 0;
+      let offset = 0;
+      const limit = 50;
+
+      // Paginate through all patterns
+      while (true) {
+        const result = await registryClient.pull({ limit, offset });
+
+        if (result.patterns.length === 0) {
+          break;
+        }
+
+        for (const pattern of result.patterns) {
+          // Check if pattern already exists locally
+          let exists = false;
+          if (pattern.type === "fix") {
+            const existingResult = await store.getFixPattern(pattern.id);
+            exists = existingResult.success && !!existingResult.data;
+          } else if (pattern.type === "blueprint") {
+            const existingResult = await store.getBlueprint(pattern.id);
+            exists = existingResult.success && !!existingResult.data;
+          }
+
+          if (exists) {
+            totalSkipped++;
+            continue;
+          }
+
+          // Save pattern locally
+          if (pattern.type === "fix") {
+            const fixData = pattern.data as unknown as FixPattern;
+            await store.saveFixPattern({
+              ...fixData,
+              id: pattern.id,
+              source: "community",
+              isPrivate: true, // Keep pulled patterns private by default
+            });
+            totalPulled++;
+          } else if (pattern.type === "blueprint") {
+            const bpData = pattern.data as unknown as Blueprint;
+            await store.saveBlueprint({
+              ...bpData,
+              id: pattern.id,
+              source: "community",
+              isPrivate: true,
+            });
+            totalPulled++;
+          }
+        }
+
+        if (!result.pagination.hasMore) {
+          break;
+        }
+
+        offset += limit;
+        console.log(chalk.dim(`  ... pulled ${offset} patterns so far`));
+      }
+
+      console.log(
+        chalk.green(`\n✅ Pulled ${totalPulled} new patterns from registry`),
+      );
+
+      if (totalSkipped > 0) {
+        console.log(chalk.dim(`   (${totalSkipped} patterns already existed locally)`));
+      }
+    } catch (error) {
+      if (error instanceof RegistryError) {
+        console.log(chalk.red(`\n❌ Registry error: ${error.message}`));
+      } else {
+        console.log(
+          chalk.red(
+            `\n❌ Failed to pull: ${error instanceof Error ? error.message : String(error)}`,
+          ),
+        );
+      }
+      process.exit(1);
+    }
   }
 
   if (!options.push && !options.pull) {

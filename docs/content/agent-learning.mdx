@@ -238,6 +238,35 @@ workflow learn:sync --push
 workflow learn:sync --pull
 ```
 
+**Push Behavior:**
+- Patterns must be marked as public first using `workflow learn:publish`
+- Patterns are anonymized (paths, PII stripped) before upload
+- Rate limit: 100 patterns per hour per contributor
+- On success, patterns are marked with `syncedAt` timestamp
+- Returns count of pushed, skipped (duplicates), and any errors
+
+**Pull Behavior:**
+- Downloads community patterns with pagination
+- Skips patterns that already exist locally (by ID)
+- Pulled patterns are saved with `source: "community"`
+- Pulled patterns default to `isPrivate: true`
+
+**Registry Configuration:**
+```bash
+# Default registry
+# https://patterns.workflow-agent.dev
+
+# Override for local development
+export WORKFLOW_REGISTRY_URL=http://localhost:3000
+```
+
+**Rate Limiting:**
+If you hit the rate limit (100 patterns/hour), you'll see:
+```
+❌ Rate limit exceeded
+   Try again in 45 minutes
+```
+
 ---
 
 ## Pattern Schema
