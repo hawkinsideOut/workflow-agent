@@ -79,6 +79,40 @@ program
   .action(configCommand);
 
 program
+  .command("config:fix")
+  .description("Automatically fix common configuration validation issues")
+  .action(async () => {
+    const chalk = (await import("chalk")).default;
+    const { autoFixConfigFile } = await import("../config/index.js");
+
+    console.log(chalk.bold.cyan("\n🔧 Workflow Configuration Auto-Fix\n"));
+
+    const result = await autoFixConfigFile();
+
+    if (result.success) {
+      if (result.changes.length === 0) {
+        console.log(chalk.green("✓ Configuration is already valid!"));
+      } else {
+        console.log(chalk.green("✓ Configuration fixed successfully!\n"));
+        console.log(chalk.dim("Changes made:"));
+        for (const change of result.changes) {
+          console.log(chalk.dim(`  • ${change}`));
+        }
+        console.log();
+      }
+      process.exit(0);
+    } else {
+      if (result.configPath) {
+        console.log(chalk.red(`✗ Failed to fix configuration: ${result.error}`));
+      } else {
+        console.log(chalk.red("✗ No workflow configuration file found"));
+        console.log(chalk.yellow("  Run: workflow init"));
+      }
+      process.exit(1);
+    }
+  });
+
+program
   .command("suggest")
   .description("Submit an improvement suggestion")
   .argument("<feedback>", "Your improvement suggestion")
@@ -98,6 +132,7 @@ program
   .command("doctor")
   .description("Run health check and get optimization suggestions")
   .option("--check-guidelines-only", "Only check guidelines presence")
+  .option("--fix", "Automatically fix validation issues in configuration")
   .action(doctorCommand);
 
 program

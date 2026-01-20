@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { loadConfig } from "../../config/index.js";
+import { loadConfigSafe, autoFixConfigFile } from "../../config/index.js";
 import { getMandatoryTemplateFilenames } from "../../templates/metadata.js";
 import { existsSync } from "fs";
 import { join } from "path";
@@ -7,16 +7,65 @@ import { hasGitRepo, getAllHooksStatus } from "../../utils/hooks.js";
 
 export async function doctorCommand(options?: {
   checkGuidelinesOnly?: boolean;
+  fix?: boolean;
 }) {
   console.log(chalk.bold.cyan("\n🏥 Workflow Agent Health Check\n"));
 
-  const config = await loadConfig();
+  // Use safe loading to handle validation errors gracefully
+  const result = await loadConfigSafe();
 
-  if (!config) {
+  // Handle missing config
+  if (!result.configPath && !result.rawConfig) {
     console.error(chalk.red("✗ No workflow configuration found"));
     console.log(chalk.yellow("  Run: workflow init"));
     process.exit(1);
   }
+
+  // Handle validation errors
+  if (!result.valid && result.issues.length > 0) {
+    console.log(chalk.yellow("⚠ Configuration has validation issues:\n"));
+
+    for (const issue of result.issues) {
+      console.log(chalk.red(`  ✗ ${issue.path}: ${issue.message}`));
+      if (issue.currentValue !== undefined) {
+        console.log(chalk.dim(`    Current value: ${JSON.stringify(issue.currentValue)}`));
+      }
+      if (issue.suggestedFix) {
+        console.log(chalk.green(`    Suggested fix: ${issue.suggestedFix.description}`));
+        console.log(chalk.dim(`    New value: ${JSON.stringify(issue.suggestedFix.newValue)}`));
+      }
+    }
+
+    // Check if auto-fix is available
+    const hasAutoFixes = result.issues.some((i) => i.suggestedFix);
+
+    if (hasAutoFixes) {
+      if (options?.fix) {
+        // Auto-fix was requested
+        console.log(chalk.cyan("\n🔧 Attempting to auto-fix issues...\n"));
+        const fixResult = await autoFixConfigFile();
+
+        if (fixResult.success) {
+          console.log(chalk.green("✓ Configuration fixed successfully!\n"));
+          for (const change of fixResult.changes) {
+            console.log(chalk.dim(`  • ${change}`));
+          }
+          console.log(chalk.cyan("\n  Run 'workflow doctor' again to verify.\n"));
+          process.exit(0);
+        } else {
+          console.log(chalk.red(`✗ Auto-fix failed: ${fixResult.error}`));
+          process.exit(1);
+        }
+      } else {
+        console.log(chalk.cyan("\n💡 Auto-fix available!"));
+        console.log(chalk.dim("  Run: workflow doctor --fix\n"));
+      }
+    }
+
+    process.exit(1);
+  }
+
+  const config = result.config!;
 
   console.log(chalk.green("✓ Configuration loaded successfully"));
   console.log(chalk.dim(`  Project: ${config.projectName}`));
