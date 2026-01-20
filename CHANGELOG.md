@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.1] - 2026-01-20
+
+### Added
+
+- **Pattern Registry Test Suite**: Comprehensive test coverage for v2.14.0 feature
+  - 28 unit tests for `RegistryClient` (push, pull, getPattern, healthCheck, errors, timeout)
+  - 25 tests for pattern queries in github-app (createPattern, getPatterns, batchCreatePatterns, rate limiting)
+  - Test coverage for custom error classes (`RateLimitedException`, `RegistryError`)
+  - Timeout handling tests with `AbortController` integration
+
 ## [2.14.0] - 2026-01-20
 
 ### Added
