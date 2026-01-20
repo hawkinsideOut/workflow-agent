@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-01-20
+
+### Added
+
+- **Document Reference Validation**: New `workflow docs:validate` command to scan markdown files for broken file references
+  - Scans all `.md` files for inline links `[text](path)`, images `![alt](path)`, and reference-style links `[ref]: path`
+  - Detects broken local file references and missing files
+  - Interactive fix mode with `--fix` flag to correct broken links
+  - Suggests similar files using glob pattern matching
+  - Supports custom glob patterns with `--patterns` flag
+  - Respects ignore patterns (node_modules, .git, dist, build by default)
+  - Skips external URLs (`http://`, `https://`) and anchor-only links (`#section`)
+  - New npm scripts: `workflow:docs:validate` and `workflow:docs:validate:fix` (now 36 total scripts)
+
 ## [2.8.1] - 2026-01-19
 
 ### Changed

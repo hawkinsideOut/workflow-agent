@@ -14,6 +14,7 @@ import { autoSetupCommand } from "./commands/auto-setup-command.js";
 import { advisoryCommand } from "./commands/advisory.js";
 import { generateInstructionsCommand } from "./commands/generate-instructions.js";
 import { updateTemplatesCommand } from "./commands/update-templates.js";
+import { docsValidateCommand } from "./commands/docs-validate.js";
 import {
   learnRecordCommand,
   learnListCommand,
@@ -167,6 +168,27 @@ program
   .option("--force", "Overwrite existing template files")
   .option("--skip", "Skip the update (useful in CI)")
   .action(updateTemplatesCommand);
+
+program
+  .command("docs:validate")
+  .description("Validate document references in markdown files")
+  .option("--fix", "Interactively fix broken references")
+  .option("--patterns <patterns>", "Glob patterns to scan (comma-separated, default: **/*.md)")
+  .option("--ignore <patterns>", "Glob patterns to ignore (comma-separated)")
+  .action((options) => {
+    const patterns = options.patterns
+      ? options.patterns.split(",").map((p: string) => p.trim())
+      : undefined;
+    const ignore = options.ignore
+      ? options.ignore.split(",").map((p: string) => p.trim())
+      : undefined;
+
+    return docsValidateCommand({
+      fix: options.fix,
+      patterns,
+      ignore,
+    });
+  });
 
 // ============================================
 // Learning System Commands

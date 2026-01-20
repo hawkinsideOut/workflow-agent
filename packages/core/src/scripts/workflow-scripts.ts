@@ -55,6 +55,10 @@ export const WORKFLOW_SCRIPTS = {
   // Template Management
   "workflow:update-templates": "workflow-agent update-templates",
   "workflow:update-templates:force": "workflow-agent update-templates --force",
+
+  // Document Validation
+  "workflow:docs:validate": "workflow-agent docs:validate",
+  "workflow:docs:validate:fix": "workflow-agent docs:validate --fix",
 } as const;
 
 export type WorkflowScriptName = keyof typeof WORKFLOW_SCRIPTS;
@@ -110,6 +114,10 @@ export const SCRIPT_CATEGORIES = {
   "Template Management": [
     "workflow:update-templates",
     "workflow:update-templates:force",
+  ],
+  "Document Validation": [
+    "workflow:docs:validate",
+    "workflow:docs:validate:fix",
   ],
 } as const;
 

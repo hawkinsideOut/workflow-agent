@@ -1,6 +1,6 @@
 {
   "name": "workflow-agent-cli",
-  "version": "2.8.1",
+  "version": "2.9.0",
   "description": "A self-evolving workflow management system for AI agent development",
   "keywords": [
     "workflow",
@@ -44,8 +44,9 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "echo \"No tests yet\"",
-    "test:coverage": "echo \"No tests yet\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "echo \"ESLint not configured - skipping\"",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",

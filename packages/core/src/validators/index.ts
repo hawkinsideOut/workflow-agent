@@ -9,6 +9,17 @@ export interface ValidationResult {
   suggestion?: string;
 }
 
+// Export document reference validation
+export {
+  validateDocumentReferences,
+  scanDocumentReferences,
+  findSimilarFiles,
+  applyReferenceFix,
+  type DocumentReference,
+  type BrokenReference,
+  type DocumentValidationResult,
+} from "./document-references.js";
+
 // Cache for discovered custom scopes
 let customScopesCache: Scope[] | null = null;
 let cacheTimestamp: number = 0;
