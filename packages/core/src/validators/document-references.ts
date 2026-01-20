@@ -5,7 +5,7 @@
 
 import { existsSync } from "fs";
 import { readFile } from "fs/promises";
-import { join, resolve, dirname, isAbsolute, relative } from "path";
+import { resolve, dirname } from "path";
 import fg from "fast-glob";
 
 export interface DocumentReference {
@@ -90,7 +90,7 @@ function resolveReferencePath(
  */
 export async function extractReferences(
   filePath: string,
-  projectRoot: string,
+  _projectRoot: string,
 ): Promise<DocumentReference[]> {
   const content = await readFile(filePath, "utf-8");
   const references: DocumentReference[] = [];
