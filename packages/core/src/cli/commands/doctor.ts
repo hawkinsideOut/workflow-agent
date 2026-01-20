@@ -115,19 +115,24 @@ export async function doctorCommand(options?: {
     console.log(chalk.yellow("⚠ No git repository found"));
     console.log(chalk.dim("  Run: git init"));
   } else {
-    const hooksStatus = getAllHooksStatus(cwd);
-    
-    for (const status of hooksStatus) {
-      if (status.installed) {
-        console.log(chalk.green(`✓ ${status.hookType}: installed`));
-      } else {
-        console.log(chalk.yellow(`⚠ ${status.hookType}: not installed`));
+    try {
+      const hooksStatus = await getAllHooksStatus(cwd);
+      
+      for (const status of hooksStatus) {
+        if (status.installed) {
+          console.log(chalk.green(`✓ ${status.hookType}: installed`));
+        } else {
+          console.log(chalk.yellow(`⚠ ${status.hookType}: not installed`));
+        }
       }
-    }
 
-    const allInstalled = hooksStatus.every((s) => s.installed);
-    if (!allInstalled) {
-      console.log(chalk.dim("\n  Run: workflow hooks install"));
+      const allInstalled = hooksStatus.every((s) => s.installed);
+      if (!allInstalled) {
+        console.log(chalk.dim("\n  Run: workflow hooks install"));
+      }
+    } catch (error) {
+      console.log(chalk.yellow("⚠ Could not check hooks status"));
+      console.log(chalk.dim(`  ${error instanceof Error ? error.message : "Unknown error"}`));
     }
   }
 
