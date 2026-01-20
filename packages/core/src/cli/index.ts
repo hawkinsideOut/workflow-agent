@@ -15,6 +15,7 @@ import { advisoryCommand } from "./commands/advisory.js";
 import { generateInstructionsCommand } from "./commands/generate-instructions.js";
 import { updateTemplatesCommand } from "./commands/update-templates.js";
 import { docsValidateCommand } from "./commands/docs-validate.js";
+import { hooksCommand } from "./commands/hooks.js";
 import {
   learnRecordCommand,
   learnListCommand,
@@ -96,7 +97,13 @@ program
 program
   .command("doctor")
   .description("Run health check and get optimization suggestions")
+  .option("--check-guidelines-only", "Only check guidelines presence")
   .action(doctorCommand);
+
+program
+  .command("hooks <action>")
+  .description("Manage git hooks")
+  .action(hooksCommand);
 
 program
   .command("scope:create")

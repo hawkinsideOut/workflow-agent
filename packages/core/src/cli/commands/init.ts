@@ -154,12 +154,15 @@ export async function initCommand(options: {
   }
 
   // Render guidelines from templates
-  const shouldGenerateGuidelines = await p.confirm({
-    message: "Generate workflow guidelines from templates?",
-    initialValue: true,
-  });
+  const shouldGenerateGuidelines =
+    options.yes || isNonInteractive
+      ? true
+      : await p.confirm({
+          message: "Generate workflow guidelines from templates?",
+          initialValue: true,
+        });
 
-  if (p.isCancel(shouldGenerateGuidelines)) {
+  if (!isNonInteractive && p.isCancel(shouldGenerateGuidelines)) {
     p.cancel("Initialization cancelled");
     process.exit(0);
   }
@@ -216,14 +219,15 @@ export async function initCommand(options: {
   }
 
   // Offer auto-setup for development tools
-  const shouldAutoSetup = options.yes
-    ? true
-    : await p.confirm({
-        message: "Set up linting, formatting, testing, and CI automatically?",
-        initialValue: true,
-      });
+  const shouldAutoSetup =
+    options.yes || isNonInteractive
+      ? true
+      : await p.confirm({
+          message: "Set up linting, formatting, testing, and CI automatically?",
+          initialValue: true,
+        });
 
-  if (p.isCancel(shouldAutoSetup)) {
+  if (!isNonInteractive && p.isCancel(shouldAutoSetup)) {
     p.cancel("Initialization cancelled");
     process.exit(0);
   }

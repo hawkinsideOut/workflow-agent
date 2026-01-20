@@ -315,7 +315,7 @@ describe("QuestionGenerator", () => {
 
       expect(outdatedQuestion).toBeDefined();
       // Priority can be medium or high depending on count
-      expect([\"medium\", \"high\"]).toContain(outdatedQuestion?.priority);
+      expect(["medium", "high"]).toContain(outdatedQuestion?.priority);
     });
   });
 
