@@ -109,7 +109,7 @@ pnpm add -D @hawkinside_out/workflow-agent
 > pnpm workflow-agent setup
 > ```
 
-On install (npm/yarn) or after running setup (pnpm), **31 workflow scripts** are automatically added to your `package.json`:
+On install (npm/yarn) or after running setup (pnpm), **38 workflow scripts** are automatically added to your `package.json`:
 
 ```json
 {
@@ -136,6 +136,7 @@ On install (npm/yarn) or after running setup (pnpm), **31 workflow scripts** are
     "workflow:learn:record": "workflow-agent learn:record",
     "workflow:learn:list": "workflow-agent learn:list",
     "workflow:learn:apply": "workflow-agent learn:apply",
+    "workflow:learn:publish": "workflow-agent learn:publish",
     "workflow:learn:sync": "workflow-agent learn:sync",
     "workflow:learn:config": "workflow-agent learn:config",
     "workflow:learn:deprecate": "workflow-agent learn:deprecate",

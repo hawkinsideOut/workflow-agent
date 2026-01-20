@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.13.0] - 2026-01-20
+
+### Added
+
+- **Automatic Script Installation**: `workflow:learn:publish` script is now automatically added to consuming projects on install/update via postinstall and `workflow-agent setup` command
+  - Corrected script count documentation from 31 to 38 total scripts
+
 ## [2.12.0] - 2026-01-20
 
 ### Added
@@ -16,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Skip confirmation prompts with `-y, --yes` flag for CI/automation
   - Fixes issue where `learn:sync --dry-run` showed 0 patterns (patterns default to `isPrivate: true`)
   - Works with both fix patterns and blueprints
+  - New npm script `workflow:learn:publish` automatically added to consuming projects (38 total scripts)
 
 ## [2.9.0] - 2026-01-20
 
