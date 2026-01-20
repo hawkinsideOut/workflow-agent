@@ -13,6 +13,7 @@ import { verifyCommand } from "./commands/verify.js";
 import { autoSetupCommand } from "./commands/auto-setup-command.js";
 import { advisoryCommand } from "./commands/advisory.js";
 import { generateInstructionsCommand } from "./commands/generate-instructions.js";
+import { updateTemplatesCommand } from "./commands/update-templates.js";
 import {
   learnRecordCommand,
   learnListCommand,
@@ -159,6 +160,13 @@ program
   .description("Generate .github/copilot-instructions.md from guidelines")
   .option("--force", "Regenerate without confirmation")
   .action(generateInstructionsCommand);
+
+program
+  .command("update-templates")
+  .description("Update guideline templates from the latest package version")
+  .option("--force", "Overwrite existing template files")
+  .option("--skip", "Skip the update (useful in CI)")
+  .action(updateTemplatesCommand);
 
 // ============================================
 // Learning System Commands

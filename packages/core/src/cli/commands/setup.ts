@@ -1,13 +1,21 @@
 import * as p from "@clack/prompts";
 import chalk from "chalk";
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import {
   WORKFLOW_SCRIPTS,
   SCRIPT_CATEGORIES,
   TOTAL_SCRIPTS,
 } from "../../scripts/workflow-scripts.js";
 import { generateCopilotInstructions } from "../../scripts/copilot-instructions-generator.js";
+import {
+  installMandatoryTemplates,
+  findTemplatesDirectory,
+} from "../../scripts/template-installer.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export async function setupCommand(): Promise<void> {
   p.intro(chalk.bgBlue(" workflow-agent setup "));
@@ -104,8 +112,27 @@ export async function setupCommand(): Promise<void> {
   console.log(chalk.dim("  pnpm run workflow:init"));
   console.log(chalk.dim("  npm run workflow:init\n"));
 
-  // Generate .github/copilot-instructions.md if guidelines exist
+  // Install mandatory templates if guidelines directory doesn't exist
   const guidelinesDir = join(cwd, "guidelines");
+  if (!existsSync(guidelinesDir)) {
+    const templatesDir = findTemplatesDirectory(__dirname);
+    if (templatesDir) {
+      const templateResult = installMandatoryTemplates(cwd, templatesDir, {
+        silent: false,
+        skipIfExists: true,
+        mandatoryOnly: true,
+      });
+      if (templateResult.installed.length > 0) {
+        console.log(
+          chalk.green(
+            `\n✓ Installed ${templateResult.installed.length} mandatory guideline templates`,
+          ),
+        );
+      }
+    }
+  }
+
+  // Generate .github/copilot-instructions.md if guidelines exist
   if (existsSync(guidelinesDir)) {
     const result = generateCopilotInstructions(cwd, { silent: false });
     if (result.success) {

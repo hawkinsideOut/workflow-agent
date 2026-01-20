@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2026-01-19
+
+### Added
+
+- **Auto-Install Mandatory Templates**: When the package is installed, mandatory guideline templates are automatically copied to the project's `guidelines/` directory
+  - Only installs if `guidelines/` directory doesn't exist (preserves user customizations)
+  - Auto-detects project name from `package.json`
+  - Uses sensible defaults for template variables when no `workflow.config.json` exists
+  - Mandatory templates: AGENT_EDITING_INSTRUCTIONS, BRANCHING_STRATEGY, TESTING_STRATEGY, SELF_IMPROVEMENT_MANDATE, PATTERN_ANALYSIS_WORKFLOW, SINGLE_SOURCE_OF_TRUTH
+- **New CLI Command**: `workflow update-templates` for opt-in template updates
+  - `--force` flag to overwrite existing template files
+  - `--skip` flag to skip updates (useful in CI)
+  - Shows list of mandatory vs optional templates
+  - Regenerates `.github/copilot-instructions.md` after update
+- **New npm Scripts**: Added 2 new scripts (now 34 total)
+  - `workflow:update-templates` - Update templates interactively
+  - `workflow:update-templates:force` - Force update all templates
+
+### Changed
+
+- **Postinstall Script**: Now installs mandatory templates when `guidelines/` doesn't exist
+- **Setup Command**: Now installs mandatory templates for pnpm users when `guidelines/` doesn't exist
+
 ## [2.7.0] - 2026-01-19
 
 ### Added

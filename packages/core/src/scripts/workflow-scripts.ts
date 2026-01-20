@@ -51,6 +51,10 @@ export const WORKFLOW_SCRIPTS = {
 
   // AI Agent Instructions
   "workflow:generate-instructions": "workflow-agent generate-instructions",
+
+  // Template Management
+  "workflow:update-templates": "workflow-agent update-templates",
+  "workflow:update-templates:force": "workflow-agent update-templates --force",
 } as const;
 
 export type WorkflowScriptName = keyof typeof WORKFLOW_SCRIPTS;
@@ -102,6 +106,10 @@ export const SCRIPT_CATEGORIES = {
   ],
   "AI Agent Instructions": [
     "workflow:generate-instructions",
+  ],
+  "Template Management": [
+    "workflow:update-templates",
+    "workflow:update-templates:force",
   ],
 } as const;
 
