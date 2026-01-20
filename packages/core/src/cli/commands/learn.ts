@@ -447,12 +447,69 @@ export async function learnListCommand(options: LearnListOptions) {
   const stats = await store.getStats();
   const totalPatterns = stats.totalFixes + stats.totalBlueprints;
   const totalDeprecated = stats.deprecatedFixes + stats.deprecatedBlueprints;
+  const totalInvalid =
+    stats.invalidFixes + stats.invalidBlueprints + stats.invalidSolutions;
 
   console.log(chalk.dim("━".repeat(40)));
   console.log(chalk.dim(`Total: ${totalPatterns} patterns`));
   console.log(chalk.dim(`  Fix Patterns: ${stats.totalFixes}`));
   console.log(chalk.dim(`  Blueprints: ${stats.totalBlueprints}`));
   console.log(chalk.dim(`  Deprecated: ${totalDeprecated}`));
+
+  // Show validation warnings if any patterns failed to load
+  if (totalInvalid > 0) {
+    console.log(
+      chalk.yellow(
+        `\n⚠️  ${totalInvalid} pattern(s) failed schema validation and were skipped:`,
+      ),
+    );
+    console.log(
+      chalk.dim(`     Fix patterns: ${stats.invalidFixes} invalid`),
+    );
+    console.log(
+      chalk.dim(`     Blueprints: ${stats.invalidBlueprints} invalid`),
+    );
+    console.log(
+      chalk.dim(`     Solutions: ${stats.invalidSolutions} invalid`),
+    );
+
+    // Show detailed validation errors
+    const validationErrors = store.getValidationErrors();
+    if (validationErrors.length > 0) {
+      console.log(chalk.yellow("\n   Validation errors:"));
+      for (const err of validationErrors.slice(0, 5)) {
+        console.log(chalk.dim(`     • ${err.file}: ${err.error}`));
+        if (err.details && err.details.length > 0) {
+          for (const detail of err.details.slice(0, 3)) {
+            console.log(chalk.dim(`       - ${detail}`));
+          }
+          if (err.details.length > 3) {
+            console.log(
+              chalk.dim(`       ... and ${err.details.length - 3} more`),
+            );
+          }
+        }
+      }
+      if (validationErrors.length > 5) {
+        console.log(
+          chalk.dim(
+            `     ... and ${validationErrors.length - 5} more errors`,
+          ),
+        );
+      }
+    }
+
+    console.log(
+      chalk.dim(
+        "\n   Tip: Invalid patterns may be missing required fields. Use the PatternStore API",
+      ),
+    );
+    console.log(
+      chalk.dim(
+        "        to create patterns instead of writing JSON files directly.",
+      ),
+    );
+  }
   console.log("");
 }
 

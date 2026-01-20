@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.0] - 2026-01-20
+
+### Fixed
+
+- **Pattern Validation Error Tracking**: Fix bug where patterns failing schema validation were silently dropped
+  - `learn:list` now shows count and details of invalid patterns that failed to load
+  - Added `getValidationErrors()` method to `PatternStore` for debugging
+  - Added `clearValidationErrors()` method to reset tracked errors
+  - `getStats()` now includes `invalidFixes`, `invalidBlueprints`, `invalidSolutions` counts
+  - New `PatternValidationError` type exported from improvement-tracker package
+  - Detailed validation error messages showing which fields failed Zod schema validation
+
+### Added
+
+- **Validation Error Tests**: 7 new tests for pattern validation error tracking
+  - Tests for schema validation error capture
+  - Tests for JSON parse error capture
+  - Tests for error clearing behavior
+  - Tests for multi-type error tracking (fixes, blueprints, solutions)
+
 ## [2.14.1] - 2026-01-20
 
 ### Added

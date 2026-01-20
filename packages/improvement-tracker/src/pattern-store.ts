@@ -75,6 +75,18 @@ export interface PatternStats {
   syncedFixes: number;
   syncedBlueprints: number;
   syncedSolutions: number;
+  /** Count of patterns that failed schema validation */
+  invalidFixes: number;
+  invalidBlueprints: number;
+  invalidSolutions: number;
+}
+
+/** Validation error details for a pattern file */
+export interface PatternValidationError {
+  file: string;
+  type: "fix" | "blueprint" | "solution";
+  error: string;
+  details?: string[];
 }
 
 // ============================================
@@ -90,12 +102,29 @@ export class PatternStore {
   private readonly fixesPath: string;
   private readonly blueprintsPath: string;
   private readonly solutionsPath: string;
+  /** Tracks validation errors from the last load operation */
+  private validationErrors: PatternValidationError[] = [];
 
   constructor(workspacePath: string) {
     this.basePath = path.join(workspacePath, PATTERNS_DIR);
     this.fixesPath = path.join(this.basePath, "fixes");
     this.blueprintsPath = path.join(this.basePath, "blueprints");
     this.solutionsPath = path.join(this.basePath, "solutions");
+  }
+
+  /**
+   * Get validation errors from the last pattern load operation.
+   * Useful for debugging why patterns might not be showing up.
+   */
+  getValidationErrors(): PatternValidationError[] {
+    return [...this.validationErrors];
+  }
+
+  /**
+   * Clear tracked validation errors
+   */
+  clearValidationErrors(): void {
+    this.validationErrors = [];
   }
 
   // ============================================
@@ -869,12 +898,27 @@ export class PatternStore {
   // ============================================
 
   /**
-   * Get statistics about stored patterns
+   * Get statistics about stored patterns.
+   * Also clears and repopulates validation errors for accurate counts.
    */
   async getStats(): Promise<PatternStats> {
+    // Clear previous validation errors before loading
+    this.validationErrors = [];
+
     const fixes = await this.loadAllFixPatterns();
     const blueprints = await this.loadAllBlueprints();
     const solutions = await this.loadAllSolutions();
+
+    // Count invalid patterns from validation errors
+    const invalidFixes = this.validationErrors.filter(
+      (e) => e.type === "fix",
+    ).length;
+    const invalidBlueprints = this.validationErrors.filter(
+      (e) => e.type === "blueprint",
+    ).length;
+    const invalidSolutions = this.validationErrors.filter(
+      (e) => e.type === "solution",
+    ).length;
 
     return {
       totalFixes: fixes.length,
@@ -890,6 +934,9 @@ export class PatternStore {
       syncedFixes: fixes.filter((p) => p.syncedAt).length,
       syncedBlueprints: blueprints.filter((b) => b.syncedAt).length,
       syncedSolutions: solutions.filter((s) => s.syncedAt).length,
+      invalidFixes,
+      invalidBlueprints,
+      invalidSolutions,
     };
   }
 
@@ -1013,9 +1060,27 @@ export class PatternStore {
           const validation = FixPatternSchema.safeParse(data);
           if (validation.success) {
             patterns.push(validation.data);
+          } else {
+            // Track validation error for debugging
+            this.validationErrors.push({
+              file,
+              type: "fix",
+              error: "Schema validation failed",
+              details: validation.error.issues.map(
+                (i) => `${i.path.join(".")}: ${i.message}`,
+              ),
+            });
           }
-        } catch {
-          // Skip invalid files
+        } catch (parseError) {
+          // Track parse error
+          this.validationErrors.push({
+            file,
+            type: "fix",
+            error:
+              parseError instanceof Error
+                ? parseError.message
+                : "Failed to parse JSON",
+          });
           continue;
         }
       }
@@ -1046,8 +1111,27 @@ export class PatternStore {
           const validation = BlueprintSchema.safeParse(data);
           if (validation.success) {
             blueprints.push(validation.data);
+          } else {
+            // Track validation error for debugging
+            this.validationErrors.push({
+              file,
+              type: "blueprint",
+              error: "Schema validation failed",
+              details: validation.error.issues.map(
+                (i) => `${i.path.join(".")}: ${i.message}`,
+              ),
+            });
           }
-        } catch {
+        } catch (parseError) {
+          // Track parse error
+          this.validationErrors.push({
+            file,
+            type: "blueprint",
+            error:
+              parseError instanceof Error
+                ? parseError.message
+                : "Failed to parse JSON",
+          });
           continue;
         }
       }
@@ -1078,8 +1162,27 @@ export class PatternStore {
           const validation = SolutionPatternSchema.safeParse(data);
           if (validation.success) {
             solutions.push(validation.data);
+          } else {
+            // Track validation error for debugging
+            this.validationErrors.push({
+              file,
+              type: "solution",
+              error: "Schema validation failed",
+              details: validation.error.issues.map(
+                (i) => `${i.path.join(".")}: ${i.message}`,
+              ),
+            });
           }
-        } catch {
+        } catch (parseError) {
+          // Track parse error
+          this.validationErrors.push({
+            file,
+            type: "solution",
+            error:
+              parseError instanceof Error
+                ? parseError.message
+                : "Failed to parse JSON",
+          });
           continue;
         }
       }

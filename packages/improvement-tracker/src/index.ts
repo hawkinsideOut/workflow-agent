@@ -112,6 +112,7 @@ export {
   type PatternResult,
   type ConflictResult,
   type PatternStats,
+  type PatternValidationError,
 } from "./pattern-store.js";
 
 // Agent Learning System - Contributor ID Management

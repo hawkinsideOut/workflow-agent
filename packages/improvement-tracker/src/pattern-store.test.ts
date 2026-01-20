@@ -1038,6 +1038,182 @@ describe("PatternStore", () => {
         expect(stats.deprecatedFixes).toBe(0);
         expect(stats.deprecatedBlueprints).toBe(0);
       });
+
+      it("should count invalid patterns that fail schema validation", async () => {
+        // Create valid patterns first
+        const validFix = createTestFixPattern({ name: "Valid Fix" });
+        const validBp = createTestBlueprint({ name: "Valid Blueprint" });
+        await store.saveFixPattern(validFix);
+        await store.saveBlueprint(validBp);
+
+        // Write invalid JSON files directly to the directories
+        const fixesPath = path.join(TEST_WORKSPACE, PATTERNS_DIR, "fixes");
+        const blueprintsPath = path.join(
+          TEST_WORKSPACE,
+          PATTERNS_DIR,
+          "blueprints",
+        );
+
+        // Invalid fix: missing required fields
+        await fs.promises.writeFile(
+          path.join(fixesPath, "invalid-fix.json"),
+          JSON.stringify({ id: "invalid-fix", name: "Missing fields" }),
+        );
+
+        // Invalid blueprint: wrong type for metrics
+        await fs.promises.writeFile(
+          path.join(blueprintsPath, "invalid-bp.json"),
+          JSON.stringify({
+            id: "invalid-bp",
+            name: "Bad metrics",
+            metrics: "should-be-object",
+          }),
+        );
+
+        const stats = await store.getStats();
+
+        expect(stats.totalFixes).toBe(1); // Only valid fix counted
+        expect(stats.totalBlueprints).toBe(1); // Only valid blueprint counted
+        expect(stats.invalidFixes).toBe(1);
+        expect(stats.invalidBlueprints).toBe(1);
+        expect(stats.invalidSolutions).toBe(0);
+      });
+    });
+
+    describe("getValidationErrors", () => {
+      it("should return empty array when no validation errors", async () => {
+        const validFix = createTestFixPattern();
+        await store.saveFixPattern(validFix);
+
+        // Load patterns to trigger validation
+        await store.getStats();
+
+        const errors = store.getValidationErrors();
+        expect(errors).toEqual([]);
+      });
+
+      it("should track schema validation errors with details", async () => {
+        const fixesPath = path.join(TEST_WORKSPACE, PATTERNS_DIR, "fixes");
+        await fs.promises.mkdir(fixesPath, { recursive: true });
+
+        // Write invalid pattern missing required fields
+        await fs.promises.writeFile(
+          path.join(fixesPath, "bad-pattern.json"),
+          JSON.stringify({ id: "bad", name: "Incomplete" }),
+        );
+
+        await store.getStats();
+        const errors = store.getValidationErrors();
+
+        expect(errors.length).toBe(1);
+        expect(errors[0].file).toBe("bad-pattern.json");
+        expect(errors[0].type).toBe("fix");
+        expect(errors[0].error).toBe("Schema validation failed");
+        expect(errors[0].details).toBeDefined();
+        expect(errors[0].details!.length).toBeGreaterThan(0);
+      });
+
+      it("should track JSON parse errors", async () => {
+        const fixesPath = path.join(TEST_WORKSPACE, PATTERNS_DIR, "fixes");
+        await fs.promises.mkdir(fixesPath, { recursive: true });
+
+        // Write invalid JSON
+        await fs.promises.writeFile(
+          path.join(fixesPath, "malformed.json"),
+          "{ invalid json",
+        );
+
+        await store.getStats();
+        const errors = store.getValidationErrors();
+
+        expect(errors.length).toBe(1);
+        expect(errors[0].file).toBe("malformed.json");
+        expect(errors[0].type).toBe("fix");
+        // Error message varies between Node versions, check for common patterns
+        expect(
+          errors[0].error.includes("JSON") ||
+            errors[0].error.includes("token") ||
+            errors[0].error.includes("property"),
+        ).toBe(true);
+      });
+
+      it("should track errors for all pattern types", async () => {
+        const fixesPath = path.join(TEST_WORKSPACE, PATTERNS_DIR, "fixes");
+        const blueprintsPath = path.join(
+          TEST_WORKSPACE,
+          PATTERNS_DIR,
+          "blueprints",
+        );
+        const solutionsPath = path.join(
+          TEST_WORKSPACE,
+          PATTERNS_DIR,
+          "solutions",
+        );
+
+        await fs.promises.mkdir(fixesPath, { recursive: true });
+        await fs.promises.mkdir(blueprintsPath, { recursive: true });
+        await fs.promises.mkdir(solutionsPath, { recursive: true });
+
+        // Write invalid patterns of each type
+        await fs.promises.writeFile(
+          path.join(fixesPath, "invalid-fix.json"),
+          JSON.stringify({ id: "x" }),
+        );
+        await fs.promises.writeFile(
+          path.join(blueprintsPath, "invalid-bp.json"),
+          JSON.stringify({ id: "y" }),
+        );
+        await fs.promises.writeFile(
+          path.join(solutionsPath, "invalid-sol.json"),
+          JSON.stringify({ id: "z" }),
+        );
+
+        await store.getStats();
+        const errors = store.getValidationErrors();
+
+        expect(errors.length).toBe(3);
+        expect(errors.filter((e) => e.type === "fix").length).toBe(1);
+        expect(errors.filter((e) => e.type === "blueprint").length).toBe(1);
+        expect(errors.filter((e) => e.type === "solution").length).toBe(1);
+      });
+
+      it("should clear validation errors on getStats call", async () => {
+        const fixesPath = path.join(TEST_WORKSPACE, PATTERNS_DIR, "fixes");
+        await fs.promises.mkdir(fixesPath, { recursive: true });
+
+        // Create an invalid file
+        await fs.promises.writeFile(
+          path.join(fixesPath, "invalid.json"),
+          JSON.stringify({ id: "incomplete" }),
+        );
+
+        // First call collects errors
+        await store.getStats();
+        expect(store.getValidationErrors().length).toBe(1);
+
+        // Remove the invalid file
+        await fs.promises.unlink(path.join(fixesPath, "invalid.json"));
+
+        // Second call should clear old errors
+        await store.getStats();
+        expect(store.getValidationErrors().length).toBe(0);
+      });
+
+      it("should be clearable manually", async () => {
+        const fixesPath = path.join(TEST_WORKSPACE, PATTERNS_DIR, "fixes");
+        await fs.promises.mkdir(fixesPath, { recursive: true });
+
+        await fs.promises.writeFile(
+          path.join(fixesPath, "invalid.json"),
+          JSON.stringify({ id: "bad" }),
+        );
+
+        await store.getStats();
+        expect(store.getValidationErrors().length).toBe(1);
+
+        store.clearValidationErrors();
+        expect(store.getValidationErrors().length).toBe(0);
+      });
     });
   });
 
