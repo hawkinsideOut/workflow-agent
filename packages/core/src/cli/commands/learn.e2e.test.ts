@@ -865,4 +865,269 @@ describe("workflow learn - E2E", () => {
       expect(stdout).toContain("Valid:");
     });
   });
+
+  describe("learn:capture command", () => {
+    it("captures a single file as blueprint with dry-run", async () => {
+      // Create a test file to capture
+      const testFile = join(tempDir, "component.tsx");
+      await writeFile(
+        testFile,
+        `import React from 'react';
+export function MyComponent() {
+  return <div>Hello</div>;
+}`,
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [
+          cliPath,
+          "learn:capture",
+          "component.tsx",
+          "--dry-run",
+          "--name",
+          "Test Component",
+          "--description",
+          "A test component pattern",
+        ],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Capture Files as Blueprint");
+      expect(stdout).toContain("Found 1 file(s) to capture");
+      expect(stdout).toContain("Dry Run");
+      expect(stdout).toContain("Name: Test Component");
+      expect(stdout).toContain("No changes made");
+    });
+
+    it("captures multiple files as blueprint with dry-run", async () => {
+      // Create test files
+      const file1 = join(tempDir, "util.ts");
+      const file2 = join(tempDir, "helper.ts");
+      await writeFile(file1, "export const util = () => {};");
+      await writeFile(file2, "export const helper = () => {};");
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [
+          cliPath,
+          "learn:capture",
+          "util.ts",
+          "helper.ts",
+          "--dry-run",
+          "--name",
+          "Utils Pattern",
+          "--description",
+          "Utility functions pattern",
+        ],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Found 2 file(s) to capture");
+      expect(stdout).toContain("Name: Utils Pattern");
+    });
+
+    it("infers tags from package.json dependencies", async () => {
+      // Create package.json with dependencies
+      await writeFile(
+        join(tempDir, "package.json"),
+        JSON.stringify({
+          dependencies: {
+            react: "^18.0.0",
+            next: "^14.0.0",
+          },
+          devDependencies: {
+            typescript: "^5.0.0",
+            vitest: "^1.0.0",
+          },
+        }),
+      );
+
+      const testFile = join(tempDir, "app.tsx");
+      await writeFile(testFile, "export default function App() { return <div/>; }");
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [
+          cliPath,
+          "learn:capture",
+          "app.tsx",
+          "--dry-run",
+          "--name",
+          "App Component",
+          "--description",
+          "Main app component",
+        ],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Inferred tags:");
+      expect(stdout).toContain("framework:react");
+      expect(stdout).toContain("framework:next");
+      expect(stdout).toContain("language:typescript");
+    });
+
+    it("infers tags from file content", async () => {
+      // Create a test file in hooks directory
+      await mkdir(join(tempDir, "hooks"), { recursive: true });
+      const hookFile = join(tempDir, "hooks", "useCounter.ts");
+      await writeFile(
+        hookFile,
+        `export function useCounter() { return { count: 0 }; }`,
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [
+          cliPath,
+          "learn:capture",
+          "hooks/useCounter.ts",
+          "--dry-run",
+          "--name",
+          "Counter Hook",
+          "--description",
+          "A counter hook pattern",
+        ],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("category:hooks");
+      expect(stdout).toContain("language:typescript");
+    });
+
+    it("fails when file does not exist", async () => {
+      const { stdout, exitCode } = await execa(
+        "node",
+        [
+          cliPath,
+          "learn:capture",
+          "nonexistent.ts",
+          "--dry-run",
+          "--name",
+          "Test",
+          "--description",
+          "Test description",
+        ],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(1);
+      expect(stdout).toContain("File not found");
+    });
+
+    it("captures directory recursively", async () => {
+      // Create directory structure
+      await mkdir(join(tempDir, "components"), { recursive: true });
+      await writeFile(join(tempDir, "components", "Button.tsx"), "export const Button = () => {};");
+      await writeFile(join(tempDir, "components", "Card.tsx"), "export const Card = () => {};");
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [
+          cliPath,
+          "learn:capture",
+          "components",
+          "--dry-run",
+          "--name",
+          "Components",
+          "--description",
+          "UI components pattern",
+        ],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Found 2 file(s) to capture");
+      expect(stdout).toContain("Button.tsx");
+      expect(stdout).toContain("Card.tsx");
+    });
+
+    it("saves blueprint when not in dry-run mode", async () => {
+      const testFile = join(tempDir, "save-test.ts");
+      await writeFile(testFile, "export const test = 'value';");
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [
+          cliPath,
+          "learn:capture",
+          "save-test.ts",
+          "--name",
+          "Save Test Pattern",
+          "--description",
+          "Testing save functionality",
+        ],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Blueprint captured successfully");
+      expect(stdout).toContain("ID:");
+      expect(stdout).toContain("To apply this pattern:");
+
+      // Verify the blueprint was saved
+      const store = new PatternStore(tempDir);
+      const result = await store.listBlueprints();
+      expect(result.success).toBe(true);
+      const saved = result.data?.find((b) => b.name === "Save Test Pattern");
+      expect(saved).toBeDefined();
+      // Files are stored in structure.keyFiles for blueprints
+      expect(saved?.structure.keyFiles.length).toBe(1);
+      expect(saved?.structure.keyFiles[0].path).toBe("save-test.ts");
+    });
+
+    it("accepts additional tags via --tags option", async () => {
+      const testFile = join(tempDir, "tagged.ts");
+      await writeFile(testFile, "export const tagged = true;");
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [
+          cliPath,
+          "learn:capture",
+          "tagged.ts",
+          "--dry-run",
+          "--name",
+          "Tagged Pattern",
+          "--description",
+          "Pattern with custom tags",
+          "--tags",
+          "category:utility,custom:mytag",
+        ],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("category:utility");
+      expect(stdout).toContain("custom:mytag");
+    });
+  });
 });

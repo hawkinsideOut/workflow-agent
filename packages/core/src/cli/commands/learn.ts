@@ -10,7 +10,6 @@ import {
   FixPatternSchema,
   BlueprintSchema,
   SolutionPatternSchema,
-  createDefaultMetrics,
   type FixPattern,
   type Blueprint,
   type PatternTag,
@@ -1741,4 +1740,610 @@ function tryAutoFix(
   }
 
   return { fixable: false };
+}
+
+// ============================================
+// learn:capture Command
+// ============================================
+
+/**
+ * Library to tag mapping for dependency-based tag inference
+ */
+const LIBRARY_TAG_MAP: Record<string, { category: PatternTag["category"]; name: string }[]> = {
+  // Frontend Frameworks
+  "react": [{ category: "framework", name: "react" }],
+  "react-dom": [{ category: "framework", name: "react" }],
+  "next": [{ category: "framework", name: "next" }],
+  "vue": [{ category: "framework", name: "vue" }],
+  "nuxt": [{ category: "framework", name: "nuxt" }],
+  "svelte": [{ category: "framework", name: "svelte" }],
+  "@sveltejs/kit": [{ category: "framework", name: "sveltekit" }],
+  "solid-js": [{ category: "framework", name: "solid" }],
+  "@angular/core": [{ category: "framework", name: "angular" }],
+  "astro": [{ category: "framework", name: "astro" }],
+  "remix": [{ category: "framework", name: "remix" }],
+
+  // Backend Frameworks
+  "express": [{ category: "framework", name: "express" }],
+  "fastify": [{ category: "framework", name: "fastify" }],
+  "hono": [{ category: "framework", name: "hono" }],
+  "koa": [{ category: "framework", name: "koa" }],
+  "@nestjs/core": [{ category: "framework", name: "nestjs" }],
+  "hapi": [{ category: "framework", name: "hapi" }],
+
+  // Testing
+  "vitest": [{ category: "tooling", name: "vitest" }, { category: "category", name: "testing" }],
+  "jest": [{ category: "tooling", name: "jest" }, { category: "category", name: "testing" }],
+  "@testing-library/react": [{ category: "tooling", name: "testing-library" }],
+  "playwright": [{ category: "tooling", name: "playwright" }, { category: "category", name: "e2e" }],
+  "cypress": [{ category: "tooling", name: "cypress" }, { category: "category", name: "e2e" }],
+
+  // State Management
+  "zustand": [{ category: "tooling", name: "zustand" }, { category: "category", name: "state" }],
+  "redux": [{ category: "tooling", name: "redux" }, { category: "category", name: "state" }],
+  "@reduxjs/toolkit": [{ category: "tooling", name: "redux-toolkit" }, { category: "category", name: "state" }],
+  "jotai": [{ category: "tooling", name: "jotai" }, { category: "category", name: "state" }],
+  "recoil": [{ category: "tooling", name: "recoil" }, { category: "category", name: "state" }],
+  "mobx": [{ category: "tooling", name: "mobx" }, { category: "category", name: "state" }],
+  "pinia": [{ category: "tooling", name: "pinia" }, { category: "category", name: "state" }],
+  "xstate": [{ category: "tooling", name: "xstate" }, { category: "category", name: "state-machine" }],
+
+  // Database & ORM
+  "prisma": [{ category: "tooling", name: "prisma" }, { category: "category", name: "database" }],
+  "@prisma/client": [{ category: "tooling", name: "prisma" }, { category: "category", name: "database" }],
+  "drizzle-orm": [{ category: "tooling", name: "drizzle" }, { category: "category", name: "database" }],
+  "typeorm": [{ category: "tooling", name: "typeorm" }, { category: "category", name: "database" }],
+  "mongoose": [{ category: "tooling", name: "mongoose" }, { category: "category", name: "mongodb" }],
+  "knex": [{ category: "tooling", name: "knex" }, { category: "category", name: "database" }],
+  "sequelize": [{ category: "tooling", name: "sequelize" }, { category: "category", name: "database" }],
+
+  // Authentication
+  "next-auth": [{ category: "tooling", name: "next-auth" }, { category: "category", name: "auth" }],
+  "@auth/core": [{ category: "tooling", name: "authjs" }, { category: "category", name: "auth" }],
+  "passport": [{ category: "tooling", name: "passport" }, { category: "category", name: "auth" }],
+  "lucia": [{ category: "tooling", name: "lucia" }, { category: "category", name: "auth" }],
+  "@clerk/nextjs": [{ category: "tooling", name: "clerk" }, { category: "category", name: "auth" }],
+
+  // UI Libraries
+  "@radix-ui/react-dialog": [{ category: "tooling", name: "radix-ui" }],
+  "@radix-ui/react-dropdown-menu": [{ category: "tooling", name: "radix-ui" }],
+  "@shadcn/ui": [{ category: "tooling", name: "shadcn" }],
+  "@chakra-ui/react": [{ category: "tooling", name: "chakra-ui" }],
+  "@mantine/core": [{ category: "tooling", name: "mantine" }],
+  "@headlessui/react": [{ category: "tooling", name: "headlessui" }],
+  "antd": [{ category: "tooling", name: "antd" }],
+  "@mui/material": [{ category: "tooling", name: "material-ui" }],
+
+  // Styling
+  "tailwindcss": [{ category: "tooling", name: "tailwind" }],
+  "styled-components": [{ category: "tooling", name: "styled-components" }],
+  "@emotion/react": [{ category: "tooling", name: "emotion" }],
+  "sass": [{ category: "tooling", name: "sass" }],
+
+  // API & Data Fetching
+  "@tanstack/react-query": [{ category: "tooling", name: "tanstack-query" }, { category: "category", name: "data-fetching" }],
+  "swr": [{ category: "tooling", name: "swr" }, { category: "category", name: "data-fetching" }],
+  "@trpc/server": [{ category: "tooling", name: "trpc" }, { category: "category", name: "api" }],
+  "@trpc/client": [{ category: "tooling", name: "trpc" }, { category: "category", name: "api" }],
+  "graphql": [{ category: "tooling", name: "graphql" }, { category: "category", name: "api" }],
+  "@apollo/client": [{ category: "tooling", name: "apollo" }, { category: "category", name: "graphql" }],
+  "axios": [{ category: "tooling", name: "axios" }],
+
+  // Form Libraries
+  "react-hook-form": [{ category: "tooling", name: "react-hook-form" }, { category: "category", name: "forms" }],
+  "formik": [{ category: "tooling", name: "formik" }, { category: "category", name: "forms" }],
+  "@tanstack/react-form": [{ category: "tooling", name: "tanstack-form" }, { category: "category", name: "forms" }],
+
+  // Validation
+  "zod": [{ category: "tooling", name: "zod" }, { category: "category", name: "validation" }],
+  "yup": [{ category: "tooling", name: "yup" }, { category: "category", name: "validation" }],
+  "valibot": [{ category: "tooling", name: "valibot" }, { category: "category", name: "validation" }],
+
+  // Build Tools
+  "vite": [{ category: "tooling", name: "vite" }],
+  "esbuild": [{ category: "tooling", name: "esbuild" }],
+  "tsup": [{ category: "tooling", name: "tsup" }],
+  "webpack": [{ category: "tooling", name: "webpack" }],
+  "turbo": [{ category: "tooling", name: "turborepo" }],
+
+  // Utilities
+  "lodash": [{ category: "tooling", name: "lodash" }],
+  "date-fns": [{ category: "tooling", name: "date-fns" }],
+  "dayjs": [{ category: "tooling", name: "dayjs" }],
+  "uuid": [{ category: "tooling", name: "uuid" }],
+  "nanoid": [{ category: "tooling", name: "nanoid" }],
+
+  // CLI & Developer Tools
+  "commander": [{ category: "tooling", name: "commander" }, { category: "category", name: "cli" }],
+  "yargs": [{ category: "tooling", name: "yargs" }, { category: "category", name: "cli" }],
+  "@clack/prompts": [{ category: "tooling", name: "clack" }, { category: "category", name: "cli" }],
+  "inquirer": [{ category: "tooling", name: "inquirer" }, { category: "category", name: "cli" }],
+  "chalk": [{ category: "tooling", name: "chalk" }],
+
+  // Runtime & Languages
+  "typescript": [{ category: "language", name: "typescript" }],
+};
+
+interface LearnCaptureOptions {
+  name?: string;
+  description?: string;
+  framework?: string;
+  tags?: string;
+  dryRun?: boolean;
+}
+
+/**
+ * Infer a pattern name from file paths
+ */
+function inferPatternName(filePaths: string[]): string {
+  // If single file, use filename without extension
+  if (filePaths.length === 1) {
+    const fileName = path.basename(filePaths[0]);
+    const nameWithoutExt = fileName.replace(/\.[^.]+$/, "");
+    // Convert to title case
+    return nameWithoutExt
+      .replace(/[-_]/g, " ")
+      .replace(/([A-Z])/g, " $1")
+      .trim()
+      .split(/\s+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ");
+  }
+
+  // Multiple files - find common directory or pattern
+  const dirs = filePaths.map((p) => path.dirname(p));
+  const uniqueDirs = [...new Set(dirs)];
+
+  if (uniqueDirs.length === 1 && uniqueDirs[0] !== ".") {
+    // All in same directory
+    const dirName = path.basename(uniqueDirs[0]);
+    return dirName
+      .replace(/[-_]/g, " ")
+      .replace(/([A-Z])/g, " $1")
+      .trim()
+      .split(/\s+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ") + " Pattern";
+  }
+
+  // Find common prefix among filenames
+  const fileNames = filePaths.map((p) => path.basename(p).replace(/\.[^.]+$/, ""));
+  if (fileNames.length > 0) {
+    let commonPrefix = fileNames[0];
+    for (const name of fileNames.slice(1)) {
+      while (!name.startsWith(commonPrefix) && commonPrefix.length > 0) {
+        commonPrefix = commonPrefix.slice(0, -1);
+      }
+    }
+    if (commonPrefix.length > 2) {
+      return commonPrefix
+        .replace(/[-_]/g, " ")
+        .replace(/([A-Z])/g, " $1")
+        .trim()
+        .split(/\s+/)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ") + " Pattern";
+    }
+  }
+
+  // Default to file count
+  return `Multi-file Pattern (${filePaths.length} files)`;
+}
+
+/**
+ * Infer tags from package.json dependencies
+ */
+async function inferTagsFromDependencies(cwd: string): Promise<PatternTag[]> {
+  const tags: PatternTag[] = [];
+  const seenTags = new Set<string>();
+
+  const packageJsonPath = path.join(cwd, "package.json");
+  if (!fs.existsSync(packageJsonPath)) {
+    return tags;
+  }
+
+  try {
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+    const allDeps = {
+      ...packageJson.dependencies,
+      ...packageJson.devDependencies,
+    };
+
+    for (const dep of Object.keys(allDeps)) {
+      const mappedTags = LIBRARY_TAG_MAP[dep];
+      if (mappedTags) {
+        for (const tag of mappedTags) {
+          const key = `${tag.category}:${tag.name}`;
+          if (!seenTags.has(key)) {
+            seenTags.add(key);
+            tags.push(tag);
+          }
+        }
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+
+  return tags;
+}
+
+/**
+ * Infer tags from file content and extensions
+ */
+function inferTagsFromContent(filePaths: string[]): PatternTag[] {
+  const tags: PatternTag[] = [];
+  const seenTags = new Set<string>();
+
+  const addTag = (category: PatternTag["category"], name: string) => {
+    const key = `${category}:${name}`;
+    if (!seenTags.has(key)) {
+      seenTags.add(key);
+      tags.push({ category, name });
+    }
+  };
+
+  for (const filePath of filePaths) {
+    const ext = path.extname(filePath).toLowerCase();
+    const fileName = path.basename(filePath).toLowerCase();
+
+    // Language detection
+    if (ext === ".ts" || ext === ".tsx") {
+      addTag("language", "typescript");
+    } else if (ext === ".js" || ext === ".jsx" || ext === ".mjs" || ext === ".cjs") {
+      addTag("language", "javascript");
+    } else if (ext === ".py") {
+      addTag("language", "python");
+    } else if (ext === ".go") {
+      addTag("language", "go");
+    } else if (ext === ".rs") {
+      addTag("language", "rust");
+    } else if (ext === ".css" || ext === ".scss" || ext === ".sass") {
+      addTag("tooling", "css");
+    }
+
+    // React detection
+    if (ext === ".tsx" || ext === ".jsx") {
+      addTag("framework", "react");
+    }
+
+    // Test file detection
+    if (fileName.includes(".test.") || fileName.includes(".spec.") || fileName.startsWith("test_")) {
+      addTag("category", "testing");
+    }
+
+    // Config file detection
+    if (fileName.includes("config") || fileName.startsWith(".")) {
+      addTag("category", "configuration");
+    }
+
+    // Component detection
+    if (filePath.includes("/components/") || filePath.includes("\\components\\")) {
+      addTag("category", "component");
+    }
+
+    // Hook detection
+    if (filePath.includes("/hooks/") || filePath.includes("\\hooks\\") || fileName.startsWith("use")) {
+      addTag("category", "hooks");
+    }
+
+    // API/route detection
+    if (filePath.includes("/api/") || filePath.includes("\\api\\") || filePath.includes("/routes/")) {
+      addTag("category", "api");
+    }
+
+    // Utils detection
+    if (filePath.includes("/utils/") || filePath.includes("\\utils\\") || filePath.includes("/lib/")) {
+      addTag("category", "utilities");
+    }
+  }
+
+  return tags;
+}
+
+/**
+ * Capture files as a blueprint pattern with auto-inferred metadata
+ */
+export async function learnCaptureCommand(paths: string[], options: LearnCaptureOptions) {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+
+  console.log(chalk.cyan("\n📸 Capture Files as Blueprint\n"));
+
+  // Resolve all paths and validate they exist
+  const resolvedPaths: string[] = [];
+  const relativePaths: string[] = [];
+
+  for (const inputPath of paths) {
+    const absolutePath = path.isAbsolute(inputPath) ? inputPath : path.resolve(cwd, inputPath);
+    
+    if (!fs.existsSync(absolutePath)) {
+      console.log(chalk.red(`✗ File not found: ${inputPath}`));
+      process.exit(1);
+    }
+
+    const stat = fs.statSync(absolutePath);
+    if (stat.isDirectory()) {
+      // Recursively get all files in directory
+      const files = getAllFilesInDir(absolutePath);
+      for (const file of files) {
+        resolvedPaths.push(file);
+        relativePaths.push(path.relative(cwd, file));
+      }
+    } else {
+      resolvedPaths.push(absolutePath);
+      relativePaths.push(path.relative(cwd, absolutePath));
+    }
+  }
+
+  if (resolvedPaths.length === 0) {
+    console.log(chalk.red("✗ No files found to capture"));
+    process.exit(1);
+  }
+
+  console.log(chalk.dim(`Found ${resolvedPaths.length} file(s) to capture:\n`));
+  for (const relPath of relativePaths.slice(0, 10)) {
+    console.log(chalk.dim(`  • ${relPath}`));
+  }
+  if (relativePaths.length > 10) {
+    console.log(chalk.dim(`  ... and ${relativePaths.length - 10} more`));
+  }
+  console.log();
+
+  // Infer tags from dependencies and content
+  const depTags = await inferTagsFromDependencies(cwd);
+  const contentTags = inferTagsFromContent(relativePaths);
+  const allInferredTags = [...depTags, ...contentTags];
+
+  // Deduplicate tags
+  const seenTagKeys = new Set<string>();
+  const uniqueTags: PatternTag[] = [];
+  for (const tag of allInferredTags) {
+    const key = `${tag.category}:${tag.name}`;
+    if (!seenTagKeys.has(key)) {
+      seenTagKeys.add(key);
+      uniqueTags.push(tag);
+    }
+  }
+
+  // Parse additional tags from options
+  if (options.tags) {
+    const tagPairs = options.tags.split(",").map((t) => t.trim());
+    for (const pair of tagPairs) {
+      const [cat, val] = pair.split(":");
+      if (cat && val) {
+        const key = `${cat}:${val}`;
+        if (!seenTagKeys.has(key)) {
+          seenTagKeys.add(key);
+          uniqueTags.push({
+            category: cat as PatternTag["category"],
+            name: val,
+          });
+        }
+      }
+    }
+  }
+
+  // Infer or get pattern name
+  let name = options.name;
+  if (!name) {
+    const inferredName = inferPatternName(relativePaths);
+    console.log(chalk.dim(`Inferred name: "${inferredName}"`));
+    
+    const nameInput = await p.text({
+      message: "Pattern name:",
+      placeholder: inferredName,
+      initialValue: inferredName,
+      validate: (value) => {
+        if (!value || value.length < 3) return "Name must be at least 3 characters";
+        if (value.length > 100) return "Name must be less than 100 characters";
+        return undefined;
+      },
+    });
+
+    if (p.isCancel(nameInput)) {
+      p.cancel("Capture cancelled");
+      process.exit(0);
+    }
+    name = nameInput as string;
+  }
+
+  // Get description
+  let description = options.description;
+  if (!description) {
+    const descInput = await p.text({
+      message: "Description:",
+      placeholder: "What does this pattern provide?",
+      validate: (value) => {
+        if (!value || value.length < 10) return "Description must be at least 10 characters";
+        if (value.length > 500) return "Description must be less than 500 characters";
+        return undefined;
+      },
+    });
+
+    if (p.isCancel(descInput)) {
+      p.cancel("Capture cancelled");
+      process.exit(0);
+    }
+    description = descInput as string;
+  }
+
+  // Determine framework
+  let framework = options.framework;
+  if (!framework) {
+    // Try to get from inferred tags
+    const frameworkTag = uniqueTags.find((t) => t.category === "framework");
+    framework = frameworkTag?.name || "general";
+  }
+
+  // Show inferred tags and allow editing
+  if (uniqueTags.length > 0) {
+    console.log(chalk.dim("\nInferred tags:"));
+    console.log(chalk.dim(`  ${formatTags(uniqueTags)}`));
+  }
+
+  // Read file contents
+  const files: Array<{ path: string; content: string; language: string }> = [];
+  for (let i = 0; i < resolvedPaths.length; i++) {
+    const absolutePath = resolvedPaths[i];
+    const relativePath = relativePaths[i];
+    const content = fs.readFileSync(absolutePath, "utf-8");
+    const ext = path.extname(relativePath).slice(1);
+    
+    // Map extension to language
+    const languageMap: Record<string, string> = {
+      ts: "typescript",
+      tsx: "typescript",
+      js: "javascript",
+      jsx: "javascript",
+      mjs: "javascript",
+      cjs: "javascript",
+      py: "python",
+      go: "go",
+      rs: "rust",
+      css: "css",
+      scss: "scss",
+      html: "html",
+      json: "json",
+      yaml: "yaml",
+      yml: "yaml",
+      md: "markdown",
+      mdx: "mdx",
+      sql: "sql",
+      sh: "bash",
+      bash: "bash",
+      zsh: "bash",
+    };
+
+    files.push({
+      path: relativePath,
+      content,
+      language: languageMap[ext] || ext || "text",
+    });
+  }
+
+  // Determine the primary language from files
+  const languageCounts: Record<string, number> = {};
+  for (const file of files) {
+    languageCounts[file.language] = (languageCounts[file.language] || 0) + 1;
+  }
+  const primaryLanguage = Object.entries(languageCounts)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] || "typescript";
+
+  // Create blueprint with proper schema structure
+  const now = new Date().toISOString();
+  const contributorManager = new ContributorManager(cwd);
+  const contributorResult = await contributorManager.getOrCreateId();
+  const contributorId = contributorResult.success && contributorResult.data 
+    ? contributorResult.data 
+    : undefined;
+
+  // Store file contents in structure.keyFiles
+  const keyFiles = files.map((f) => ({
+    path: f.path,
+    purpose: `${f.language} file`,
+    content: f.content,
+  }));
+
+  const blueprint: Blueprint = {
+    id: crypto.randomUUID(),
+    name,
+    description,
+    tags: uniqueTags,
+    stack: {
+      framework,
+      language: primaryLanguage,
+      runtime: "node",
+      packageManager: "pnpm",
+      dependencies: [],
+      devDependencies: [],
+    },
+    structure: {
+      directories: [...new Set(files.map((f) => path.dirname(f.path)).filter((d) => d !== "."))],
+      keyFiles,
+    },
+    setup: {
+      prerequisites: [],
+      steps: [],
+      configs: [],
+    },
+    compatibility: {
+      framework,
+      frameworkVersion: ">=1.0.0",
+      runtime: "node",
+      runtimeVersion: ">=18.0.0",
+      dependencies: [],
+    },
+    metrics: {
+      applications: 0,
+      successes: 0,
+      failures: 0,
+      successRate: 0,
+    },
+    relatedPatterns: [],
+    isPrivate: true,
+    contributorId,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  // Dry run - just show what would be captured
+  if (options.dryRun) {
+    console.log(chalk.yellow("\n🔍 Dry Run - Would capture:\n"));
+    console.log(chalk.bold(`Name: ${name}`));
+    console.log(chalk.dim(`Description: ${description}`));
+    console.log(chalk.dim(`Framework: ${framework}`));
+    console.log(chalk.dim(`Tags: ${formatTags(uniqueTags)}`));
+    console.log(chalk.dim(`Files: ${files.length}`));
+    console.log(chalk.dim(`ID: ${blueprint.id}`));
+    console.log(chalk.yellow("\n⚠️  No changes made (dry run)"));
+    return;
+  }
+
+  // Save blueprint
+  const result = await store.saveBlueprint(blueprint);
+
+  if (!result.success) {
+    console.log(chalk.red(`\n✗ Failed to save blueprint: ${result.error}`));
+    process.exit(1);
+  }
+
+  console.log(chalk.green("\n✓ Blueprint captured successfully!\n"));
+  console.log(chalk.bold(`ID: ${blueprint.id}`));
+  console.log(chalk.dim(`Name: ${name}`));
+  console.log(chalk.dim(`Files: ${files.length}`));
+  console.log(chalk.dim(`Tags: ${formatTags(uniqueTags)}`));
+  console.log(chalk.dim(`\nTo apply this pattern:`));
+  console.log(chalk.cyan(`  pnpm workflow:learn:apply ${blueprint.id}`));
+  console.log(chalk.dim(`\nTo publish to registry:`));
+  console.log(chalk.cyan(`  pnpm workflow:learn:publish ${blueprint.id}`));
+}
+
+/**
+ * Recursively get all files in a directory
+ */
+function getAllFilesInDir(dirPath: string): string[] {
+  const files: string[] = [];
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const fullPath = path.join(dirPath, entry.name);
+    
+    // Skip hidden files and common ignore patterns
+    if (entry.name.startsWith(".") || 
+        entry.name === "node_modules" || 
+        entry.name === "dist" ||
+        entry.name === "build" ||
+        entry.name === ".git") {
+      continue;
+    }
+
+    if (entry.isDirectory()) {
+      files.push(...getAllFilesInDir(fullPath));
+    } else {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
 }

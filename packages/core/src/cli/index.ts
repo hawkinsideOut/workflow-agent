@@ -26,6 +26,7 @@ import {
   learnStatsCommand,
   learnPublishCommand,
   learnValidateCommand,
+  learnCaptureCommand,
 } from "./commands/learn.js";
 import {
   solutionCaptureCommand,
@@ -59,13 +60,8 @@ program
   .action(initCommand);
 
 program
-  .command("validate <type>")
+  .command("validate <type> [value]")
   .description("Validate branch name, commit message, or PR title")
-  .argument("<type>", "What to validate: branch, commit, or pr")
-  .argument(
-    "[value]",
-    "Value to validate (defaults to current branch/HEAD commit)",
-  )
   .option(
     "--suggest-on-error",
     "Offer improvement suggestions on validation errors",
@@ -73,11 +69,8 @@ program
   .action(validateCommand);
 
 program
-  .command("config <action>")
+  .command("config <action> [key] [value]")
   .description("Manage workflow configuration")
-  .argument("<action>", "Action: get, set, add, remove")
-  .argument("[key]", "Config key")
-  .argument("[value]", "Config value")
   .action(configCommand);
 
 program
@@ -265,11 +258,20 @@ program
 program
   .command("learn:apply <patternId>")
   .description("Apply a pattern to the current project")
-  .argument("<patternId>", "Pattern ID to apply")
   .option("--framework <fw>", "Override framework")
   .option("--version <ver>", "Override version")
   .option("--dry-run", "Preview without applying")
   .action(learnApplyCommand);
+
+program
+  .command("learn:capture <paths...>")
+  .description("Capture files as a blueprint pattern with auto-inferred metadata")
+  .option("--name <name>", "Pattern name (inferred from paths if omitted)")
+  .option("--description <desc>", "Pattern description")
+  .option("--framework <fw>", "Override inferred framework")
+  .option("--tags <tags>", "Additional tags (comma-separated, e.g., 'framework:react,language:typescript')")
+  .option("--dry-run", "Preview what would be captured without saving")
+  .action(learnCaptureCommand);
 
 program
   .command("learn:sync")
@@ -293,8 +295,6 @@ program
 program
   .command("learn:deprecate <patternId> <reason>")
   .description("Deprecate an outdated pattern")
-  .argument("<patternId>", "Pattern ID to deprecate")
-  .argument("<reason>", "Reason for deprecation")
   .action(learnDeprecateCommand);
 
 program
@@ -344,7 +344,6 @@ program
 program
   .command("solution:search <query>")
   .description("Search for solution patterns")
-  .argument("<query>", "Search query (keywords, problem description)")
   .option("--category <cat>", "Filter by category")
   .option("--framework <fw>", "Filter by framework")
   .option("--limit <n>", "Maximum results", "10")
@@ -362,7 +361,6 @@ program
 program
   .command("solution:apply <solutionId>")
   .description("Apply a solution pattern to the current project")
-  .argument("<solutionId>", "Solution ID to apply")
   .option("--output <dir>", "Output directory")
   .option("--dry-run", "Preview without applying")
   .option("--include-tests", "Include test files")
@@ -371,8 +369,6 @@ program
 program
   .command("solution:deprecate <solutionId> <reason>")
   .description("Deprecate a solution pattern")
-  .argument("<solutionId>", "Solution ID to deprecate")
-  .argument("<reason>", "Reason for deprecation")
   .action(solutionDeprecateCommand);
 
 program
