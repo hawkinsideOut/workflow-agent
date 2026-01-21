@@ -2,7 +2,9 @@ import * as path from "node:path";
 import type {
   FixPattern,
   Blueprint,
+  SolutionPattern,
   SolutionStep,
+  SolutionFile,
   KeyFile,
   ConfigEntry,
 } from "./patterns-schema";
@@ -398,6 +400,108 @@ export class PatternAnonymizer {
   // ============================================
   // Validation
   // ============================================
+  // Solution Pattern Anonymization
+  // ============================================
+
+  /**
+   * Anonymize a solution pattern for sharing
+   */
+  anonymizeSolution(solution: SolutionPattern): AnonymizationResult<SolutionPattern> {
+    try {
+      const anonymizedFields: string[] = [];
+      let anonymized = { ...solution };
+
+      // Anonymize implementation files
+      if (this.options.anonymizeContent) {
+        const anonFiles = solution.implementation.files.map((file, index) => {
+          const anonFile = this.anonymizeSolutionFile(file);
+          if (JSON.stringify(anonFile) !== JSON.stringify(file)) {
+            anonymizedFields.push(`implementation.files[${index}]`);
+          }
+          return anonFile;
+        });
+
+        anonymized = {
+          ...anonymized,
+          implementation: {
+            ...anonymized.implementation,
+            files: anonFiles,
+          },
+        };
+      }
+
+      // Anonymize architecture notes
+      if (this.options.anonymizeContent && solution.architecture) {
+        const anonDataFlow = this.anonymizeString(solution.architecture.dataFlow);
+        const anonDecisions = solution.architecture.keyDecisions.map(d => this.anonymizeString(d));
+        const anonDiagram = solution.architecture.diagram 
+          ? this.anonymizeString(solution.architecture.diagram)
+          : undefined;
+
+        if (anonDataFlow !== solution.architecture.dataFlow) {
+          anonymizedFields.push("architecture.dataFlow");
+        }
+
+        anonymized = {
+          ...anonymized,
+          architecture: {
+            ...anonymized.architecture,
+            dataFlow: anonDataFlow,
+            keyDecisions: anonDecisions,
+            diagram: anonDiagram,
+          },
+        };
+      }
+
+      // Remove source project reference
+      if (anonymized.sourceProject) {
+        anonymizedFields.push("sourceProject");
+        anonymized = {
+          ...anonymized,
+          sourceProject: undefined,
+        };
+      }
+
+      // Remove contributor ID
+      if (anonymized.contributorId) {
+        anonymizedFields.push("contributorId");
+        const { contributorId: _, ...rest } = anonymized;
+        anonymized = rest as SolutionPattern;
+      }
+
+      return {
+        success: true,
+        data: anonymized,
+        anonymizedFields,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Anonymize a solution file entry
+   */
+  private anonymizeSolutionFile(file: SolutionFile): SolutionFile {
+    const result = { ...file };
+
+    if (this.options.anonymizePaths) {
+      result.path = this.anonymizeRelativePath(file.path);
+    }
+
+    if (this.options.anonymizeContent && file.content) {
+      result.content = this.anonymizeString(file.content);
+    }
+
+    return result;
+  }
+
+  // ============================================
+  // PII Detection
+  // ============================================
 
   /**
    * Check if a string contains potential PII
@@ -503,4 +607,14 @@ export function anonymizeBlueprint(
 ): AnonymizationResult<Blueprint> {
   const anonymizer = new PatternAnonymizer();
   return anonymizer.anonymizeBlueprint(blueprint);
+}
+
+/**
+ * Anonymize a solution pattern with default options
+ */
+export function anonymizeSolution(
+  solution: SolutionPattern,
+): AnonymizationResult<SolutionPattern> {
+  const anonymizer = new PatternAnonymizer();
+  return anonymizer.anonymizeSolution(solution);
 }

@@ -950,6 +950,7 @@ export class PatternStore {
   async getPatternsForSync(): Promise<{
     fixes: FixPattern[];
     blueprints: Blueprint[];
+    solutions: SolutionPattern[];
   }> {
     const fixes = (await this.loadAllFixPatterns()).filter(
       (p) => !p.isPrivate && !isPatternDeprecated(p),
@@ -957,8 +958,11 @@ export class PatternStore {
     const blueprints = (await this.loadAllBlueprints()).filter(
       (b) => !b.isPrivate && !isPatternDeprecated(b),
     );
+    const solutions = (await this.loadAllSolutions()).filter(
+      (s) => !s.isPrivate && !s.deprecatedAt,
+    );
 
-    return { fixes, blueprints };
+    return { fixes, blueprints, solutions };
   }
 
   /**
@@ -966,7 +970,7 @@ export class PatternStore {
    */
   async markAsSynced(
     patternIds: string[],
-    type: "fix" | "blueprint",
+    type: "fix" | "blueprint" | "solution",
   ): Promise<void> {
     const now = new Date().toISOString();
 
@@ -980,10 +984,19 @@ export class PatternStore {
             updatedAt: now,
           });
         }
-      } else {
+      } else if (type === "blueprint") {
         const result = await this.getBlueprint(id);
         if (result.success && result.data) {
           await this.saveBlueprint({
+            ...result.data,
+            syncedAt: now,
+            updatedAt: now,
+          });
+        }
+      } else if (type === "solution") {
+        const result = await this.getSolution(id);
+        if (result.success && result.data) {
+          await this.saveSolution({
             ...result.data,
             syncedAt: now,
             updatedAt: now,

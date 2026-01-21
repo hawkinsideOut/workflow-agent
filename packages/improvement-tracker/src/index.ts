@@ -129,6 +129,7 @@ export {
   createAnonymizer,
   anonymizeFixPattern,
   anonymizeBlueprint,
+  anonymizeSolution,
   DEFAULT_ANONYMIZATION_OPTIONS,
   type AnonymizationOptions,
   type AnonymizationResult,

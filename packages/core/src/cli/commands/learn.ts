@@ -12,6 +12,7 @@ import {
   SolutionPatternSchema,
   type FixPattern,
   type Blueprint,
+  type SolutionPattern,
   type PatternTag,
 } from "@hawkinside_out/workflow-improvement-tracker";
 import {
@@ -683,11 +684,11 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
   const anonymizer = new PatternAnonymizer();
 
   // Get patterns to sync
-  const { fixes, blueprints } = await store.getPatternsForSync();
+  const { fixes, blueprints, solutions } = await store.getPatternsForSync();
 
   console.log(
     chalk.dim(
-      `  Patterns ready to sync: ${fixes.length} fixes, ${blueprints.length} blueprints`,
+      `  Patterns ready to sync: ${fixes.length} fixes, ${blueprints.length} blueprints, ${solutions.length} solutions`,
     ),
   );
 
@@ -696,8 +697,8 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
 
     // Anonymize patterns before sync
     const anonymizedPatterns: Array<{
-      pattern: FixPattern | Blueprint;
-      type: "fix" | "blueprint";
+      pattern: FixPattern | Blueprint | SolutionPattern;
+      type: "fix" | "blueprint" | "solution";
       originalId: string;
     }> = [];
 
@@ -725,8 +726,21 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
       }
     }
 
+    for (const solution of solutions) {
+      const result = anonymizer.anonymizeSolution(solution);
+      if (result.success && result.data) {
+        anonymizedPatterns.push({
+          pattern: result.data,
+          type: "solution",
+          originalId: solution.id,
+        });
+        console.log(chalk.dim(`  ✓ Anonymized: ${solution.name}`));
+      }
+    }
+
     const fixCount = anonymizedPatterns.filter((p) => p.type === "fix").length;
     const bpCount = anonymizedPatterns.filter((p) => p.type === "blueprint").length;
+    const solutionCount = anonymizedPatterns.filter((p) => p.type === "solution").length;
 
     if (anonymizedPatterns.length === 0) {
       console.log(chalk.yellow("\n⚠️ No patterns to push"));
@@ -735,7 +749,7 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
 
     console.log(
       chalk.dim(
-        `\n  Ready to push ${fixCount} fixes and ${bpCount} blueprints`,
+        `\n  Ready to push ${fixCount} fixes, ${bpCount} blueprints, and ${solutionCount} solutions`,
       ),
     );
 
@@ -773,12 +787,18 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
         const pushedBpIds = anonymizedPatterns
           .filter((p) => p.type === "blueprint")
           .map((p) => p.originalId);
+        const pushedSolutionIds = anonymizedPatterns
+          .filter((p) => p.type === "solution")
+          .map((p) => p.originalId);
 
         if (pushedFixIds.length > 0) {
           await store.markAsSynced(pushedFixIds, "fix");
         }
         if (pushedBpIds.length > 0) {
           await store.markAsSynced(pushedBpIds, "blueprint");
+        }
+        if (pushedSolutionIds.length > 0) {
+          await store.markAsSynced(pushedSolutionIds, "solution");
         }
       }
 
@@ -883,6 +903,9 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
           } else if (pattern.type === "blueprint") {
             const existingResult = await store.getBlueprint(pattern.id);
             exists = existingResult.success && !!existingResult.data;
+          } else if (pattern.type === "solution") {
+            const existingResult = await store.getSolution(pattern.id);
+            exists = existingResult.success && !!existingResult.data;
           }
 
           if (exists) {
@@ -904,6 +927,15 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
             const bpData = pattern.data as unknown as Blueprint;
             await store.saveBlueprint({
               ...bpData,
+              id: pattern.id,
+              source: "community",
+              isPrivate: true,
+            });
+            totalPulled++;
+          } else if (pattern.type === "solution") {
+            const solutionData = pattern.data as unknown as SolutionPattern;
+            await store.saveSolution({
+              ...solutionData,
               id: pattern.id,
               source: "community",
               isPrivate: true,

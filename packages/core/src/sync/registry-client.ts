@@ -5,7 +5,7 @@
  * the community pattern registry.
  */
 
-import type { FixPattern, Blueprint } from "@hawkinside_out/workflow-improvement-tracker";
+import type { FixPattern, Blueprint, SolutionPattern } from "@hawkinside_out/workflow-improvement-tracker";
 
 // Default registry URL
 const DEFAULT_REGISTRY_URL = "https://registry-api-rust.vercel.app";
@@ -115,8 +115,8 @@ export class RegistryClient {
    */
   async push(
     patterns: Array<{
-      pattern: FixPattern | Blueprint;
-      type: "fix" | "blueprint";
+      pattern: FixPattern | Blueprint | SolutionPattern;
+      type: "fix" | "blueprint" | "solution";
       hash?: string;
     }>,
     contributorId: string,
