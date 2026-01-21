@@ -134,14 +134,14 @@ describe("workflow learn - E2E", () => {
   });
 
   // ============================================
-  // learn:config Tests
+  // learn config Tests
   // ============================================
 
-  describe("learn:config", () => {
+  describe("learn config", () => {
     it("shows configuration when no config exists", async () => {
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:config"],
+        [cliPath, "learn", "config"],
         {
           cwd: tempDir,
           reject: false,
@@ -156,7 +156,7 @@ describe("workflow learn - E2E", () => {
     it("enables telemetry with --enable-telemetry", async () => {
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:config", "--enable-telemetry"],
+        [cliPath, "learn", "config", "--enable-telemetry"],
         {
           cwd: tempDir,
           reject: false,
@@ -174,7 +174,7 @@ describe("workflow learn - E2E", () => {
 
     it("disables telemetry with --disable-telemetry", async () => {
       // First enable using CLI
-      await execa("node", [cliPath, "learn:config", "--enable-telemetry"], {
+      await execa("node", [cliPath, "learn", "config", "--enable-telemetry"], {
         cwd: tempDir,
         reject: false,
       });
@@ -187,7 +187,7 @@ describe("workflow learn - E2E", () => {
       // Then disable via CLI
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:config", "--disable-telemetry"],
+        [cliPath, "learn", "config", "--disable-telemetry"],
         {
           cwd: tempDir,
           reject: false,
@@ -206,7 +206,7 @@ describe("workflow learn - E2E", () => {
     it("enables sync with --enable-sync", async () => {
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:config", "--enable-sync"],
+        [cliPath, "learn", "config", "--enable-sync"],
         {
           cwd: tempDir,
           reject: false,
@@ -229,7 +229,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:config", "--show"],
+        [cliPath, "learn", "config", "--show"],
         {
           cwd: tempDir,
           reject: false,
@@ -244,14 +244,14 @@ describe("workflow learn - E2E", () => {
   });
 
   // ============================================
-  // learn:list Tests
+  // learn list Tests
   // ============================================
 
-  describe("learn:list", () => {
+  describe("learn list", () => {
     it("shows empty list when no patterns exist", async () => {
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:list"],
+        [cliPath, "learn", "list"],
         {
           cwd: tempDir,
           reject: false,
@@ -278,7 +278,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:list"],
+        [cliPath, "learn", "list"],
         {
           cwd: tempDir,
           reject: false,
@@ -308,7 +308,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:list", "--type", "fix"],
+        [cliPath, "learn", "list", "--type", "fix"],
         {
           cwd: tempDir,
           reject: false,
@@ -322,14 +322,14 @@ describe("workflow learn - E2E", () => {
   });
 
   // ============================================
-  // learn:stats Tests
+  // learn stats Tests
   // ============================================
 
-  describe("learn:stats", () => {
+  describe("learn stats", () => {
     it("shows statistics", async () => {
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:stats"],
+        [cliPath, "learn", "stats"],
         {
           cwd: tempDir,
           reject: false,
@@ -358,7 +358,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:stats"],
+        [cliPath, "learn", "stats"],
         {
           cwd: tempDir,
           reject: false,
@@ -372,14 +372,14 @@ describe("workflow learn - E2E", () => {
   });
 
   // ============================================
-  // learn:sync Tests
+  // learn sync Tests
   // ============================================
 
-  describe("learn:sync", () => {
+  describe("learn sync", () => {
     it("warns when sync is not enabled", async () => {
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:sync"],
+        [cliPath, "learn", "sync"],
         {
           cwd: tempDir,
           reject: false,
@@ -397,7 +397,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:sync"],
+        [cliPath, "learn", "sync", "--push", "--dry-run"],
         {
           cwd: tempDir,
           reject: false,
@@ -405,10 +405,9 @@ describe("workflow learn - E2E", () => {
       );
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("Sync Learning Patterns");
-      expect(stdout).toContain(
-        "Specify --push to upload or --pull to download",
-      );
+      // Unified sync shows scope and direction
+      expect(stdout).toContain("Sync scope");
+      expect(stdout).toContain("Learning patterns");
     });
 
     it("shows patterns ready to sync with --push --dry-run", async () => {
@@ -424,7 +423,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:sync", "--push", "--dry-run"],
+        [cliPath, "learn", "sync", "--push", "--dry-run"],
         {
           cwd: tempDir,
           reject: false,
@@ -433,8 +432,8 @@ describe("workflow learn - E2E", () => {
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("DRY-RUN MODE");
-      // The pattern is saved with isPrivate: false, so it should be ready to sync
-      expect(stdout).toContain("Patterns ready to sync");
+      // The unified sync shows "Ready to push" with pattern counts
+      expect(stdout).toContain("Ready to push");
     });
   });
 
@@ -556,10 +555,10 @@ describe("workflow learn - E2E", () => {
   });
 
   // ============================================
-  // learn:publish Tests
+  // learn publish Tests
   // ============================================
 
-  describe("learn:publish", () => {
+  describe("learn publish", () => {
     it("marks a private fix pattern as public", async () => {
       // Create a private pattern
       const store = new PatternStore(tempDir);
@@ -573,7 +572,7 @@ describe("workflow learn - E2E", () => {
       // Run the publish command (non-interactive)
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:publish", pattern.id, "--yes"],
+        [cliPath, "learn", "publish", pattern.id, "--yes"],
         {
           cwd: tempDir,
           reject: false,
@@ -602,7 +601,7 @@ describe("workflow learn - E2E", () => {
       // Run the publish command with --private
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:publish", pattern.id, "--private", "--yes"],
+        [cliPath, "learn", "publish", pattern.id, "--private", "--yes"],
         {
           cwd: tempDir,
           reject: false,
@@ -635,7 +634,7 @@ describe("workflow learn - E2E", () => {
       // Run the publish command with --all
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:publish", "--all", "--yes"],
+        [cliPath, "learn", "publish", "--all", "--yes"],
         {
           cwd: tempDir,
           reject: false,
@@ -663,7 +662,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:publish", pattern.id],
+        [cliPath, "learn", "publish", pattern.id],
         {
           cwd: tempDir,
           reject: false,
@@ -677,7 +676,7 @@ describe("workflow learn - E2E", () => {
     it("fails with error when pattern ID not found", async () => {
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:publish", "nonexistent-id"],
+        [cliPath, "learn", "publish", "nonexistent-id"],
         {
           cwd: tempDir,
           reject: false,
@@ -691,7 +690,7 @@ describe("workflow learn - E2E", () => {
     it("requires pattern ID when not using --all", async () => {
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:publish"],
+        [cliPath, "learn", "publish"],
         {
           cwd: tempDir,
           reject: false,
@@ -714,7 +713,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:publish", blueprint.id, "--yes"],
+        [cliPath, "learn", "publish", blueprint.id, "--yes"],
         {
           cwd: tempDir,
           reject: false,
@@ -731,7 +730,7 @@ describe("workflow learn - E2E", () => {
     });
   });
 
-  describe("learn:validate command", () => {
+  describe("learn validate command", () => {
     it("validates pattern files in directory", async () => {
       // Create a valid blueprint file
       const store = new PatternStore(tempDir);
@@ -740,7 +739,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:validate"],
+        [cliPath, "learn", "validate"],
         {
           cwd: tempDir,
           reject: false,
@@ -762,7 +761,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:validate", "--type", "blueprint"],
+        [cliPath, "learn", "validate", "--type", "blueprint"],
         {
           cwd: tempDir,
           reject: false,
@@ -788,7 +787,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:validate"],
+        [cliPath, "learn", "validate"],
         {
           cwd: tempDir,
           reject: false,
@@ -806,7 +805,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:validate", "--verbose"],
+        [cliPath, "learn", "validate", "--verbose"],
         {
           cwd: tempDir,
           reject: false,
@@ -825,7 +824,7 @@ describe("workflow learn - E2E", () => {
       try {
         const { stdout, exitCode } = await execa(
           "node",
-          [cliPath, "learn:validate"],
+          [cliPath, "learn", "validate"],
           {
             cwd: emptyDir,
             reject: false,
@@ -854,7 +853,7 @@ describe("workflow learn - E2E", () => {
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn:validate", "--file", blueprintPath],
+        [cliPath, "learn", "validate", "--file", blueprintPath],
         {
           cwd: tempDir,
           reject: false,
@@ -866,7 +865,7 @@ describe("workflow learn - E2E", () => {
     });
   });
 
-  describe("learn:capture command", () => {
+  describe("learn capture command", () => {
     it("captures a single file as blueprint with dry-run", async () => {
       // Create a test file to capture
       const testFile = join(tempDir, "component.tsx");
@@ -882,7 +881,7 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn:capture",
+          "learn", "capture",
           "component.tsx",
           "--dry-run",
           "--name",
@@ -915,7 +914,7 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn:capture",
+          "learn", "capture",
           "util.ts",
           "helper.ts",
           "--dry-run",
@@ -958,7 +957,7 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn:capture",
+          "learn", "capture",
           "app.tsx",
           "--dry-run",
           "--name",
@@ -992,7 +991,7 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn:capture",
+          "learn", "capture",
           "hooks/useCounter.ts",
           "--dry-run",
           "--name",
@@ -1016,7 +1015,7 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn:capture",
+          "learn", "capture",
           "nonexistent.ts",
           "--dry-run",
           "--name",
@@ -1044,7 +1043,7 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn:capture",
+          "learn", "capture",
           "components",
           "--dry-run",
           "--name",
@@ -1072,7 +1071,7 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn:capture",
+          "learn", "capture",
           "save-test.ts",
           "--name",
           "Save Test Pattern",
@@ -1109,7 +1108,7 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn:capture",
+          "learn", "capture",
           "tagged.ts",
           "--dry-run",
           "--name",

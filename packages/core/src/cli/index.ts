@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import chalk from "chalk";
 import { initCommand } from "./commands/init.js";
 import { validateCommand } from "./commands/validate.js";
 import { configCommand } from "./commands/config.js";
@@ -11,31 +12,41 @@ import { scopeCreateCommand } from "./commands/scope-create.js";
 import { scopeMigrateCommand } from "./commands/scope-migrate.js";
 import { verifyCommand } from "./commands/verify.js";
 import { autoSetupCommand } from "./commands/auto-setup-command.js";
-import { advisoryCommand } from "./commands/advisory.js";
-import { generateInstructionsCommand } from "./commands/generate-instructions.js";
-import { updateTemplatesCommand } from "./commands/update-templates.js";
-import { docsValidateCommand } from "./commands/docs-validate.js";
-import { hooksCommand } from "./commands/hooks.js";
+// Command groups
+import { createDocsCommand, docsValidateCommand, docsGenerateCommand, docsUpdateCommand } from "./commands/docs/index.js";
+import { createHooksCommand, hooksCommand } from "./commands/hooks/index.js";
 import {
-  learnRecordCommand,
-  learnListCommand,
-  learnApplyCommand,
-  learnSyncCommand,
-  learnConfigCommand,
-  learnDeprecateCommand,
-  learnStatsCommand,
-  learnPublishCommand,
-  learnValidateCommand,
-  learnCaptureCommand,
-} from "./commands/learn.js";
-import {
+  createSolutionCommand,
   solutionCaptureCommand,
   solutionSearchCommand,
   solutionListCommand,
   solutionApplyCommand,
   solutionDeprecateCommand,
   solutionStatsCommand,
-} from "./commands/solution.js";
+} from "./commands/solution/index.js";
+// Legacy imports for backward compatibility
+import { advisoryCommand } from "./commands/advisory.js";
+
+/**
+ * Show deprecation warning for old command syntax
+ */
+function deprecationWarning(oldCmd: string, newCmd: string): void {
+  console.warn(chalk.yellow(`⚠️  "${oldCmd}" is deprecated and will be removed in v2.0.`));
+  console.warn(chalk.yellow(`   Use: ${newCmd}\n`));
+}
+import {
+  createLearnCommand,
+  learnRecordCommand,
+  learnListCommand,
+  learnApplyCommand,
+  learnConfigCommand,
+  learnDeprecateCommand,
+  learnStatsCommand,
+  learnPublishCommand,
+  learnValidateCommand,
+  learnCaptureCommand,
+} from "./commands/learn/index.js";
+import { syncCommand } from "./commands/sync.js";
 
 const program = new Command();
 
@@ -45,6 +56,63 @@ program
     "A self-evolving workflow management system for AI agent development",
   )
   .version("1.0.0");
+
+// ============================================
+// Command Groups (New Subcommand Pattern)
+// ============================================
+
+// Register docs command group
+program.addCommand(createDocsCommand());
+
+// Register solution command group
+program.addCommand(createSolutionCommand());
+
+// Register learn command group
+program.addCommand(createLearnCommand());
+
+// Register scope command group
+import { createScopeCommand } from "./commands/scope/index.js";
+program.addCommand(createScopeCommand());
+
+// Register hooks command group
+program.addCommand(createHooksCommand());
+
+// Register unified sync command
+program
+  .command("sync")
+  .description("Sync patterns and solutions with the community registry")
+  .option("--push", "Push local patterns to registry")
+  .option("--pull", "Pull patterns from registry")
+  .option("--solutions", "Include solution patterns")
+  .option("--learn", "Include learning patterns (default)")
+  .option("--scopes", "Sync custom scope packages")
+  .option("--all", "Sync everything")
+  .option("--dry-run", "Preview without syncing")
+  .addHelpText(
+    "after",
+    `
+${chalk.bold("Examples:")}
+  ${chalk.dim("# Interactive sync (prompts for direction)")}
+  $ workflow sync
+
+  ${chalk.dim("# Push local patterns to registry")}
+  $ workflow sync --push
+
+  ${chalk.dim("# Pull patterns from registry")}
+  $ workflow sync --pull
+
+  ${chalk.dim("# Sync solutions only")}
+  $ workflow sync --solutions --push
+
+  ${chalk.dim("# Preview what would be synced")}
+  $ workflow sync --all --dry-run
+`,
+  )
+  .action(syncCommand);
+
+// ============================================
+// Core Commands
+// ============================================
 
 program
   .command("init")
@@ -130,14 +198,38 @@ program
   .option("--fix", "Automatically fix validation issues in configuration")
   .action(doctorCommand);
 
+// ============================================
+// Deprecated Commands (Hidden, will be removed in v2.0)
+// ============================================
+
+// Legacy hooks command with action argument (replaced by subcommands)
 program
-  .command("hooks <action>")
-  .description("Manage git hooks")
-  .action(hooksCommand);
+  .command("hooks:install", { hidden: true })
+  .description("[DEPRECATED] Use: workflow hooks install")
+  .action(async () => {
+    deprecationWarning("workflow hooks:install", "workflow hooks install");
+    return hooksCommand("install");
+  });
 
 program
-  .command("scope:create")
-  .description("Create a custom scope package")
+  .command("hooks:uninstall", { hidden: true })
+  .description("[DEPRECATED] Use: workflow hooks uninstall")
+  .action(async () => {
+    deprecationWarning("workflow hooks:uninstall", "workflow hooks uninstall");
+    return hooksCommand("uninstall");
+  });
+
+program
+  .command("hooks:status", { hidden: true })
+  .description("[DEPRECATED] Use: workflow hooks status")
+  .action(async () => {
+    deprecationWarning("workflow hooks:status", "workflow hooks status");
+    return hooksCommand("status");
+  });
+
+program
+  .command("scope:create", { hidden: true })
+  .description("[DEPRECATED] Use: workflow scope create")
   .option("--name <name>", 'Package name (e.g., "fintech", "gaming")')
   .option(
     "--scopes <scopes>",
@@ -146,15 +238,21 @@ program
   .option("--preset-name <preset>", "Preset display name")
   .option("--output-dir <dir>", "Output directory")
   .option("--no-test", "Skip test file generation")
-  .action(scopeCreateCommand);
+  .action(async (options) => {
+    deprecationWarning("workflow scope:create", "workflow scope create");
+    return scopeCreateCommand(options);
+  });
 
 program
-  .command("scope:migrate")
-  .description("Migrate inline scopes to a custom package")
+  .command("scope:migrate", { hidden: true })
+  .description("[DEPRECATED] Use: workflow scope migrate")
   .option("--name <name>", "Package name for the preset")
   .option("--output-dir <dir>", "Output directory")
   .option("--keep-config", "Keep inline scopes in config after migration")
-  .action(scopeMigrateCommand);
+  .action(async (options) => {
+    deprecationWarning("workflow scope:migrate", "workflow scope migrate");
+    return scopeMigrateCommand(options);
+  });
 
 program
   .command("verify")
@@ -173,46 +271,55 @@ program
   .option("--audit", "Show audit report without applying changes")
   .action(autoSetupCommand);
 
+// ============================================
+// Deprecated Commands (Removed in v2.0)
+// Use `workflow docs <subcommand>` instead
+// ============================================
+
 program
-  .command("advisory")
-  .description("Generate advisory board analysis and documentation")
-  .option(
-    "--depth <level>",
-    "Analysis depth: executive, quick, standard, comprehensive",
-  )
-  .option("--output <path>", "Output directory (default: docs/advisory)")
+  .command("advisory", { hidden: true })
+  .description("[DEPRECATED] Use: workflow docs advisory")
+  .option("--depth <level>", "Analysis depth")
+  .option("--output <path>", "Output directory")
   .option("--interactive", "Enable interactive mode")
   .option("--dry-run", "Preview analysis without writing files")
-  .option(
-    "--format <type>",
-    "Output format: markdown, json (default: markdown)",
-  )
+  .option("--format <type>", "Output format")
   .option("--timestamp", "Append timestamp to filenames")
-  .option("--include-health", "Include code health metrics from verify/doctor")
-  .option("--ci", "CI mode with exit codes on high-risk findings")
+  .option("--include-health", "Include code health metrics")
+  .option("--ci", "CI mode with exit codes")
   .option("--compare <path>", "Compare with previous report")
-  .action(advisoryCommand);
+  .action(async (options) => {
+    deprecationWarning("workflow advisory", "workflow docs advisory");
+    return advisoryCommand(options);
+  });
 
 program
-  .command("generate-instructions")
-  .description("Generate .github/copilot-instructions.md from guidelines")
+  .command("generate-instructions", { hidden: true })
+  .description("[DEPRECATED] Use: workflow docs generate")
   .option("--force", "Regenerate without confirmation")
-  .action(generateInstructionsCommand);
+  .action(async (options) => {
+    deprecationWarning("workflow generate-instructions", "workflow docs generate");
+    return docsGenerateCommand(options);
+  });
 
 program
-  .command("update-templates")
-  .description("Update guideline templates from the latest package version")
+  .command("update-templates", { hidden: true })
+  .description("[DEPRECATED] Use: workflow docs update")
   .option("--force", "Overwrite existing template files")
-  .option("--skip", "Skip the update (useful in CI)")
-  .action(updateTemplatesCommand);
+  .option("--skip", "Skip the update")
+  .action(async (options) => {
+    deprecationWarning("workflow update-templates", "workflow docs update");
+    return docsUpdateCommand(options);
+  });
 
 program
-  .command("docs:validate")
-  .description("Validate document references in markdown files")
+  .command("docs:validate", { hidden: true })
+  .description("[DEPRECATED] Use: workflow docs validate")
   .option("--fix", "Interactively fix broken references")
-  .option("--patterns <patterns>", "Glob patterns to scan (comma-separated, default: **/*.md)")
-  .option("--ignore <patterns>", "Glob patterns to ignore (comma-separated)")
-  .action((options) => {
+  .option("--patterns <patterns>", "Glob patterns to scan")
+  .option("--ignore <patterns>", "Glob patterns to ignore")
+  .action(async (options) => {
+    deprecationWarning("workflow docs:validate", "workflow docs validate");
     const patterns = options.patterns
       ? options.patterns.split(",").map((p: string) => p.trim())
       : undefined;
@@ -228,153 +335,193 @@ program
   });
 
 // ============================================
-// Learning System Commands
+// Deprecated Learning Commands (Removed in v2.0)
+// Use `workflow learn <subcommand>` instead
 // ============================================
 
 program
-  .command("learn:record")
-  .description("Record a new pattern from a successful implementation")
+  .command("learn:record", { hidden: true })
+  .description("[DEPRECATED] Use: workflow learn record")
   .option("--name <name>", "Pattern name")
   .option("--description <desc>", "Pattern description")
-  .option(
-    "--category <cat>",
-    "Category (migration, security, performance, etc.)",
-  )
-  .option("--framework <fw>", "Framework (next, react, vue, etc.)")
+  .option("--category <cat>", "Category")
+  .option("--framework <fw>", "Framework")
   .option("--version <ver>", "Framework version range")
-  .option("--tags <tags>", "Comma-separated tags (category:value)")
-  .option("--type <type>", "Pattern type (fix, blueprint)")
-  .action(learnRecordCommand);
+  .option("--tags <tags>", "Comma-separated tags")
+  .option("--type <type>", "Pattern type")
+  .action(async (options) => {
+    deprecationWarning("workflow learn:record", "workflow learn record");
+    return learnRecordCommand(options);
+  });
 
 program
-  .command("learn:list")
-  .description("List recorded learning patterns")
-  .option("--type <type>", "Filter by type (fix, blueprint, all)")
+  .command("learn:list", { hidden: true })
+  .description("[DEPRECATED] Use: workflow learn list")
+  .option("--type <type>", "Filter by type")
   .option("--framework <fw>", "Filter by framework")
   .option("--tag <tag>", "Filter by tag")
   .option("--deprecated", "Include deprecated patterns")
-  .action(learnListCommand);
+  .action(async (options) => {
+    deprecationWarning("workflow learn:list", "workflow learn list");
+    return learnListCommand(options);
+  });
 
 program
-  .command("learn:apply <patternId>")
-  .description("Apply a pattern to the current project")
+  .command("learn:apply <patternId>", { hidden: true })
+  .description("[DEPRECATED] Use: workflow learn apply")
   .option("--framework <fw>", "Override framework")
   .option("--version <ver>", "Override version")
   .option("--dry-run", "Preview without applying")
-  .action(learnApplyCommand);
+  .action(async (patternId, options) => {
+    deprecationWarning("workflow learn:apply", "workflow learn apply");
+    return learnApplyCommand(patternId, options);
+  });
 
 program
-  .command("learn:capture <paths...>")
-  .description("Capture files as a blueprint pattern with auto-inferred metadata")
-  .option("--name <name>", "Pattern name (inferred from paths if omitted)")
+  .command("learn:capture <paths...>", { hidden: true })
+  .description("[DEPRECATED] Use: workflow learn capture")
+  .option("--name <name>", "Pattern name")
   .option("--description <desc>", "Pattern description")
   .option("--framework <fw>", "Override inferred framework")
-  .option("--tags <tags>", "Additional tags (comma-separated, e.g., 'framework:react,language:typescript')")
-  .option("--dry-run", "Preview what would be captured without saving")
-  .action(learnCaptureCommand);
+  .option("--tags <tags>", "Additional tags")
+  .option("--dry-run", "Preview capture")
+  .action(async (paths, options) => {
+    deprecationWarning("workflow learn:capture", "workflow learn capture");
+    return learnCaptureCommand(paths, options);
+  });
 
 program
-  .command("learn:sync")
-  .description("Sync patterns with remote registry")
-  .option("--push", "Push local patterns to registry")
-  .option("--pull", "Pull patterns from registry")
+  .command("learn:sync", { hidden: true })
+  .description("[DEPRECATED] Use: workflow sync")
+  .option("--push", "Push local patterns")
+  .option("--pull", "Pull patterns")
   .option("--dry-run", "Preview without syncing")
-  .action(learnSyncCommand);
+  .action(async (options) => {
+    deprecationWarning("workflow learn:sync", "workflow sync");
+    return syncCommand({ ...options, learn: true });
+  });
 
 program
-  .command("learn:config")
-  .description("Configure learning settings")
+  .command("learn:config", { hidden: true })
+  .description("[DEPRECATED] Use: workflow learn config")
   .option("--enable-sync", "Enable pattern sync")
   .option("--disable-sync", "Disable pattern sync")
-  .option("--enable-telemetry", "Enable anonymous telemetry")
+  .option("--enable-telemetry", "Enable telemetry")
   .option("--disable-telemetry", "Disable telemetry")
   .option("--reset-id", "Reset contributor ID")
   .option("--show", "Show current configuration")
-  .action(learnConfigCommand);
+  .action(async (options) => {
+    deprecationWarning("workflow learn:config", "workflow learn config");
+    return learnConfigCommand(options);
+  });
 
 program
-  .command("learn:deprecate <patternId> <reason>")
-  .description("Deprecate an outdated pattern")
-  .action(learnDeprecateCommand);
+  .command("learn:deprecate <patternId> <reason>", { hidden: true })
+  .description("[DEPRECATED] Use: workflow learn deprecate")
+  .action(async (patternId, reason) => {
+    deprecationWarning("workflow learn:deprecate", "workflow learn deprecate");
+    return learnDeprecateCommand(patternId, reason);
+  });
 
 program
-  .command("learn:publish [patternId]")
-  .description("Mark pattern(s) as public for syncing")
-  .option("--private", "Mark as private instead of public")
+  .command("learn:publish [patternId]", { hidden: true })
+  .description("[DEPRECATED] Use: workflow learn publish")
+  .option("--private", "Mark as private")
   .option("--all", "Apply to all patterns")
   .option("-y, --yes", "Skip confirmation prompts")
-  .action(learnPublishCommand);
+  .action(async (patternId, options) => {
+    deprecationWarning("workflow learn:publish", "workflow learn publish");
+    return learnPublishCommand(patternId, options);
+  });
 
 program
-  .command("learn:stats")
-  .description("Show learning statistics")
-  .action(learnStatsCommand);
+  .command("learn:stats", { hidden: true })
+  .description("[DEPRECATED] Use: workflow learn stats")
+  .action(async () => {
+    deprecationWarning("workflow learn:stats", "workflow learn stats");
+    return learnStatsCommand();
+  });
 
 program
-  .command("learn:validate")
-  .description("Validate pattern files and optionally auto-fix common issues")
-  .option(
-    "-t, --type <type>",
-    "Pattern type to validate (fix, blueprint, solution, all)",
-    "all",
-  )
-  .option("-f, --file <path>", "Validate a specific file by path")
-  .option("--fix", "Automatically fix common issues (missing metrics, setup, etc.)")
-  .option("-v, --verbose", "Show detailed validation output")
-  .action(learnValidateCommand);
+  .command("learn:validate", { hidden: true })
+  .description("[DEPRECATED] Use: workflow learn validate")
+  .option("-t, --type <type>", "Pattern type to validate", "all")
+  .option("-f, --file <path>", "Validate a specific file")
+  .option("--fix", "Automatically fix common issues")
+  .option("-v, --verbose", "Show detailed output")
+  .action(async (options) => {
+    deprecationWarning("workflow learn:validate", "workflow learn validate");
+    return learnValidateCommand(options);
+  });
 
 // ============================================
-// Solution Pattern Commands
+// Deprecated Solution Commands (Removed in v2.0)
+// Use `workflow solution <subcommand>` instead
 // ============================================
 
 program
-  .command("solution:capture")
-  .description("Capture a solution pattern from working code")
+  .command("solution:capture", { hidden: true })
+  .description("[DEPRECATED] Use: workflow solution capture")
   .option("--name <name>", "Solution name")
   .option("--description <desc>", "Solution description")
-  .option(
-    "--category <cat>",
-    "Category (auth, api, database, ui, testing, deployment, integration, performance, security, other)",
-  )
+  .option("--category <cat>", "Category")
   .option("--keywords <kw>", "Comma-separated keywords")
   .option("--path <path>", "Path to the solution directory")
-  .option("--anonymize", "Anonymize sensitive data in code")
-  .option("--private", "Keep solution private (not synced)")
-  .action(solutionCaptureCommand);
+  .option("--anonymize", "Anonymize sensitive data")
+  .option("--private", "Keep solution private")
+  .action(async (options) => {
+    deprecationWarning("workflow solution:capture", "workflow solution capture");
+    return solutionCaptureCommand(options);
+  });
 
 program
-  .command("solution:search <query>")
-  .description("Search for solution patterns")
+  .command("solution:search <query>", { hidden: true })
+  .description("[DEPRECATED] Use: workflow solution search")
   .option("--category <cat>", "Filter by category")
   .option("--framework <fw>", "Filter by framework")
   .option("--limit <n>", "Maximum results", "10")
-  .action(solutionSearchCommand);
+  .action(async (query, options) => {
+    deprecationWarning("workflow solution:search", "workflow solution search");
+    return solutionSearchCommand(query, options);
+  });
 
 program
-  .command("solution:list")
-  .description("List all solution patterns")
+  .command("solution:list", { hidden: true })
+  .description("[DEPRECATED] Use: workflow solution list")
   .option("--category <cat>", "Filter by category")
   .option("--framework <fw>", "Filter by framework")
   .option("--deprecated", "Include deprecated solutions")
   .option("--limit <n>", "Maximum results", "20")
-  .action(solutionListCommand);
+  .action(async (options) => {
+    deprecationWarning("workflow solution:list", "workflow solution list");
+    return solutionListCommand(options);
+  });
 
 program
-  .command("solution:apply <solutionId>")
-  .description("Apply a solution pattern to the current project")
+  .command("solution:apply <solutionId>", { hidden: true })
+  .description("[DEPRECATED] Use: workflow solution apply")
   .option("--output <dir>", "Output directory")
   .option("--dry-run", "Preview without applying")
   .option("--include-tests", "Include test files")
-  .action(solutionApplyCommand);
+  .action(async (solutionId, options) => {
+    deprecationWarning("workflow solution:apply", "workflow solution apply");
+    return solutionApplyCommand(solutionId, options);
+  });
 
 program
-  .command("solution:deprecate <solutionId> <reason>")
-  .description("Deprecate a solution pattern")
-  .action(solutionDeprecateCommand);
+  .command("solution:deprecate <solutionId> <reason>", { hidden: true })
+  .description("[DEPRECATED] Use: workflow solution deprecate")
+  .action(async (solutionId, reason) => {
+    deprecationWarning("workflow solution:deprecate", "workflow solution deprecate");
+    return solutionDeprecateCommand(solutionId, reason);
+  });
 
 program
-  .command("solution:stats")
-  .description("Show solution pattern statistics")
-  .action(solutionStatsCommand);
+  .command("solution:stats", { hidden: true })
+  .description("[DEPRECATED] Use: workflow solution stats")
+  .action(async () => {
+    deprecationWarning("workflow solution:stats", "workflow solution stats");
+    return solutionStatsCommand();
+  });
 
 program.parse();

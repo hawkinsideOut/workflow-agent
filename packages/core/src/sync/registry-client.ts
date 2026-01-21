@@ -237,16 +237,16 @@ export class RegistryClient {
 
         if (response.status === 429) {
           // Rate limited
-          const body = await response.json();
+          const body = await response.json() as { message?: string; resetAt?: string | null; remaining?: number };
           throw new RateLimitedException(
             body.message || "Rate limit exceeded",
-            body.resetAt,
+            body.resetAt ?? null,
             body.remaining ?? 0,
           );
         }
 
         if (!response.ok) {
-          const body = await response.json().catch(() => ({}));
+          const body = await response.json().catch(() => ({})) as { error?: string };
           throw new RegistryError(
             body.error || `Request failed with status ${response.status}`,
             response.status,

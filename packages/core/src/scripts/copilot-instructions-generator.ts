@@ -376,7 +376,7 @@ export function generateCopilotInstructions(
   projectRoot: string,
   options: { force?: boolean; silent?: boolean } = {}
 ): GenerateResult {
-  const { force = false, silent = false } = options;
+  const { force: _force = false, silent = false } = options;
 
   const guidelinesDir = join(projectRoot, "guidelines");
   const githubDir = join(projectRoot, ".github");

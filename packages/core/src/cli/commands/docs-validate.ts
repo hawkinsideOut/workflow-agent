@@ -1,10 +1,9 @@
 import * as p from "@clack/prompts";
 import chalk from "chalk";
-import { join, relative } from "path";
+import { relative } from "path";
 import {
   validateDocumentReferences,
   applyReferenceFix,
-  type BrokenReference,
 } from "../../validators/document-references.js";
 
 export async function docsValidateCommand(options: {
@@ -155,6 +154,7 @@ export async function docsValidateCommand(options: {
             if (!value || value.trim().length === 0) {
               return "Path cannot be empty";
             }
+            return undefined;
           },
         });
 

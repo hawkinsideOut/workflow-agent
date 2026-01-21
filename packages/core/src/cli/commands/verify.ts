@@ -140,22 +140,6 @@ export async function verifyCommand(options: VerifyOptions) {
 // Auto-Record Learning Pattern
 // ============================================
 
-interface CheckResult {
-  success: boolean;
-  totalAttempts: number;
-  fixesApplied: number;
-  appliedFixes?: Array<{
-    checkName: string;
-    displayName: string;
-    command: string;
-    timestamp: Date;
-  }>;
-  pendingFixes?: Array<{
-    check: { name: string; displayName: string };
-    command: string;
-  }>;
-}
-
 /**
  * Record successful fix patterns for learning
  * Called after verify succeeds with auto-fixes applied
