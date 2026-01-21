@@ -339,6 +339,7 @@ program
   .option("--keywords <kw>", "Comma-separated keywords")
   .option("--path <path>", "Path to the solution directory")
   .option("--anonymize", "Anonymize sensitive data in code")
+  .option("--private", "Keep solution private (not synced)")
   .action(solutionCaptureCommand);
 
 program

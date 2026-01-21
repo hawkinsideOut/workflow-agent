@@ -21,6 +21,7 @@ interface SolutionCaptureOptions {
   keywords?: string;
   path?: string;
   anonymize?: boolean;
+  private?: boolean;
 }
 
 interface SolutionSearchOptions {
@@ -223,6 +224,7 @@ export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
       description,
       category,
       keywords,
+      { isPrivate: options.private ?? false },
     );
 
     spinner.stop("Solution analyzed");

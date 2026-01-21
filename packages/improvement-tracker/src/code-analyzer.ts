@@ -304,6 +304,7 @@ export class CodeAnalyzer {
     description: string,
     category: SolutionCategory,
     keywords: string[],
+    options: { isPrivate?: boolean } = {},
   ): Promise<SolutionPattern> {
     const analysis = await this.analyzeDirectory(dirPath, category);
     const architecture = this.detectArchitecture(analysis);
@@ -359,7 +360,7 @@ export class CodeAnalyzer {
       relatedPatterns: [],
       source: "manual",
       sourceProject: path.basename(dirPath),
-      isPrivate: true,
+      isPrivate: options.isPrivate ?? false,
       createdAt: now,
       updatedAt: now,
     };

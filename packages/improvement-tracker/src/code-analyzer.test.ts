@@ -871,7 +871,7 @@ const path = "/home/username/project";
       expect(pattern.source).toBe("manual");
     });
 
-    it("should set isPrivate to true by default", async () => {
+    it("should set isPrivate to false by default (public)", async () => {
       const analyzer = createCodeAnalyzer();
       const pattern = await analyzer.createSolutionPattern(
         TEST_DIR,
@@ -879,6 +879,20 @@ const path = "/home/username/project";
         "Test description",
         "auth",
         ["test"],
+      );
+
+      expect(pattern.isPrivate).toBe(false);
+    });
+
+    it("should set isPrivate to true when option is passed", async () => {
+      const analyzer = createCodeAnalyzer();
+      const pattern = await analyzer.createSolutionPattern(
+        TEST_DIR,
+        "Test Solution",
+        "Test description",
+        "auth",
+        ["test"],
+        { isPrivate: true },
       );
 
       expect(pattern.isPrivate).toBe(true);
