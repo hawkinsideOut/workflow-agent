@@ -573,11 +573,11 @@ export async function learnApplyCommand(
   // Record telemetry for application attempt
   const framework =
     options.framework ??
-    patternData.compatibility.frameworks[0]?.name ??
+    patternData.compatibility?.frameworks?.[0]?.name ??
     "unknown";
   const version =
     options.version ??
-    patternData.compatibility.frameworks[0]?.version ??
+    patternData.compatibility?.frameworks?.[0]?.version ??
     "0.0.0";
 
   await telemetry.recordApplication(patternId, patternType, framework, version);
