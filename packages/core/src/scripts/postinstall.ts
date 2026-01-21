@@ -12,6 +12,8 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import {
   WORKFLOW_SCRIPTS,
+  DEPRECATED_SCRIPTS,
+  WORKFLOW_SCRIPTS_VERSION,
   SCRIPT_CATEGORIES,
   TOTAL_SCRIPTS,
 } from "./workflow-scripts.js";
@@ -80,11 +82,20 @@ function addScriptsToPackageJson(): void {
       packageJson.scripts = {};
     }
 
-    // Track added and updated scripts separately
+    // Track changes
     const addedScripts: string[] = [];
     const updatedScripts: string[] = [];
+    const removedScripts: string[] = [];
 
-    // Always add/update all workflow scripts (ensures updates get new scripts)
+    // Step 1: Remove deprecated scripts
+    for (const deprecatedScript of DEPRECATED_SCRIPTS) {
+      if (packageJson.scripts[deprecatedScript] !== undefined) {
+        delete packageJson.scripts[deprecatedScript];
+        removedScripts.push(deprecatedScript);
+      }
+    }
+
+    // Step 2: Add/update all workflow scripts (ensures updates get new scripts)
     for (const [scriptName, scriptCommand] of Object.entries(
       WORKFLOW_SCRIPTS,
     )) {
@@ -100,7 +111,8 @@ function addScriptsToPackageJson(): void {
       // If script exists with same value, do nothing (already up to date)
     }
 
-    const totalChanges = addedScripts.length + updatedScripts.length;
+    const totalChanges =
+      addedScripts.length + updatedScripts.length + removedScripts.length;
 
     if (totalChanges > 0) {
       // Write back to package.json with proper formatting
@@ -118,10 +130,26 @@ function addScriptsToPackageJson(): void {
       if (updatedScripts.length > 0) {
         summaryParts.push(`${updatedScripts.length} updated`);
       }
+      if (removedScripts.length > 0) {
+        summaryParts.push(`${removedScripts.length} deprecated removed`);
+      }
 
       console.log(
         `\n✓ Workflow scripts configured in package.json (${summaryParts.join(", ")}):`,
       );
+
+      // Log removed deprecated scripts
+      if (removedScripts.length > 0) {
+        console.log(`\n  ⚠️  Removed deprecated scripts:`);
+        for (const script of removedScripts) {
+          console.log(`    - ${script}`);
+        }
+        console.log(
+          `\n  💡 Updated to workflow-agent v${WORKFLOW_SCRIPTS_VERSION} with new command syntax.`,
+        );
+        console.log(`     Old: workflow-agent learn:list`);
+        console.log(`     New: workflow-agent learn list\n`);
+      }
 
       // Display scripts by category
       for (const [category, scripts] of Object.entries(SCRIPT_CATEGORIES)) {
