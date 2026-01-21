@@ -1,5 +1,25 @@
 # workflow-agent-cli
 
+## 2.20.0
+
+### Minor Changes
+
+- feat(scripts): auto-remove deprecated scripts on install/update
+
+  BREAKING CHANGE: Old colon-style script names are now removed and replaced with new hyphen-style names on package install or update.
+
+  **Changes:**
+  - 44 deprecated script names are automatically removed from package.json
+  - New hyphen-style scripts are added (e.g., `workflow:learn-list` instead of `workflow:learn:list`)
+  - Version marker script `workflow:version` for tracking
+  - New scripts for hooks, sync, and all CLI subcommands
+  - Console output shows removed deprecated scripts with migration hint
+
+  **Migration:**
+  - Old scripts are automatically removed and replaced on install/update
+  - Users see a warning about deprecated scripts being removed
+  - Run `pnpm workflow-agent setup` for pnpm users
+
 ## 2.19.0
 
 ### Minor Changes
