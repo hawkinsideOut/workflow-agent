@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, writeFile } from "fs/promises";
+import { mkdtemp, rm, writeFile, mkdir } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import { execa } from "execa";
@@ -728,6 +728,141 @@ describe("workflow learn - E2E", () => {
       const updatedBlueprint = await store.getBlueprint(blueprint.id);
       expect(updatedBlueprint.success).toBe(true);
       expect(updatedBlueprint.data?.isPrivate).toBe(false);
+    });
+  });
+
+  describe("learn:validate command", () => {
+    it("validates pattern files in directory", async () => {
+      // Create a valid blueprint file
+      const store = new PatternStore(tempDir);
+      const blueprint = createTestBlueprint({ name: "Valid Blueprint" });
+      await store.saveBlueprint(blueprint);
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:validate"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Validation Summary");
+      expect(stdout).toContain("Valid:");
+    });
+
+    it("filters by pattern type", async () => {
+      // Create both fix and blueprint patterns
+      const store = new PatternStore(tempDir);
+      await store.saveBlueprint(createTestBlueprint({ name: "Blueprint 1" }));
+      await store.saveFixPattern(
+        createTestFixPattern({ name: "Fix Pattern 1" }),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:validate", "--type", "blueprint"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Validation Summary");
+    });
+
+    it("reports invalid patterns", async () => {
+      // Create an invalid pattern file directly
+      const patternsDir = join(tempDir, ".workflow", "patterns", "blueprints");
+      await mkdir(patternsDir, { recursive: true });
+      const invalidPattern = {
+        id: "invalid-id",
+        // Missing required fields
+      };
+      await writeFile(
+        join(patternsDir, "invalid.json"),
+        JSON.stringify(invalidPattern),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:validate"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(1); // Should fail with invalid patterns
+      expect(stdout).toContain("Invalid:");
+    });
+
+    it("shows verbose output with --verbose flag", async () => {
+      const store = new PatternStore(tempDir);
+      const blueprint = createTestBlueprint({ name: "Test Blueprint" });
+      await store.saveBlueprint(blueprint);
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:validate", "--verbose"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Validation Summary");
+      // Verbose mode shows individual file validations
+    });
+
+    it("handles empty pattern directories gracefully", async () => {
+      // New temp dir with no patterns
+      const emptyDir = await mkdtemp(join(tmpdir(), "workflow-validate-"));
+
+      try {
+        const { stdout, exitCode } = await execa(
+          "node",
+          [cliPath, "learn:validate"],
+          {
+            cwd: emptyDir,
+            reject: false,
+          },
+        );
+
+        expect(exitCode).toBe(0);
+        expect(stdout).toContain("Valid: 0");
+      } finally {
+        await rm(emptyDir, { recursive: true, force: true });
+      }
+    });
+
+    it("validates specific file with --file option", async () => {
+      const store = new PatternStore(tempDir);
+      const blueprint = createTestBlueprint({ name: "Specific Blueprint" });
+      await store.saveBlueprint(blueprint);
+
+      const blueprintPath = join(
+        tempDir,
+        ".workflow",
+        "patterns",
+        "blueprints",
+        `${blueprint.id}.json`,
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn:validate", "--file", blueprintPath],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Valid:");
     });
   });
 });

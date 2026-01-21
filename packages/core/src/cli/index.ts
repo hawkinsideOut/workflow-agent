@@ -25,6 +25,7 @@ import {
   learnDeprecateCommand,
   learnStatsCommand,
   learnPublishCommand,
+  learnValidateCommand,
 } from "./commands/learn.js";
 import {
   solutionCaptureCommand,
@@ -308,6 +309,19 @@ program
   .command("learn:stats")
   .description("Show learning statistics")
   .action(learnStatsCommand);
+
+program
+  .command("learn:validate")
+  .description("Validate pattern files and optionally auto-fix common issues")
+  .option(
+    "-t, --type <type>",
+    "Pattern type to validate (fix, blueprint, solution, all)",
+    "all",
+  )
+  .option("-f, --file <path>", "Validate a specific file by path")
+  .option("--fix", "Automatically fix common issues (missing metrics, setup, etc.)")
+  .option("-v, --verbose", "Show detailed validation output")
+  .action(learnValidateCommand);
 
 // ============================================
 // Solution Pattern Commands

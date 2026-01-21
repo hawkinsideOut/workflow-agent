@@ -7,6 +7,10 @@ import {
   ContributorManager,
   PatternAnonymizer,
   TelemetryCollector,
+  FixPatternSchema,
+  BlueprintSchema,
+  SolutionPatternSchema,
+  createDefaultMetrics,
   type FixPattern,
   type Blueprint,
   type PatternTag,
@@ -57,6 +61,13 @@ interface LearnConfigOptions {
   disableTelemetry?: boolean;
   resetId?: boolean;
   show?: boolean;
+}
+
+interface LearnValidateOptions {
+  type?: "fix" | "blueprint" | "solution" | "all";
+  fix?: boolean;
+  verbose?: boolean;
+  file?: string;
 }
 
 // ============================================
@@ -1332,4 +1343,402 @@ export async function learnStatsCommand() {
   }
 
   console.log("");
+}
+
+// ============================================
+// learn:validate Command
+// ============================================
+
+interface ValidationResult {
+  file: string;
+  type: "fix" | "blueprint" | "solution";
+  valid: boolean;
+  errors: string[];
+  fixable: boolean;
+  fixedData?: FixPattern | Blueprint | unknown;
+}
+
+/**
+ * Validate pattern files and optionally fix them
+ */
+export async function learnValidateCommand(options: LearnValidateOptions) {
+  const cwd = getWorkspacePath();
+  const patternsPath = path.join(cwd, ".workflow", "patterns");
+  const patternType = options.type ?? "all";
+  const shouldFix = options.fix ?? false;
+  const verbose = options.verbose ?? false;
+  const specificFile = options.file;
+
+  console.log(chalk.cyan("\n🔍 Validating Pattern Files\n"));
+
+  const results: ValidationResult[] = [];
+
+  // If a specific file is provided, validate only that file
+  if (specificFile) {
+    const fileResult = await validateSingleFile(specificFile, verbose);
+    if (fileResult) {
+      results.push(fileResult);
+    }
+  } else {
+    // Validate fix patterns
+    if (patternType === "all" || patternType === "fix") {
+      const fixesPath = path.join(patternsPath, "fixes");
+      const fixResults = await validatePatternDirectory(
+        fixesPath,
+        "fix",
+        FixPatternSchema,
+        verbose,
+      );
+      results.push(...fixResults);
+    }
+
+    // Validate blueprints
+    if (patternType === "all" || patternType === "blueprint") {
+      const blueprintsPath = path.join(patternsPath, "blueprints");
+      const bpResults = await validatePatternDirectory(
+        blueprintsPath,
+        "blueprint",
+        BlueprintSchema,
+        verbose,
+      );
+      results.push(...bpResults);
+    }
+
+    // Validate solutions
+    if (patternType === "all" || patternType === "solution") {
+      const solutionsPath = path.join(patternsPath, "solutions");
+      const solResults = await validatePatternDirectory(
+        solutionsPath,
+        "solution",
+        SolutionPatternSchema,
+        verbose,
+      );
+      results.push(...solResults);
+    }
+  }
+
+  // Summary
+  const valid = results.filter((r) => r.valid);
+  const invalid = results.filter((r) => !r.valid);
+  const fixable = invalid.filter((r) => r.fixable);
+
+  console.log(chalk.dim("━".repeat(50)));
+  console.log(chalk.bold(`\n📊 Validation Summary\n`));
+  console.log(chalk.green(`  ✓ Valid: ${valid.length}`));
+  if (invalid.length > 0) {
+    console.log(chalk.red(`  ✗ Invalid: ${invalid.length}`));
+    console.log(chalk.yellow(`  🔧 Auto-fixable: ${fixable.length}`));
+  }
+
+  // Show invalid patterns
+  if (invalid.length > 0) {
+    console.log(chalk.red(`\n❌ Invalid Patterns:\n`));
+    for (const result of invalid) {
+      console.log(chalk.white(`  ${result.file} (${result.type})`));
+      for (const err of result.errors.slice(0, 5)) {
+        console.log(chalk.dim(`    - ${err}`));
+      }
+      if (result.errors.length > 5) {
+        console.log(chalk.dim(`    ... and ${result.errors.length - 5} more`));
+      }
+      if (result.fixable) {
+        console.log(chalk.yellow(`    → Can be auto-fixed`));
+      }
+    }
+  }
+
+  // Auto-fix if requested
+  if (shouldFix && fixable.length > 0) {
+    console.log(chalk.cyan(`\n🔧 Auto-fixing ${fixable.length} patterns...\n`));
+
+    let fixed = 0;
+    for (const result of fixable) {
+      if (result.fixedData) {
+        const filePath = path.join(
+          patternsPath,
+          result.type === "fix"
+            ? "fixes"
+            : result.type === "blueprint"
+              ? "blueprints"
+              : "solutions",
+          result.file,
+        );
+
+        try {
+          await fs.promises.writeFile(
+            filePath,
+            JSON.stringify(result.fixedData, null, 2),
+          );
+          console.log(chalk.green(`  ✓ Fixed: ${result.file}`));
+          fixed++;
+        } catch (error) {
+          console.log(
+            chalk.red(
+              `  ✗ Failed to fix: ${result.file} - ${error instanceof Error ? error.message : "Unknown error"}`,
+            ),
+          );
+        }
+      }
+    }
+
+    console.log(chalk.green(`\n✅ Fixed ${fixed}/${fixable.length} patterns`));
+  } else if (fixable.length > 0 && !shouldFix) {
+    console.log(
+      chalk.yellow(
+        `\n💡 Run with --fix to auto-fix ${fixable.length} patterns`,
+      ),
+    );
+  }
+
+  console.log("");
+
+  // Exit with error code if there are unfixable invalid patterns
+  const unfixable = invalid.filter((r) => !r.fixable);
+  if (unfixable.length > 0 && !shouldFix) {
+    process.exit(1);
+  }
+  if (invalid.length > 0 && !shouldFix) {
+    process.exit(1);
+  }
+}
+
+/**
+ * Validate all JSON files in a pattern directory
+ */
+async function validatePatternDirectory(
+  dirPath: string,
+  type: "fix" | "blueprint" | "solution",
+  schema: typeof FixPatternSchema | typeof BlueprintSchema | typeof SolutionPatternSchema,
+  verbose: boolean,
+): Promise<ValidationResult[]> {
+  const results: ValidationResult[] = [];
+
+  try {
+    const files = await fs.promises.readdir(dirPath);
+
+    for (const file of files) {
+      if (!file.endsWith(".json")) continue;
+
+      const filePath = path.join(dirPath, file);
+      const result = await validatePatternFile(filePath, file, type, schema, verbose);
+      results.push(result);
+
+      if (verbose) {
+        if (result.valid) {
+          console.log(chalk.green(`  ✓ ${file}`));
+        } else {
+          console.log(chalk.red(`  ✗ ${file}`));
+        }
+      }
+    }
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      console.log(
+        chalk.yellow(`  ⚠ Could not read ${type} directory: ${dirPath}`),
+      );
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Validate a single file by its absolute path, auto-detecting type from path
+ */
+async function validateSingleFile(
+  filePath: string,
+  verbose: boolean,
+): Promise<ValidationResult | null> {
+  const fileName = path.basename(filePath);
+
+  // Detect type from path
+  let type: "fix" | "blueprint" | "solution";
+  let schema: typeof FixPatternSchema | typeof BlueprintSchema | typeof SolutionPatternSchema;
+
+  if (filePath.includes("/fixes/") || filePath.includes("\\fixes\\")) {
+    type = "fix";
+    schema = FixPatternSchema;
+  } else if (filePath.includes("/blueprints/") || filePath.includes("\\blueprints\\")) {
+    type = "blueprint";
+    schema = BlueprintSchema;
+  } else if (filePath.includes("/solutions/") || filePath.includes("\\solutions\\")) {
+    type = "solution";
+    schema = SolutionPatternSchema;
+  } else {
+    // Try to detect from content
+    try {
+      const content = await fs.promises.readFile(filePath, "utf-8");
+      const data = JSON.parse(content);
+
+      // Heuristics to detect type
+      if (data.trigger && data.solution) {
+        type = "fix";
+        schema = FixPatternSchema;
+      } else if (data.stack && data.structure) {
+        type = "blueprint";
+        schema = BlueprintSchema;
+      } else if (data.context && data.approach) {
+        type = "solution";
+        schema = SolutionPatternSchema;
+      } else {
+        // Default to blueprint as it's most common
+        type = "blueprint";
+        schema = BlueprintSchema;
+      }
+    } catch {
+      // Default to blueprint
+      type = "blueprint";
+      schema = BlueprintSchema;
+    }
+  }
+
+  return validatePatternFile(filePath, fileName, type, schema, verbose);
+}
+
+/**
+ * Validate a single pattern file
+ */
+async function validatePatternFile(
+  filePath: string,
+  fileName: string,
+  type: "fix" | "blueprint" | "solution",
+  schema: typeof FixPatternSchema | typeof BlueprintSchema | typeof SolutionPatternSchema,
+  verbose: boolean,
+): Promise<ValidationResult> {
+  try {
+    const content = await fs.promises.readFile(filePath, "utf-8");
+    const data = JSON.parse(content);
+
+    const validation = schema.safeParse(data);
+
+    if (validation.success) {
+      return {
+        file: fileName,
+        type,
+        valid: true,
+        errors: [],
+        fixable: false,
+      };
+    }
+
+    // Collect errors
+    const errors = validation.error.issues.map(
+      (i) => `${i.path.join(".")}: ${i.message}`,
+    );
+
+    // Try to auto-fix common issues
+    const { fixable, fixedData } = tryAutoFix(data, type, validation.error.issues);
+
+    return {
+      file: fileName,
+      type,
+      valid: false,
+      errors,
+      fixable,
+      fixedData,
+    };
+  } catch (error) {
+    return {
+      file: fileName,
+      type,
+      valid: false,
+      errors: [
+        error instanceof Error ? error.message : "Failed to parse JSON",
+      ],
+      fixable: false,
+    };
+  }
+}
+
+/**
+ * Try to auto-fix common validation issues
+ */
+function tryAutoFix(
+  data: Record<string, unknown>,
+  type: "fix" | "blueprint" | "solution",
+  issues: { path: (string | number)[]; message: string; code: string }[],
+): { fixable: boolean; fixedData?: Record<string, unknown> } {
+  const fixedData = { ...data };
+  let allFixable = true;
+
+  for (const issue of issues) {
+    const pathStr = issue.path.join(".");
+
+    // Auto-fix missing metrics
+    if (pathStr === "metrics" && issue.code === "invalid_type") {
+      fixedData.metrics = createDefaultMetrics();
+      continue;
+    }
+
+    // Auto-fix missing setup (for blueprints)
+    if (pathStr === "setup" && issue.code === "invalid_type" && type === "blueprint") {
+      fixedData.setup = {
+        commands: [],
+        envVars: [],
+        dependencies: [],
+      };
+      continue;
+    }
+
+    // Auto-fix missing relatedPatterns
+    if (pathStr === "relatedPatterns" && issue.code === "invalid_type") {
+      fixedData.relatedPatterns = [];
+      continue;
+    }
+
+    // Auto-fix missing tags
+    if (pathStr === "tags" && issue.code === "invalid_type") {
+      fixedData.tags = [];
+      continue;
+    }
+
+    // Auto-fix missing errorSignatures (for fix patterns)
+    if (pathStr === "errorSignatures" && issue.code === "invalid_type" && type === "fix") {
+      fixedData.errorSignatures = [];
+      continue;
+    }
+
+    // Auto-fix missing codeChanges (for fix patterns)
+    if (pathStr === "codeChanges" && issue.code === "invalid_type" && type === "fix") {
+      fixedData.codeChanges = [];
+      continue;
+    }
+
+    // Auto-fix missing problemKeywords (for solutions)
+    if (pathStr === "problemKeywords" && issue.code === "invalid_type" && type === "solution") {
+      fixedData.problemKeywords = [];
+      continue;
+    }
+
+    // Auto-fix missing implementations (for solutions)
+    if (pathStr === "implementations" && issue.code === "invalid_type" && type === "solution") {
+      fixedData.implementations = [];
+      continue;
+    }
+
+    // Can't auto-fix this issue
+    allFixable = false;
+  }
+
+  // Re-validate the fixed data
+  let schema;
+  if (type === "fix") {
+    schema = FixPatternSchema;
+  } else if (type === "blueprint") {
+    schema = BlueprintSchema;
+  } else {
+    schema = SolutionPatternSchema;
+  }
+
+  const revalidation = schema.safeParse(fixedData);
+  if (revalidation.success) {
+    return { fixable: true, fixedData };
+  }
+
+  // If still invalid, check if we fixed some but not all
+  if (allFixable) {
+    return { fixable: true, fixedData };
+  }
+
+  return { fixable: false };
 }

@@ -48,8 +48,8 @@ export const CompatibilitySchema = z.object({
   runtime: z.string().optional(),
   /** Semver range for runtime: "^20.0.0" */
   runtimeVersion: z.string().optional(),
-  /** All relevant dependencies with version info */
-  dependencies: z.array(DependencyVersionSchema),
+  /** All relevant dependencies with version info (optional) */
+  dependencies: z.array(DependencyVersionSchema).default([]),
 });
 
 // ============================================
@@ -63,7 +63,31 @@ export const PatternTagSchema = z.object({
   /** Tag name */
   name: z.string().min(1).max(50),
   /** Tag category for filtering */
-  category: z.enum(["framework", "tool", "error-type", "file-type", "custom"]),
+  category: z.enum([
+    // Original categories
+    "framework",
+    "tool",
+    "error-type",
+    "file-type",
+    "custom",
+    // Extended categories for blueprints and solutions
+    "ui",
+    "pattern",
+    "feature",
+    "database",
+    "security",
+    "architecture",
+    "testing",
+    "api",
+    "auth",
+    "state",
+    "performance",
+    "deployment",
+    "integration",
+    "library",
+    "language",
+    "runtime",
+  ]),
 });
 
 // ============================================
@@ -257,10 +281,10 @@ export const StackSchema = z.object({
   runtime: z.string().min(1),
   /** Package manager */
   packageManager: PackageManagerEnum,
-  /** Production dependencies */
-  dependencies: z.array(DependencyVersionSchema),
-  /** Development dependencies */
-  devDependencies: z.array(DependencyVersionSchema),
+  /** Production dependencies (optional, defaults to empty array) */
+  dependencies: z.array(DependencyVersionSchema).default([]),
+  /** Development dependencies (optional, defaults to empty array) */
+  devDependencies: z.array(DependencyVersionSchema).default([]),
 });
 
 /**
@@ -290,9 +314,9 @@ export const KeyFileSchema = z.object({
  */
 export const StructureSchema = z.object({
   /** Directories to create */
-  directories: z.array(DirectoryEntrySchema),
+  directories: z.array(DirectoryEntrySchema).default([]),
   /** Key files with templates */
-  keyFiles: z.array(KeyFileSchema),
+  keyFiles: z.array(KeyFileSchema).default([]),
 });
 
 /**
@@ -326,11 +350,11 @@ export const ConfigEntrySchema = z.object({
  */
 export const SetupSchema = z.object({
   /** Prerequisites before setup */
-  prerequisites: z.array(z.string()),
+  prerequisites: z.array(z.string()).default([]),
   /** Ordered setup steps */
-  steps: z.array(SetupStepSchema),
+  steps: z.array(SetupStepSchema).default([]),
   /** Config files to create */
-  configs: z.array(ConfigEntrySchema),
+  configs: z.array(ConfigEntrySchema).default([]),
   /** Post-setup commands */
   postSetup: z.array(z.string()).optional(),
 });
@@ -347,7 +371,7 @@ export const BlueprintSchema = z.object({
   description: z.string().max(1000),
 
   /** Tags for classification */
-  tags: z.array(PatternTagSchema),
+  tags: z.array(PatternTagSchema).default([]),
 
   /** Technology stack */
   stack: StackSchema,
@@ -355,17 +379,26 @@ export const BlueprintSchema = z.object({
   /** Project structure */
   structure: StructureSchema,
 
-  /** Setup instructions */
-  setup: SetupSchema,
+  /** Setup instructions (optional, defaults to empty setup) */
+  setup: SetupSchema.default({
+    prerequisites: [],
+    steps: [],
+    configs: [],
+  }),
 
   /** Framework/runtime compatibility */
   compatibility: CompatibilitySchema,
 
-  /** Usage metrics */
-  metrics: PatternMetricsSchema,
+  /** Usage metrics (optional, defaults to zero metrics) */
+  metrics: PatternMetricsSchema.default({
+    applications: 0,
+    successes: 0,
+    failures: 0,
+    successRate: 0,
+  }),
 
   /** Related fix patterns commonly used with this blueprint */
-  relatedPatterns: z.array(z.string().uuid()),
+  relatedPatterns: z.array(z.string().uuid()).default([]),
 
   // Privacy and sync
   /** Whether this blueprint should be synced */
