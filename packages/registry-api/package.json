@@ -1,0 +1,27 @@
+{
+  "name": "@hawkinside_out/workflow-registry-api",
+  "version": "1.0.0",
+  "description": "Pattern Registry API for workflow-agent community pattern sync",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "echo 'ESLint not configured - skipping'",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.34.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@vercel/node": "^3.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

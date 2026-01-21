@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    { "src": "/api/ping", "dest": "/api/ping.ts" },
+    { "src": "/api/health", "dest": "/api/health.ts" },
+    { "src": "/api/patterns/push", "dest": "/api/patterns/push.ts" },
+    { "src": "/api/patterns/pull", "dest": "/api/patterns/pull.ts" },
+    { "src": "/api/patterns/([^/]+)", "dest": "/api/patterns/[id].ts?id=$1" }
+  ]
+}

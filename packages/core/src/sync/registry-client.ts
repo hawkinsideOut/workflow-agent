@@ -8,7 +8,7 @@
 import type { FixPattern, Blueprint } from "@hawkinside_out/workflow-improvement-tracker";
 
 // Default registry URL
-const DEFAULT_REGISTRY_URL = "https://patterns.workflow-agent.dev";
+const DEFAULT_REGISTRY_URL = "https://registry-api-rust.vercel.app";
 
 /**
  * Pattern payload for push/pull operations
@@ -131,7 +131,7 @@ export class RegistryClient {
     };
 
     const response = await this.request<PushResponse>(
-      "/patterns/push",
+      "/api/patterns/push",
       {
         method: "POST",
         headers: {
@@ -173,7 +173,7 @@ export class RegistryClient {
     }
 
     const queryString = params.toString();
-    const url = `/patterns/pull${queryString ? `?${queryString}` : ""}`;
+    const url = `/api/patterns/pull${queryString ? `?${queryString}` : ""}`;
 
     return this.request<PullResponse>(url, {
       method: "GET",
@@ -188,7 +188,7 @@ export class RegistryClient {
    */
   async getPattern(patternId: string): Promise<RegistryPattern | null> {
     try {
-      return await this.request<RegistryPattern>(`/patterns/${patternId}`, {
+      return await this.request<RegistryPattern>(`/api/patterns/${patternId}`, {
         method: "GET",
       });
     } catch (error) {
@@ -204,7 +204,7 @@ export class RegistryClient {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      await this.request<{ status: string }>("/health", {
+      await this.request<{ status: string }>("/api/health", {
         method: "GET",
       });
       return true;

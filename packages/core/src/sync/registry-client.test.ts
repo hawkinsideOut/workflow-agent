@@ -99,7 +99,7 @@ describe("RegistryClient", () => {
       expect(result.rateLimit.remaining).toBe(99);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:3000/patterns/push",
+        "http://localhost:3000/api/patterns/push",
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({
@@ -281,7 +281,7 @@ describe("RegistryClient", () => {
       await client.pull({ type: "blueprint" });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:3000/patterns/pull?type=blueprint",
+        "http://localhost:3000/api/patterns/pull?type=blueprint",
         expect.any(Object),
       );
     });
@@ -300,7 +300,7 @@ describe("RegistryClient", () => {
       await client.pull({ limit: 20, offset: 10 });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:3000/patterns/pull?limit=20&offset=10",
+        "http://localhost:3000/api/patterns/pull?limit=20&offset=10",
         expect.any(Object),
       );
     });
@@ -319,7 +319,7 @@ describe("RegistryClient", () => {
       await client.pull({ since: "2026-01-19T00:00:00.000Z" });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:3000/patterns/pull?since=2026-01-19T00%3A00%3A00.000Z",
+        "http://localhost:3000/api/patterns/pull?since=2026-01-19T00%3A00%3A00.000Z",
         expect.any(Object),
       );
     });
