@@ -101,6 +101,7 @@ program
   .option("--dry-run", "Preview without syncing")
   .option("--enable-sync", "Enable pattern sync")
   .option("--disable-sync", "Disable pattern sync")
+  .option("--include-private", "Include private patterns in push")
   .addHelpText(
     "after",
     `
@@ -122,6 +123,9 @@ ${chalk.bold("Examples:")}
 
   ${chalk.dim("# Sync solutions only")}
   $ workflow sync --solutions --push
+
+  ${chalk.dim("# Include private patterns in push")}
+  $ workflow sync --solutions --push --include-private
 
   ${chalk.dim("# Preview what would be synced")}
   $ workflow sync --all --dry-run

@@ -41,6 +41,7 @@ export interface UnifiedSyncOptions {
   dryRun?: boolean;
   enableSync?: boolean;
   disableSync?: boolean;
+  includePrivate?: boolean;
 }
 
 function getWorkspacePath(): string {
@@ -136,21 +137,42 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
   }
 
   // Show what will be synced
-  console.log(chalk.cyan("\n📦 Sync scope:"));
+  console.log(chalk.cyan("\n📦 Syncing:"));
   if (syncLearn) console.log(chalk.dim("  • Learning patterns (fixes, blueprints)"));
   if (syncSolutions) console.log(chalk.dim("  • Solution patterns"));
   if (syncScopes) console.log(chalk.dim("  • Custom scopes"));
   console.log(chalk.dim(`  • Direction: ${direction === "both" ? "push + pull" : direction}`));
+  if (options.includePrivate) console.log(chalk.dim("  • Including private patterns"));
   console.log("");
 
   const store = new PatternStore(cwd);
   const anonymizer = new PatternAnonymizer();
 
-  // Get patterns to sync (with defaults in case of undefined)
+  // Get patterns to sync
+  // If --include-private is set, get all patterns; otherwise filter to public only
   const syncData = await store.getPatternsForSync();
-  const fixes = syncData.fixes ?? [];
-  const blueprints = syncData.blueprints ?? [];
-  const solutions = syncData.solutions ?? [];
+  let fixes = syncData.fixes ?? [];
+  let blueprints = syncData.blueprints ?? [];
+  let solutions = syncData.solutions ?? [];
+
+  // Get stats for all patterns to show why some might be excluded
+  const stats = await store.getStats();
+  const totalLocalFixes = stats.totalFixes;
+  const totalLocalBlueprints = stats.totalBlueprints;
+  const totalLocalSolutions = stats.totalSolutions;
+  const privateFixes = stats.privateFixes;
+  const privateBlueprints = stats.privateBlueprints;
+  const privateSolutions = stats.privateSolutions;
+
+  // If --include-private, we need to get all patterns including private ones
+  if (options.includePrivate) {
+    const allFixes = await store.listFixPatterns({ includeDeprecated: false });
+    const allBlueprints = await store.listBlueprints({ includeDeprecated: false });
+    const allSolutions = await store.listSolutions({ includeDeprecated: false });
+    fixes = allFixes.data ?? [];
+    blueprints = allBlueprints.data ?? [];
+    solutions = allSolutions.data ?? [];
+  }
 
   // Filter based on options
   const patternsToSync: Array<{
@@ -160,11 +182,17 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
   }> = [];
 
   if (syncLearn) {
-    console.log(
-      chalk.dim(
-        `  Found ${fixes.length} fixes, ${blueprints.length} blueprints ready to sync`,
-      ),
-    );
+    const publicCount = fixes.length;
+    const privateCount = privateFixes;
+    
+    if (options.includePrivate) {
+      console.log(chalk.dim(`  Found ${publicCount} fixes, ${blueprints.length} blueprints to sync (including private)`));
+    } else if (publicCount === 0 && privateCount > 0) {
+      console.log(chalk.yellow(`  Found 0 fixes ready to sync (${privateCount} are private)`));
+      console.log(chalk.dim(`    Use --include-private to include them, or run 'workflow learn migrate --public'`));
+    } else {
+      console.log(chalk.dim(`  Found ${publicCount} fixes, ${blueprints.length} blueprints ready to sync`));
+    }
 
     for (const fix of fixes) {
       const result = anonymizer.anonymizeFixPattern(fix);
@@ -190,11 +218,17 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
   }
 
   if (syncSolutions) {
-    console.log(
-      chalk.dim(
-        `  Found ${solutions.length} solutions ready to sync`,
-      ),
-    );
+    const publicCount = solutions.length;
+    const privateCount = privateSolutions;
+    
+    if (options.includePrivate) {
+      console.log(chalk.dim(`  Found ${publicCount} solutions to sync (including private)`));
+    } else if (publicCount === 0 && privateCount > 0) {
+      console.log(chalk.yellow(`  Found 0 solutions ready to sync (${privateCount} are private)`));
+      console.log(chalk.dim(`    Use --include-private to include them, or run 'workflow solution migrate --public'`));
+    } else {
+      console.log(chalk.dim(`  Found ${publicCount} solutions ready to sync`));
+    }
 
     for (const solution of solutions) {
       const result = anonymizer.anonymizeSolution(solution);
@@ -345,12 +379,14 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
 
         let totalPatterns = 0;
         let savedCount = 0;
+        const typeCounts: Record<string, number> = {};
 
         for (const pullType of pullTypes) {
           const pullResult = await registryClient.pull({
             type: pullType,
           });
 
+          typeCounts[pullType] = pullResult.patterns.length;
           totalPatterns += pullResult.patterns.length;
 
           for (const pulled of pullResult.patterns) {
@@ -371,12 +407,25 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
           }
         }
 
+        // Show registry stats
+        if (syncSolutions && typeCounts["solution"] !== undefined) {
+          console.log(chalk.dim(`  Registry has ${typeCounts["solution"]} solution(s) available`));
+        }
+        if (syncLearn) {
+          const fixCount = typeCounts["fix"] ?? 0;
+          const bpCount = typeCounts["blueprint"] ?? 0;
+          console.log(chalk.dim(`  Registry has ${fixCount} fix(es), ${bpCount} blueprint(s) available`));
+        }
+
         if (totalPatterns === 0) {
           console.log(chalk.dim("  No new patterns to pull"));
         } else {
           console.log(
-            chalk.green(`\n  ✅ Pulled ${savedCount} patterns from registry`),
+            chalk.green(`\n  ✅ Pulled ${savedCount} new patterns from registry`),
           );
+          if (savedCount < totalPatterns) {
+            console.log(chalk.dim(`     (${totalPatterns - savedCount} already existed locally)`));
+          }
         }
       } catch (error) {
         if (error instanceof RateLimitedException) {

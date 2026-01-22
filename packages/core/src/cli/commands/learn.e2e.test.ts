@@ -408,8 +408,8 @@ describe("workflow learn - E2E", () => {
       );
 
       expect(exitCode).toBe(0);
-      // Unified sync shows scope and direction
-      expect(stdout).toContain("Sync scope");
+      // Unified sync shows what's being synced and direction
+      expect(stdout).toContain("Syncing:");
       expect(stdout).toContain("Learning patterns");
     });
 

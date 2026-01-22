@@ -29,6 +29,8 @@ import {
   solutionAnalyzeCommand,
   solutionDeprecateCommand,
   solutionStatsCommand,
+  solutionMigrateCommand,
+  solutionEditCommand,
 } from "../solution.js";
 
 /**
@@ -259,6 +261,43 @@ ${chalk.bold("Examples:")}
     )
     .action(solutionStatsCommand);
 
+  // migrate subcommand
+  solutionCmd
+    .command("migrate")
+    .description("Migrate solution patterns (make public/private)")
+    .option("--public", "Make all solutions public (syncable)")
+    .option("--private", "Make all solutions private")
+    .option("--dry-run", "Preview changes without applying")
+    .addHelpText(
+      "after",
+      `
+${chalk.bold("Examples:")}
+  $ workflow solution migrate --public                  ${chalk.dim("# Make all public")}
+  $ workflow solution migrate --private                 ${chalk.dim("# Make all private")}
+  $ workflow solution migrate --public --dry-run        ${chalk.dim("# Preview changes")}
+`,
+    )
+    .action(solutionMigrateCommand);
+
+  // edit subcommand
+  solutionCmd
+    .command("edit <solutionId>")
+    .description("Edit a solution pattern's properties")
+    .option("--name <name>", "Update solution name")
+    .option("--description <desc>", "Update description")
+    .option("--public", "Make solution public (syncable)")
+    .option("--private", "Make solution private")
+    .addHelpText(
+      "after",
+      `
+${chalk.bold("Examples:")}
+  $ workflow solution edit abc123 --public              ${chalk.dim("# Make public")}
+  $ workflow solution edit abc123 --private             ${chalk.dim("# Make private")}
+  $ workflow solution edit abc123 --name "New Name"     ${chalk.dim("# Rename")}
+`,
+    )
+    .action(solutionEditCommand);
+
   return solutionCmd;
 }
 
@@ -275,4 +314,5 @@ export {
   solutionAnalyzeCommand,
   solutionDeprecateCommand,
   solutionStatsCommand,
-} from "../solution.js";
+  solutionMigrateCommand,
+  solutionEditCommand,} from "../solution.js";

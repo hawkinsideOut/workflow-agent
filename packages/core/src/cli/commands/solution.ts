@@ -4,6 +4,7 @@ import * as path from "node:path";
 import {
   PatternStore,
   CodeAnalyzer,
+  ContributorManager,
   type SolutionPattern,
   type SolutionCategory,
   type SolutionFile,
@@ -218,6 +219,16 @@ export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
     anonymize: options.anonymize ?? false,
   });
 
+  // Determine isPrivate: if --private flag is set, use it; otherwise check sync status
+  // If sync is enabled, default to public (isPrivate: false) so solutions can be shared
+  let isPrivate = options.private ?? false;
+  if (options.private === undefined) {
+    const contributorManager = new ContributorManager(cwd);
+    const syncEnabled = await contributorManager.isSyncEnabled();
+    // When sync is enabled, default to public; when disabled, default to private
+    isPrivate = !syncEnabled;
+  }
+
   try {
     const pattern = await analyzer.createSolutionPattern(
       absolutePath,
@@ -225,7 +236,7 @@ export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
       description,
       category,
       keywords,
-      { isPrivate: options.private ?? false },
+      { isPrivate },
     );
 
     spinner.stop("Solution analyzed");
@@ -1093,4 +1104,183 @@ export async function solutionAnalyzeCommand() {
 
   console.log(chalk.dim("  To capture a solution:"));
   console.log(chalk.cyan("    workflow solution capture --path <path> --name <name>"));
+}
+// ============================================
+// solution:migrate Command
+// ============================================
+
+interface SolutionMigrateOptions {
+  public?: boolean;
+  private?: boolean;
+  dryRun?: boolean;
+}
+
+/**
+ * Migrate solution patterns (e.g., make all public or private)
+ */
+export async function solutionMigrateCommand(options: SolutionMigrateOptions) {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+  await store.initialize();
+
+  console.log(chalk.cyan("\n🔄 Migrate Solution Patterns\n"));
+
+  if (!options.public && !options.private) {
+    console.log(chalk.yellow("  Please specify --public or --private"));
+    console.log(chalk.dim("\n  Examples:"));
+    console.log(chalk.dim("    workflow solution migrate --public     # Make all solutions public"));
+    console.log(chalk.dim("    workflow solution migrate --private    # Make all solutions private"));
+    return;
+  }
+
+  const targetPrivate = options.private ?? false;
+  const targetLabel = targetPrivate ? "private" : "public";
+
+  const result = await store.listSolutions({ limit: 1000 });
+  if (!result.success || !result.data) {
+    console.log(chalk.red(`  ✗ Failed to load solutions: ${result.error}`));
+    return;
+  }
+
+  const solutions = result.data;
+  const toMigrate = solutions.filter((s) => s.isPrivate !== targetPrivate);
+
+  if (toMigrate.length === 0) {
+    console.log(chalk.green(`  ✓ All ${solutions.length} solutions are already ${targetLabel}`));
+    return;
+  }
+
+  console.log(chalk.dim(`  Found ${toMigrate.length} solutions to make ${targetLabel}:\n`));
+
+  for (const solution of toMigrate) {
+    console.log(chalk.dim(`    • ${solution.name} (${solution.id.slice(0, 8)})`));
+  }
+
+  if (options.dryRun) {
+    console.log(chalk.yellow(`\n  [DRY-RUN] Would migrate ${toMigrate.length} solutions to ${targetLabel}`));
+    return;
+  }
+
+  // Confirm
+  const confirm = await p.confirm({
+    message: `Migrate ${toMigrate.length} solutions to ${targetLabel}?`,
+    initialValue: true,
+  });
+
+  if (p.isCancel(confirm) || !confirm) {
+    p.cancel("Migration cancelled");
+    return;
+  }
+
+  // Perform migration
+  let migrated = 0;
+  for (const solution of toMigrate) {
+    const updated: SolutionPattern = {
+      ...solution,
+      isPrivate: targetPrivate,
+      updatedAt: new Date().toISOString(),
+    };
+    const saveResult = await store.saveSolution(updated);
+    if (saveResult.success) {
+      migrated++;
+    }
+  }
+
+  console.log(chalk.green(`\n  ✓ Migrated ${migrated} solutions to ${targetLabel}`));
+  
+  if (!targetPrivate) {
+    console.log(chalk.dim("    These solutions can now be synced with 'workflow sync --solutions --push'"));
+  }
+}
+
+// ============================================
+// solution:edit Command
+// ============================================
+
+interface SolutionEditOptions {
+  name?: string;
+  description?: string;
+  public?: boolean;
+  private?: boolean;
+}
+
+/**
+ * Edit a solution pattern's properties
+ */
+export async function solutionEditCommand(solutionId: string, options: SolutionEditOptions) {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+  await store.initialize();
+
+  console.log(chalk.cyan("\n✏️ Edit Solution Pattern\n"));
+
+  // Find the solution
+  const result = await store.getSolution(solutionId);
+  
+  if (!result.success || !result.data) {
+    // Try partial ID match
+    const allResult = await store.listSolutions({ limit: 1000 });
+    if (allResult.success && allResult.data) {
+      const match = allResult.data.find((s) => s.id.startsWith(solutionId));
+      if (match) {
+        return solutionEditCommand(match.id, options);
+      }
+    }
+    console.log(chalk.red(`  ✗ Solution not found: ${solutionId}`));
+    return;
+  }
+
+  const solution = result.data;
+  let updated = { ...solution };
+  const changes: string[] = [];
+
+  // Apply changes
+  if (options.name) {
+    updated.name = options.name;
+    changes.push(`name: "${options.name}"`);
+  }
+
+  if (options.description) {
+    updated.description = options.description;
+    changes.push(`description: "${options.description.slice(0, 30)}..."`);
+  }
+
+  if (options.public !== undefined && options.public) {
+    updated.isPrivate = false;
+    changes.push("visibility: public");
+  } else if (options.private !== undefined && options.private) {
+    updated.isPrivate = true;
+    changes.push("visibility: private");
+  }
+
+  if (changes.length === 0) {
+    console.log(chalk.yellow("  No changes specified"));
+    console.log(chalk.dim("\n  Options:"));
+    console.log(chalk.dim("    --name <name>        Update name"));
+    console.log(chalk.dim("    --description <desc> Update description"));
+    console.log(chalk.dim("    --public             Make public (syncable)"));
+    console.log(chalk.dim("    --private            Make private"));
+    return;
+  }
+
+  // Show current and changes
+  console.log(chalk.dim(`  Solution: ${solution.name} (${solution.id.slice(0, 8)})`));
+  console.log(chalk.dim("  Changes:"));
+  for (const change of changes) {
+    console.log(chalk.dim(`    • ${change}`));
+  }
+
+  // Update
+  updated.updatedAt = new Date().toISOString();
+  const saveResult = await store.saveSolution(updated);
+
+  if (saveResult.success) {
+    console.log(chalk.green("\n  ✓ Solution updated"));
+    
+    if (options.public) {
+      console.log(chalk.dim("    This solution can now be synced with 'workflow sync --solutions --push'"));
+    }
+  } else {
+    console.log(chalk.red(`\n  ✗ Failed to save: ${saveResult.error}`));
+  }
 }
