@@ -100,6 +100,7 @@ function formatTags(tags: PatternTag[]): string {
 export async function learnRecordCommand(options: LearnRecordOptions) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   console.log(chalk.cyan("\n📚 Record a Learning Pattern\n"));
 
@@ -371,6 +372,7 @@ export async function learnRecordCommand(options: LearnRecordOptions) {
 export async function learnListCommand(options: LearnListOptions) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
   const patternType = options.type ?? "all";
   const showDeprecated = options.deprecated ?? false;
 
@@ -537,6 +539,7 @@ export async function learnApplyCommand(
 ) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
   const telemetry = new TelemetryCollector(cwd);
 
   console.log(chalk.cyan("\n🔧 Apply Learning Pattern\n"));
@@ -681,6 +684,7 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
   }
 
   const store = new PatternStore(cwd);
+  await store.initialize();
   const anonymizer = new PatternAnonymizer();
 
   // Get patterns to sync
@@ -1112,6 +1116,7 @@ export async function learnPublishCommand(
 ) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   const makePrivate = options.private ?? false;
   const actionWord = makePrivate ? "private" : "public";
@@ -1293,6 +1298,7 @@ export async function learnPublishCommand(
 export async function learnDeprecateCommand(patternId: string, reason: string) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   console.log(chalk.cyan("\n⚠️ Deprecate Pattern\n"));
 
@@ -1344,6 +1350,7 @@ export async function learnDeprecateCommand(patternId: string, reason: string) {
 export async function learnStatsCommand() {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
   const telemetry = new TelemetryCollector(cwd);
 
   console.log(chalk.cyan("\n📊 Learning Statistics\n"));
@@ -2079,6 +2086,7 @@ function inferTagsFromContent(filePaths: string[]): PatternTag[] {
 export async function learnCaptureCommand(paths: string[], options: LearnCaptureOptions) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   console.log(chalk.cyan("\n📸 Capture Files as Blueprint\n"));
 
@@ -2394,6 +2402,7 @@ interface LearnAnalyzeOptions {
 export async function learnAnalyzeCommand(options: LearnAnalyzeOptions): Promise<void> {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
   const verbose = options.verbose ?? false;
 
   console.log(chalk.cyan("\n🔍 Analyzing Codebase for Learning Opportunities\n"));
@@ -2509,6 +2518,7 @@ interface LearnExportOptions {
 export async function learnExportCommand(options: LearnExportOptions): Promise<void> {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
   const format = options.format ?? "json";
   const patternType = options.type ?? "all";
   const outputPath = options.output ?? `patterns-export.${format}`;
@@ -2606,6 +2616,7 @@ export async function learnImportCommand(
 ): Promise<void> {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
   const dryRun = options.dryRun ?? false;
   const merge = options.merge ?? true;
 
@@ -2719,6 +2730,7 @@ interface LearnCleanOptions {
 export async function learnCleanCommand(options: LearnCleanOptions): Promise<void> {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
   const dryRun = options.dryRun ?? false;
   const cleanDeprecated = options.deprecated ?? false;
   const cleanStale = options.stale ?? false;

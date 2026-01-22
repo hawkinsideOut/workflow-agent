@@ -266,6 +266,7 @@ describe("workflow learn - E2E", () => {
     it("lists fix patterns when they exist", async () => {
       // Create a pattern directly
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const result = await store.saveFixPattern(
         createTestFixPattern({
           name: "Test Fix Pattern",
@@ -295,6 +296,7 @@ describe("workflow learn - E2E", () => {
     it("filters by type with --type fix", async () => {
       // Create both fix and blueprint
       const store = new PatternStore(tempDir);
+      await store.initialize();
 
       const fixResult = await store.saveFixPattern(
         createTestFixPattern({ name: "A Fix Pattern" }),
@@ -345,6 +347,7 @@ describe("workflow learn - E2E", () => {
     it("shows pattern counts accurately", async () => {
       // Create some patterns
       const store = new PatternStore(tempDir);
+      await store.initialize();
 
       const result1 = await store.saveFixPattern(
         createTestFixPattern({ name: "Fix 1" }),
@@ -416,6 +419,7 @@ describe("workflow learn - E2E", () => {
       await contributorManager.enableSync();
 
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const saveResult = await store.saveFixPattern(
         createTestFixPattern({ name: "Sync Test Pattern" }),
       );
@@ -447,6 +451,7 @@ describe("workflow learn - E2E", () => {
 
       // Create and save with first instance
       const store1 = new PatternStore(tempDir);
+      await store1.initialize();
       const saveResult = await store1.saveFixPattern(
         createTestFixPattern({ id: patternId, name: "Persistent Pattern" }),
       );
@@ -454,6 +459,7 @@ describe("workflow learn - E2E", () => {
 
       // Read with second instance
       const store2 = new PatternStore(tempDir);
+      await store2.initialize();
       const result = await store2.getFixPattern(patternId);
 
       expect(result.success).toBe(true);
@@ -462,6 +468,7 @@ describe("workflow learn - E2E", () => {
 
     it("handles concurrent pattern operations", async () => {
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const ids: string[] = [];
 
       // Create 5 patterns concurrently
@@ -562,6 +569,7 @@ describe("workflow learn - E2E", () => {
     it("marks a private fix pattern as public", async () => {
       // Create a private pattern
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const pattern = createTestFixPattern({
         name: "Private Pattern",
         isPrivate: true,
@@ -591,6 +599,7 @@ describe("workflow learn - E2E", () => {
     it("marks a public fix pattern as private with --private flag", async () => {
       // Create a public pattern
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const pattern = createTestFixPattern({
         name: "Public Pattern",
         isPrivate: false,
@@ -620,6 +629,7 @@ describe("workflow learn - E2E", () => {
     it("marks all patterns as public with --all flag", async () => {
       // Create multiple private patterns
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const pattern1 = createTestFixPattern({
         name: "Pattern 1",
         isPrivate: true,
@@ -654,6 +664,7 @@ describe("workflow learn - E2E", () => {
     it("reports nothing to do when pattern is already in target state", async () => {
       // Create an already public pattern
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const pattern = createTestFixPattern({
         name: "Already Public Pattern",
         isPrivate: false,
@@ -704,6 +715,7 @@ describe("workflow learn - E2E", () => {
     it("marks blueprint as public", async () => {
       // Create a private blueprint
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const blueprint = createTestBlueprint({
         name: "Private Blueprint",
         isPrivate: true,
@@ -734,6 +746,7 @@ describe("workflow learn - E2E", () => {
     it("validates pattern files in directory", async () => {
       // Create a valid blueprint file
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const blueprint = createTestBlueprint({ name: "Valid Blueprint" });
       await store.saveBlueprint(blueprint);
 
@@ -754,6 +767,7 @@ describe("workflow learn - E2E", () => {
     it("filters by pattern type", async () => {
       // Create both fix and blueprint patterns
       const store = new PatternStore(tempDir);
+      await store.initialize();
       await store.saveBlueprint(createTestBlueprint({ name: "Blueprint 1" }));
       await store.saveFixPattern(
         createTestFixPattern({ name: "Fix Pattern 1" }),
@@ -800,6 +814,7 @@ describe("workflow learn - E2E", () => {
 
     it("shows verbose output with --verbose flag", async () => {
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const blueprint = createTestBlueprint({ name: "Test Blueprint" });
       await store.saveBlueprint(blueprint);
 
@@ -840,6 +855,7 @@ describe("workflow learn - E2E", () => {
 
     it("validates specific file with --file option", async () => {
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const blueprint = createTestBlueprint({ name: "Specific Blueprint" });
       await store.saveBlueprint(blueprint);
 
@@ -1091,6 +1107,7 @@ export function MyComponent() {
 
       // Verify the blueprint was saved
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const result = await store.listBlueprints();
       expect(result.success).toBe(true);
       const saved = result.data?.find((b) => b.name === "Save Test Pattern");
@@ -1198,6 +1215,7 @@ export function MyComponent() {
     it("exports patterns to JSON file", async () => {
       // Create a pattern first
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const pattern = createTestFixPattern({ name: "Export E2E Test Fix" });
       await store.saveFixPattern(pattern);
 
@@ -1222,6 +1240,7 @@ export function MyComponent() {
 
     it("exports with YAML format", async () => {
       const store = new PatternStore(tempDir);
+      await store.initialize();
       await store.saveFixPattern(createTestFixPattern({ name: "YAML Export E2E" }));
 
       const { stdout, exitCode } = await execa(
@@ -1240,6 +1259,7 @@ export function MyComponent() {
 
     it("filters by type when --type is specified", async () => {
       const store = new PatternStore(tempDir);
+      await store.initialize();
       await store.saveFixPattern(createTestFixPattern({ name: "Fix Only E2E" }));
       await store.saveBlueprint(createTestBlueprint({ name: "Blueprint Only E2E" }));
 
@@ -1297,10 +1317,11 @@ export function MyComponent() {
   describe("learn import", () => {
     it("imports patterns from JSON file", async () => {
       // Create export file
+      const importId = crypto.randomUUID();
       const exportData = {
         version: "1.0",
         exportedAt: new Date().toISOString(),
-        fixes: [createTestFixPattern({ id: "import-e2e-fix", name: "Imported E2E Fix" })],
+        fixes: [createTestFixPattern({ id: importId, name: "Imported E2E Fix" })],
         blueprints: [],
       };
       await writeFile(
@@ -1323,14 +1344,16 @@ export function MyComponent() {
 
       // Verify pattern was saved
       const store = new PatternStore(tempDir);
-      const result = await store.getFixPattern("import-e2e-fix");
+      await store.initialize();
+      const result = await store.getFixPattern(importId);
       expect(result.success).toBe(true);
       expect(result.data?.name).toBe("Imported E2E Fix");
     });
 
     it("supports dry-run mode", async () => {
+      const dryRunId = crypto.randomUUID();
       const exportData = {
-        fixes: [createTestFixPattern({ id: "dry-run-e2e", name: "Dry Run E2E Import" })],
+        fixes: [createTestFixPattern({ id: dryRunId, name: "Dry Run E2E Import" })],
         blueprints: [],
       };
       await writeFile(
@@ -1353,7 +1376,8 @@ export function MyComponent() {
 
       // Verify pattern was NOT saved
       const store = new PatternStore(tempDir);
-      const result = await store.getFixPattern("dry-run-e2e");
+      await store.initialize();
+      const result = await store.getFixPattern(dryRunId);
       expect(result.success).toBe(false);
     });
 
@@ -1372,13 +1396,16 @@ export function MyComponent() {
     });
 
     it("skips existing patterns when --no-merge is used", async () => {
-      // Create existing pattern
+      // Create existing pattern with valid UUID
+      const skipMergeId = crypto.randomUUID();
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const existingPattern = createTestFixPattern({
-        id: "skip-merge-e2e",
+        id: skipMergeId,
         name: "Existing Pattern E2E",
       });
-      await store.saveFixPattern(existingPattern);
+      const saveResult = await store.saveFixPattern(existingPattern);
+      expect(saveResult.success).toBe(true);
 
       // Create import file with same pattern
       const exportData = {
@@ -1426,15 +1453,18 @@ export function MyComponent() {
     });
 
     it("finds deprecated patterns with --deprecated --dry-run", async () => {
-      // Create deprecated pattern
+      // Create deprecated pattern with valid UUID
+      const deprecatedId = crypto.randomUUID();
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const pattern = createTestFixPattern({
-        id: "deprecated-e2e",
+        id: deprecatedId,
         name: "Deprecated Pattern E2E",
         deprecatedAt: new Date().toISOString(),
         deprecationReason: "No longer needed",
       });
-      await store.saveFixPattern(pattern);
+      const saveResult = await store.saveFixPattern(pattern);
+      expect(saveResult.success).toBe(true);
 
       const { stdout, exitCode } = await execa(
         "node",
@@ -1451,17 +1481,20 @@ export function MyComponent() {
     });
 
     it("finds stale patterns with --stale --dry-run", async () => {
-      // Create a stale pattern (updated > 90 days ago)
+      // Create a stale pattern (updated > 90 days ago) with valid UUID
+      const staleId = crypto.randomUUID();
       const store = new PatternStore(tempDir);
+      await store.initialize();
       const staleDate = new Date();
       staleDate.setDate(staleDate.getDate() - 100);
 
       const pattern = createTestFixPattern({
-        id: "stale-e2e",
+        id: staleId,
         name: "Stale Pattern E2E",
         updatedAt: staleDate.toISOString(),
       });
-      await store.saveFixPattern(pattern);
+      const saveResult = await store.saveFixPattern(pattern);
+      expect(saveResult.success).toBe(true);
 
       const { stdout, exitCode } = await execa(
         "node",
@@ -1478,6 +1511,7 @@ export function MyComponent() {
 
     it("shows all patterns with --all --dry-run", async () => {
       const store = new PatternStore(tempDir);
+      await store.initialize();
       await store.saveFixPattern(createTestFixPattern({ name: "All Clean E2E 1" }));
       await store.saveFixPattern(createTestFixPattern({ name: "All Clean E2E 2" }));
 

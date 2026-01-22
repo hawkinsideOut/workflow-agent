@@ -6,6 +6,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createTestFixPattern, createTestBlueprint } from "./test-utils.js";
 
+// Create shared mock functions that persist across all PatternStore instances
+const mockListFixPatterns = vi.fn();
+const mockListBlueprints = vi.fn();
+const mockGetFixPattern = vi.fn();
+const mockGetBlueprint = vi.fn();
+const mockSaveFixPattern = vi.fn();
+const mockSaveBlueprint = vi.fn();
+const mockInitialize = vi.fn();
+
 // Mock dependencies
 vi.mock("fs", () => ({
   existsSync: vi.fn(),
@@ -18,12 +27,13 @@ vi.mock("fs", () => ({
 
 vi.mock("@hawkinside_out/workflow-improvement-tracker", () => ({
   PatternStore: vi.fn().mockImplementation(() => ({
-    listFixPatterns: vi.fn(),
-    listBlueprints: vi.fn(),
-    getFixPattern: vi.fn(),
-    getBlueprint: vi.fn(),
-    saveFixPattern: vi.fn(),
-    saveBlueprint: vi.fn(),
+    initialize: mockInitialize,
+    listFixPatterns: mockListFixPatterns,
+    listBlueprints: mockListBlueprints,
+    getFixPattern: mockGetFixPattern,
+    getBlueprint: mockGetBlueprint,
+    saveFixPattern: mockSaveFixPattern,
+    saveBlueprint: mockSaveBlueprint,
   })),
   ContributorManager: vi.fn(),
   PatternAnonymizer: vi.fn(),
@@ -33,16 +43,15 @@ vi.mock("@hawkinside_out/workflow-improvement-tracker", () => ({
   SolutionPatternSchema: {},
 }));
 
-vi.mock("chalk", () => ({
-  default: {
-    cyan: (s: string) => s,
-    green: (s: string) => s,
-    red: (s: string) => s,
-    yellow: (s: string) => s,
-    bold: (s: string) => s,
-    dim: (s: string) => s,
-  },
-}));
+// Proxy-based chalk mock for chainable methods
+vi.mock("chalk", () => {
+  const identity = (s: string) => s;
+  const handler: ProxyHandler<typeof identity> = {
+    get: () => new Proxy(identity, handler),
+    apply: (_target, _thisArg, args: string[]) => args[0],
+  };
+  return { default: new Proxy(identity, handler) };
+});
 
 vi.mock("@clack/prompts", () => ({
   confirm: vi.fn().mockResolvedValue(true),
@@ -52,7 +61,6 @@ vi.mock("@clack/prompts", () => ({
 
 // Import modules after mocks are set up
 import * as fs from "fs";
-import { PatternStore } from "@hawkinside_out/workflow-improvement-tracker";
 import {
   learnAnalyzeCommand,
   learnExportCommand,
@@ -61,7 +69,6 @@ import {
 } from "./learn.js";
 
 describe("learn commands - Unit Tests", () => {
-  let mockStore: ReturnType<typeof vi.mocked<InstanceType<typeof PatternStore>>>;
   let consoleSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -70,8 +77,13 @@ describe("learn commands - Unit Tests", () => {
     // Capture console output
     consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-    // Get mocked store instance
-    mockStore = vi.mocked(new PatternStore(""));
+    // Reset mock implementations with default resolved values
+    mockListFixPatterns.mockResolvedValue({ success: true, data: [] });
+    mockListBlueprints.mockResolvedValue({ success: true, data: [] });
+    mockGetFixPattern.mockResolvedValue({ success: false });
+    mockGetBlueprint.mockResolvedValue({ success: false });
+    mockSaveFixPattern.mockResolvedValue({ success: true, data: {} });
+    mockSaveBlueprint.mockResolvedValue({ success: true, data: {} });
   });
 
   afterEach(() => {
@@ -89,8 +101,8 @@ describe("learn commands - Unit Tests", () => {
         return String(p).includes("src/auth");
       });
 
-      mockStore.listFixPatterns.mockResolvedValue({ success: true, data: [] });
-      mockStore.listBlueprints.mockResolvedValue({ success: true, data: [] });
+      mockListFixPatterns.mockResolvedValue({ success: true, data: [] });
+      mockListBlueprints.mockResolvedValue({ success: true, data: [] });
 
       await learnAnalyzeCommand({ verbose: false });
 
@@ -102,11 +114,11 @@ describe("learn commands - Unit Tests", () => {
     it("does not suggest patterns that already exist", async () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
 
-      mockStore.listFixPatterns.mockResolvedValue({
+      mockListFixPatterns.mockResolvedValue({
         success: true,
         data: [createTestFixPattern({ name: "Auth Pattern" })],
       });
-      mockStore.listBlueprints.mockResolvedValue({ success: true, data: [] });
+      mockListBlueprints.mockResolvedValue({ success: true, data: [] });
 
       await learnAnalyzeCommand({ verbose: false });
 
@@ -119,8 +131,8 @@ describe("learn commands - Unit Tests", () => {
         return String(p).includes("src/api");
       });
 
-      mockStore.listFixPatterns.mockResolvedValue({ success: true, data: [] });
-      mockStore.listBlueprints.mockResolvedValue({ success: true, data: [] });
+      mockListFixPatterns.mockResolvedValue({ success: true, data: [] });
+      mockListBlueprints.mockResolvedValue({ success: true, data: [] });
 
       await learnAnalyzeCommand({ verbose: true });
 
@@ -130,8 +142,8 @@ describe("learn commands - Unit Tests", () => {
     it("reports nothing when no opportunities found", async () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
 
-      mockStore.listFixPatterns.mockResolvedValue({ success: true, data: [] });
-      mockStore.listBlueprints.mockResolvedValue({ success: true, data: [] });
+      mockListFixPatterns.mockResolvedValue({ success: true, data: [] });
+      mockListBlueprints.mockResolvedValue({ success: true, data: [] });
 
       await learnAnalyzeCommand({ verbose: false });
 
@@ -150,11 +162,11 @@ describe("learn commands - Unit Tests", () => {
       const fix = createTestFixPattern({ name: "Export Test Fix" });
       const blueprint = createTestBlueprint({ name: "Export Test Blueprint" });
 
-      mockStore.listFixPatterns.mockResolvedValue({
+      mockListFixPatterns.mockResolvedValue({
         success: true,
         data: [fix],
       });
-      mockStore.listBlueprints.mockResolvedValue({
+      mockListBlueprints.mockResolvedValue({
         success: true,
         data: [blueprint],
       });
@@ -174,11 +186,11 @@ describe("learn commands - Unit Tests", () => {
       const fix = createTestFixPattern({ name: "Only Fix" });
       const blueprint = createTestBlueprint({ name: "Should Not Include" });
 
-      mockStore.listFixPatterns.mockResolvedValue({
+      mockListFixPatterns.mockResolvedValue({
         success: true,
         data: [fix],
       });
-      mockStore.listBlueprints.mockResolvedValue({
+      mockListBlueprints.mockResolvedValue({
         success: true,
         data: [blueprint],
       });
@@ -195,11 +207,11 @@ describe("learn commands - Unit Tests", () => {
       const fix = createTestFixPattern({ name: "Should Not Include" });
       const blueprint = createTestBlueprint({ name: "Only Blueprint" });
 
-      mockStore.listFixPatterns.mockResolvedValue({
+      mockListFixPatterns.mockResolvedValue({
         success: true,
         data: [fix],
       });
-      mockStore.listBlueprints.mockResolvedValue({
+      mockListBlueprints.mockResolvedValue({
         success: true,
         data: [blueprint],
       });
@@ -213,11 +225,11 @@ describe("learn commands - Unit Tests", () => {
     });
 
     it("generates YAML-like output when format is yaml", async () => {
-      mockStore.listFixPatterns.mockResolvedValue({
+      mockListFixPatterns.mockResolvedValue({
         success: true,
         data: [createTestFixPattern({ name: "YAML Test" })],
       });
-      mockStore.listBlueprints.mockResolvedValue({
+      mockListBlueprints.mockResolvedValue({
         success: true,
         data: [],
       });
@@ -231,8 +243,8 @@ describe("learn commands - Unit Tests", () => {
     });
 
     it("reports no patterns when store is empty", async () => {
-      mockStore.listFixPatterns.mockResolvedValue({ success: true, data: [] });
-      mockStore.listBlueprints.mockResolvedValue({ success: true, data: [] });
+      mockListFixPatterns.mockResolvedValue({ success: true, data: [] });
+      mockListBlueprints.mockResolvedValue({ success: true, data: [] });
 
       await learnExportCommand({});
 
@@ -256,12 +268,12 @@ describe("learn commands - Unit Tests", () => {
       vi.mocked(fs.promises.readFile).mockResolvedValue(
         JSON.stringify(importData),
       );
-      mockStore.getFixPattern.mockResolvedValue({ success: false });
-      mockStore.saveFixPattern.mockResolvedValue({ success: true, data: fix });
+      mockGetFixPattern.mockResolvedValue({ success: false });
+      mockSaveFixPattern.mockResolvedValue({ success: true, data: fix });
 
       await learnImportCommand("import.json", { merge: true });
 
-      expect(mockStore.saveFixPattern).toHaveBeenCalledWith(fix);
+      expect(mockSaveFixPattern).toHaveBeenCalledWith(fix);
     });
 
     it("skips existing patterns when merge is false", async () => {
@@ -272,11 +284,11 @@ describe("learn commands - Unit Tests", () => {
       vi.mocked(fs.promises.readFile).mockResolvedValue(
         JSON.stringify(importData),
       );
-      mockStore.getFixPattern.mockResolvedValue({ success: true, data: fix });
+      mockGetFixPattern.mockResolvedValue({ success: true, data: fix });
 
       await learnImportCommand("import.json", { merge: false });
 
-      expect(mockStore.saveFixPattern).not.toHaveBeenCalled();
+      expect(mockSaveFixPattern).not.toHaveBeenCalled();
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining("Skipped"),
       );
@@ -296,7 +308,7 @@ describe("learn commands - Unit Tests", () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining("Dry run"),
       );
-      expect(mockStore.saveFixPattern).not.toHaveBeenCalled();
+      expect(mockSaveFixPattern).not.toHaveBeenCalled();
     });
 
     it("exits with error when file not found", async () => {
@@ -304,9 +316,11 @@ describe("learn commands - Unit Tests", () => {
 
       const mockExit = vi
         .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
+        .mockImplementation(() => {
+          throw new Error("process.exit called");
+        });
 
-      await learnImportCommand("nonexistent.json", {});
+      await expect(learnImportCommand("nonexistent.json", {})).rejects.toThrow("process.exit called");
 
       expect(mockExit).toHaveBeenCalledWith(1);
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -322,9 +336,11 @@ describe("learn commands - Unit Tests", () => {
 
       const mockExit = vi
         .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
+        .mockImplementation(() => {
+          throw new Error("process.exit called");
+        });
 
-      await learnImportCommand("bad.json", {});
+      await expect(learnImportCommand("bad.json", {})).rejects.toThrow("process.exit called");
 
       expect(mockExit).toHaveBeenCalledWith(1);
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -342,15 +358,15 @@ describe("learn commands - Unit Tests", () => {
       vi.mocked(fs.promises.readFile).mockResolvedValue(
         JSON.stringify(importData),
       );
-      mockStore.getBlueprint.mockResolvedValue({ success: false });
-      mockStore.saveBlueprint.mockResolvedValue({
+      mockGetBlueprint.mockResolvedValue({ success: false });
+      mockSaveBlueprint.mockResolvedValue({
         success: true,
         data: blueprint,
       });
 
       await learnImportCommand("import.json", { merge: true });
 
-      expect(mockStore.saveBlueprint).toHaveBeenCalledWith(blueprint);
+      expect(mockSaveBlueprint).toHaveBeenCalledWith(blueprint);
     });
   });
 
@@ -374,11 +390,11 @@ describe("learn commands - Unit Tests", () => {
       });
       const activeFix = createTestFixPattern({ name: "Active Fix" });
 
-      mockStore.listFixPatterns.mockResolvedValue({
+      mockListFixPatterns.mockResolvedValue({
         success: true,
         data: [deprecatedFix, activeFix],
       });
-      mockStore.listBlueprints.mockResolvedValue({ success: true, data: [] });
+      mockListBlueprints.mockResolvedValue({ success: true, data: [] });
 
       await learnCleanCommand({ deprecated: true, dryRun: true });
 
@@ -403,11 +419,11 @@ describe("learn commands - Unit Tests", () => {
         updatedAt: new Date().toISOString(),
       });
 
-      mockStore.listFixPatterns.mockResolvedValue({
+      mockListFixPatterns.mockResolvedValue({
         success: true,
         data: [staleFix, freshFix],
       });
-      mockStore.listBlueprints.mockResolvedValue({ success: true, data: [] });
+      mockListBlueprints.mockResolvedValue({ success: true, data: [] });
 
       await learnCleanCommand({ stale: true, dryRun: true });
 
@@ -421,11 +437,11 @@ describe("learn commands - Unit Tests", () => {
       const fix2 = createTestFixPattern({ name: "Fix 2" });
       const bp1 = createTestBlueprint({ name: "Blueprint 1" });
 
-      mockStore.listFixPatterns.mockResolvedValue({
+      mockListFixPatterns.mockResolvedValue({
         success: true,
         data: [fix1, fix2],
       });
-      mockStore.listBlueprints.mockResolvedValue({
+      mockListBlueprints.mockResolvedValue({
         success: true,
         data: [bp1],
       });
@@ -443,11 +459,11 @@ describe("learn commands - Unit Tests", () => {
         updatedAt: new Date().toISOString(),
       });
 
-      mockStore.listFixPatterns.mockResolvedValue({
+      mockListFixPatterns.mockResolvedValue({
         success: true,
         data: [freshFix],
       });
-      mockStore.listBlueprints.mockResolvedValue({ success: true, data: [] });
+      mockListBlueprints.mockResolvedValue({ success: true, data: [] });
 
       await learnCleanCommand({ deprecated: true, dryRun: true });
 
@@ -462,11 +478,11 @@ describe("learn commands - Unit Tests", () => {
         deprecatedAt: new Date().toISOString(),
       });
 
-      mockStore.listFixPatterns.mockResolvedValue({
+      mockListFixPatterns.mockResolvedValue({
         success: true,
         data: [deprecatedFix],
       });
-      mockStore.listBlueprints.mockResolvedValue({ success: true, data: [] });
+      mockListBlueprints.mockResolvedValue({ success: true, data: [] });
 
       await learnCleanCommand({ deprecated: true, dryRun: true });
 

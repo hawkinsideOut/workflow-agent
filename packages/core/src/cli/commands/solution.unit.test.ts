@@ -6,6 +6,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createTestSolutionPattern } from "./test-utils.js";
 
+// Create shared mock functions that persist across all PatternStore instances
+const mockListSolutions = vi.fn();
+const mockGetSolution = vi.fn();
+const mockSaveSolution = vi.fn();
+const mockDeleteSolution = vi.fn();
+const mockSearchSolutions = vi.fn();
+const mockInitialize = vi.fn();
+
 // Mock dependencies
 vi.mock("fs", () => ({
   existsSync: vi.fn(),
@@ -25,24 +33,24 @@ vi.mock("node:fs", () => ({
 
 vi.mock("@hawkinside_out/workflow-improvement-tracker", () => ({
   PatternStore: vi.fn().mockImplementation(() => ({
-    listSolutions: vi.fn(),
-    getSolution: vi.fn(),
-    saveSolution: vi.fn(),
-    deleteSolution: vi.fn(),
-    searchSolutions: vi.fn(),
+    initialize: mockInitialize,
+    listSolutions: mockListSolutions,
+    getSolution: mockGetSolution,
+    saveSolution: mockSaveSolution,
+    deleteSolution: mockDeleteSolution,
+    searchSolutions: mockSearchSolutions,
   })),
 }));
 
-vi.mock("chalk", () => ({
-  default: {
-    cyan: (s: string) => s,
-    green: (s: string) => s,
-    red: (s: string) => s,
-    yellow: (s: string) => s,
-    bold: (s: string) => s,
-    dim: (s: string) => s,
-  },
-}));
+// Proxy-based chalk mock for chainable methods
+vi.mock("chalk", () => {
+  const identity = (s: string) => s;
+  const handler: ProxyHandler<typeof identity> = {
+    get: () => new Proxy(identity, handler),
+    apply: (_target, _thisArg, args: string[]) => args[0],
+  };
+  return { default: new Proxy(identity, handler) };
+});
 
 vi.mock("@clack/prompts", () => ({
   text: vi.fn().mockResolvedValue("Test Input"),
@@ -53,9 +61,7 @@ vi.mock("@clack/prompts", () => ({
 }));
 
 // Import modules after mocks are set up
-import * as fs from "fs";
 import * as nodeFs from "node:fs";
-import { PatternStore } from "@hawkinside_out/workflow-improvement-tracker";
 import {
   solutionShowCommand,
   solutionExportCommand,
@@ -64,7 +70,6 @@ import {
 } from "./solution.js";
 
 describe("solution commands - Unit Tests", () => {
-  let mockStore: ReturnType<typeof vi.mocked<InstanceType<typeof PatternStore>>>;
   let consoleSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -73,7 +78,12 @@ describe("solution commands - Unit Tests", () => {
     consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
 
-    mockStore = vi.mocked(new PatternStore(""));
+    // Reset mock implementations with default resolved values
+    mockListSolutions.mockResolvedValue({ success: true, data: [] });
+    mockGetSolution.mockResolvedValue({ success: false });
+    mockSaveSolution.mockResolvedValue({ success: true, data: {} });
+    mockDeleteSolution.mockResolvedValue({ success: true });
+    mockSearchSolutions.mockResolvedValue({ success: true, data: [] });
   });
 
   afterEach(() => {
@@ -87,7 +97,7 @@ describe("solution commands - Unit Tests", () => {
   describe("solutionShowCommand", () => {
     it("displays solution details when found", async () => {
       const solution = createTestSolutionPattern({ name: "Show Test Solution" });
-      mockStore.getSolution.mockResolvedValue({ success: true, data: solution });
+      mockGetSolution.mockResolvedValue({ success: true, data: solution });
 
       await solutionShowCommand(solution.id);
 
@@ -110,7 +120,7 @@ describe("solution commands - Unit Tests", () => {
           dependencies: [],
         },
       });
-      mockStore.getSolution.mockResolvedValue({ success: true, data: solution });
+      mockGetSolution.mockResolvedValue({ success: true, data: solution });
 
       await solutionShowCommand(solution.id);
 
@@ -120,13 +130,15 @@ describe("solution commands - Unit Tests", () => {
     });
 
     it("exits with error when solution not found", async () => {
-      mockStore.getSolution.mockResolvedValue({ success: false });
+      mockGetSolution.mockResolvedValue({ success: false });
 
       const mockExit = vi
         .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
+        .mockImplementation(() => {
+          throw new Error("process.exit called");
+        });
 
-      await solutionShowCommand("nonexistent-id");
+      await expect(solutionShowCommand("nonexistent-id")).rejects.toThrow("process.exit called");
 
       expect(mockExit).toHaveBeenCalledWith(1);
       mockExit.mockRestore();
@@ -152,7 +164,7 @@ describe("solution commands - Unit Tests", () => {
           envVars: [{ name: "JWT_SECRET", required: true, description: "JWT secret" }],
         },
       });
-      mockStore.getSolution.mockResolvedValue({ success: true, data: solution });
+      mockGetSolution.mockResolvedValue({ success: true, data: solution });
 
       await solutionShowCommand(solution.id);
 
@@ -167,7 +179,7 @@ describe("solution commands - Unit Tests", () => {
         deprecatedAt: new Date().toISOString(),
         deprecationReason: "Superseded by v2",
       });
-      mockStore.getSolution.mockResolvedValue({ success: true, data: solution });
+      mockGetSolution.mockResolvedValue({ success: true, data: solution });
 
       await solutionShowCommand(solution.id);
 
@@ -184,7 +196,7 @@ describe("solution commands - Unit Tests", () => {
   describe("solutionExportCommand", () => {
     it("exports solutions to JSON format", async () => {
       const solution = createTestSolutionPattern({ name: "Export Test" });
-      mockStore.listSolutions.mockResolvedValue({
+      mockListSolutions.mockResolvedValue({
         success: true,
         data: [solution],
       });
@@ -201,7 +213,7 @@ describe("solution commands - Unit Tests", () => {
 
     it("exports to YAML format when specified", async () => {
       const solution = createTestSolutionPattern({ name: "YAML Test" });
-      mockStore.listSolutions.mockResolvedValue({
+      mockListSolutions.mockResolvedValue({
         success: true,
         data: [solution],
       });
@@ -215,20 +227,20 @@ describe("solution commands - Unit Tests", () => {
     });
 
     it("filters by category when specified", async () => {
-      mockStore.listSolutions.mockResolvedValue({
+      mockListSolutions.mockResolvedValue({
         success: true,
         data: [],
       });
 
       await solutionExportCommand({ category: "auth" });
 
-      expect(mockStore.listSolutions).toHaveBeenCalledWith(
-        expect.objectContaining({ category: "auth" }),
+      expect(mockListSolutions).toHaveBeenCalledWith(
+        expect.objectContaining({ solutionCategory: "auth" }),
       );
     });
 
     it("reports no solutions when store is empty", async () => {
-      mockStore.listSolutions.mockResolvedValue({ success: true, data: [] });
+      mockListSolutions.mockResolvedValue({ success: true, data: [] });
 
       await solutionExportCommand({});
 
@@ -252,12 +264,12 @@ describe("solution commands - Unit Tests", () => {
       vi.mocked(nodeFs.promises.readFile).mockResolvedValue(
         JSON.stringify(importData),
       );
-      mockStore.getSolution.mockResolvedValue({ success: false });
-      mockStore.saveSolution.mockResolvedValue({ success: true, data: solution });
+      mockGetSolution.mockResolvedValue({ success: false });
+      mockSaveSolution.mockResolvedValue({ success: true, data: solution });
 
       await solutionImportCommand("import.json", { merge: true });
 
-      expect(mockStore.saveSolution).toHaveBeenCalledWith(solution);
+      expect(mockSaveSolution).toHaveBeenCalledWith(solution);
     });
 
     it("skips existing solutions when merge is false", async () => {
@@ -268,11 +280,11 @@ describe("solution commands - Unit Tests", () => {
       vi.mocked(nodeFs.promises.readFile).mockResolvedValue(
         JSON.stringify(importData),
       );
-      mockStore.getSolution.mockResolvedValue({ success: true, data: solution });
+      mockGetSolution.mockResolvedValue({ success: true, data: solution });
 
       await solutionImportCommand("import.json", { merge: false });
 
-      expect(mockStore.saveSolution).not.toHaveBeenCalled();
+      expect(mockSaveSolution).not.toHaveBeenCalled();
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining("Skipped"),
       );
@@ -292,7 +304,7 @@ describe("solution commands - Unit Tests", () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining("Dry run"),
       );
-      expect(mockStore.saveSolution).not.toHaveBeenCalled();
+      expect(mockSaveSolution).not.toHaveBeenCalled();
     });
 
     it("exits with error when file not found", async () => {
@@ -300,9 +312,11 @@ describe("solution commands - Unit Tests", () => {
 
       const mockExit = vi
         .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
+        .mockImplementation(() => {
+          throw new Error("process.exit called");
+        });
 
-      await solutionImportCommand("nonexistent.json", {});
+      await expect(solutionImportCommand("nonexistent.json", {})).rejects.toThrow("process.exit called");
 
       expect(mockExit).toHaveBeenCalledWith(1);
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -318,9 +332,11 @@ describe("solution commands - Unit Tests", () => {
 
       const mockExit = vi
         .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
+        .mockImplementation(() => {
+          throw new Error("process.exit called");
+        });
 
-      await solutionImportCommand("bad.json", {});
+      await expect(solutionImportCommand("bad.json", {})).rejects.toThrow("process.exit called");
 
       expect(mockExit).toHaveBeenCalledWith(1);
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -341,7 +357,7 @@ describe("solution commands - Unit Tests", () => {
         return String(p).includes("src/auth");
       });
 
-      mockStore.listSolutions.mockResolvedValue({ success: true, data: [] });
+      mockListSolutions.mockResolvedValue({ success: true, data: [] });
 
       await solutionAnalyzeCommand();
 
@@ -353,7 +369,7 @@ describe("solution commands - Unit Tests", () => {
     it("does not suggest already captured solutions", async () => {
       vi.mocked(nodeFs.existsSync).mockReturnValue(true);
 
-      mockStore.listSolutions.mockResolvedValue({
+      mockListSolutions.mockResolvedValue({
         success: true,
         data: [createTestSolutionPattern({ name: "Authentication Module" })],
       });
@@ -365,7 +381,7 @@ describe("solution commands - Unit Tests", () => {
 
     it("reports nothing when no opportunities found", async () => {
       vi.mocked(nodeFs.existsSync).mockReturnValue(false);
-      mockStore.listSolutions.mockResolvedValue({ success: true, data: [] });
+      mockListSolutions.mockResolvedValue({ success: true, data: [] });
 
       await solutionAnalyzeCommand();
 
@@ -380,7 +396,7 @@ describe("solution commands - Unit Tests", () => {
         return path.includes("src/auth") || path.includes("src/api");
       });
 
-      mockStore.listSolutions.mockResolvedValue({ success: true, data: [] });
+      mockListSolutions.mockResolvedValue({ success: true, data: [] });
 
       await solutionAnalyzeCommand();
 

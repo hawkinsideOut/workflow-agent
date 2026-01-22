@@ -94,6 +94,7 @@ function truncate(str: string, maxLen: number): string {
 export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   console.log(chalk.cyan("\n📦 Capture Solution Pattern\n"));
 
@@ -281,6 +282,7 @@ export async function solutionSearchCommand(
 ) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   console.log(chalk.cyan("\n🔍 Search Solution Patterns\n"));
 
@@ -338,6 +340,7 @@ export async function solutionSearchCommand(
 export async function solutionListCommand(options: SolutionListOptions) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   console.log(chalk.cyan("\n📋 Solution Patterns\n"));
 
@@ -413,6 +416,7 @@ export async function solutionApplyCommand(
 ) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   console.log(chalk.cyan("\n🚀 Apply Solution Pattern\n"));
 
@@ -552,6 +556,7 @@ export async function solutionDeprecateCommand(
 ) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   console.log(chalk.cyan("\n⚠️  Deprecate Solution Pattern\n"));
 
@@ -590,6 +595,7 @@ export async function solutionDeprecateCommand(
 export async function solutionStatsCommand() {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   console.log(chalk.cyan("\n📊 Solution Pattern Statistics\n"));
 
@@ -643,6 +649,7 @@ interface SolutionCreateOptions {
 export async function solutionCreateCommand(options: SolutionCreateOptions) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   console.log(chalk.cyan("\n✨ Create Solution Pattern\n"));
 
@@ -784,6 +791,7 @@ export async function solutionCreateCommand(options: SolutionCreateOptions) {
 export async function solutionShowCommand(solutionId: string) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
 
   console.log(chalk.cyan("\n📋 Solution Details\n"));
 
@@ -864,13 +872,14 @@ interface SolutionExportOptions {
 export async function solutionExportCommand(options: SolutionExportOptions) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
   const format = options.format ?? "json";
   const outputPath = options.output ?? `solutions-export.${format}`;
 
   console.log(chalk.cyan("\n📤 Exporting Solution Patterns\n"));
 
   const result = await store.listSolutions({
-    category: options.category,
+    solutionCategory: options.category,
     limit: 1000,
   });
 
@@ -942,6 +951,7 @@ export async function solutionImportCommand(
 ) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
   const dryRun = options.dryRun ?? false;
   const merge = options.merge ?? true;
 
@@ -1021,6 +1031,7 @@ export async function solutionImportCommand(
 export async function solutionAnalyzeCommand() {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
+  await store.initialize();
   const fs = await import("node:fs");
   const pathModule = await import("node:path");
 

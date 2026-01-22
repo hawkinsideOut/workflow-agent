@@ -138,7 +138,10 @@ export { login } from "./auth/login";
 describe("Solution Pattern E2E Tests", () => {
   beforeEach(async () => {
     testDir = await mkdtemp(join(tmpdir(), "solution-e2e-"));
+    // Create required directories
+    await mkdir(join(testDir, ".workflow", "patterns", "solutions"), { recursive: true });
     store = new PatternStore(testDir);
+    await store.initialize();
   });
 
   afterEach(async () => {
@@ -524,6 +527,7 @@ describe("solution CLI commands - E2E", () => {
     });
 
     cliStore = new PatternStore(tempDir);
+    await cliStore.initialize();
   });
 
   afterEach(async () => {
@@ -536,16 +540,18 @@ describe("solution CLI commands - E2E", () => {
 
   describe("solution show", () => {
     it("displays solution details via CLI", async () => {
-      // Create a solution first
+      // Create a solution first - use a proper UUID
+      const solutionId = crypto.randomUUID();
       const solution = createTestSolution({
-        id: "show-cli-test",
+        id: solutionId,
         name: "Show CLI Test Solution",
       });
-      await cliStore.saveSolution(solution);
+      const saveResult = await cliStore.saveSolution(solution);
+      expect(saveResult.success).toBe(true);
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "solution", "show", "show-cli-test"],
+        [cliPath, "solution", "show", solutionId],
         {
           cwd: tempDir,
           reject: false,
@@ -558,7 +564,7 @@ describe("solution CLI commands - E2E", () => {
     });
 
     it("exits with error for non-existent solution", async () => {
-      const { exitCode, stdout } = await execa(
+      const { exitCode, stderr } = await execa(
         "node",
         [cliPath, "solution", "show", "nonexistent-id"],
         {
@@ -568,12 +574,13 @@ describe("solution CLI commands - E2E", () => {
       );
 
       expect(exitCode).toBe(1);
-      expect(stdout).toContain("not found");
+      expect(stderr).toContain("not found");
     });
 
     it("shows compatibility information", async () => {
+      const solutionId = crypto.randomUUID();
       const solution = createTestSolution({
-        id: "compat-cli-test",
+        id: solutionId,
         name: "Compatibility CLI Test",
         compatibility: {
           framework: "next",
@@ -583,11 +590,12 @@ describe("solution CLI commands - E2E", () => {
           dependencies: [],
         },
       });
-      await cliStore.saveSolution(solution);
+      const saveResult = await cliStore.saveSolution(solution);
+      expect(saveResult.success).toBe(true);
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "solution", "show", "compat-cli-test"],
+        [cliPath, "solution", "show", solutionId],
         {
           cwd: tempDir,
           reject: false,
@@ -660,12 +668,15 @@ describe("solution CLI commands - E2E", () => {
     });
 
     it("filters by category", async () => {
-      await cliStore.saveSolution(
+      const authResult = await cliStore.saveSolution(
         createTestSolution({ name: "Auth Solution", category: "auth" }),
       );
-      await cliStore.saveSolution(
+      expect(authResult.success).toBe(true);
+
+      const apiResult = await cliStore.saveSolution(
         createTestSolution({ name: "API Solution", category: "api" }),
       );
+      expect(apiResult.success).toBe(true);
 
       const { stdout, exitCode } = await execa(
         "node",
@@ -689,6 +700,7 @@ describe("solution CLI commands - E2E", () => {
       const { readFile: fsReadFile } = await import("fs/promises");
       const content = await fsReadFile(join(tempDir, "auth-only.json"), "utf-8");
       const data = JSON.parse(content);
+      expect(data.solutions.length).toBeGreaterThan(0);
       expect(data.solutions.every((s: { category: string }) => s.category === "auth")).toBe(true);
     });
 
@@ -728,12 +740,13 @@ describe("solution CLI commands - E2E", () => {
   describe("solution import", () => {
     it("imports solutions from JSON file", async () => {
       // Create export file
+      const importId = crypto.randomUUID();
       const exportData = {
         version: "1.0",
         exportedAt: new Date().toISOString(),
         solutions: [
           createTestSolution({
-            id: "import-cli-test",
+            id: importId,
             name: "Imported CLI Solution",
           }),
         ],
@@ -756,16 +769,17 @@ describe("solution CLI commands - E2E", () => {
       expect(stdout).toContain("Import complete");
 
       // Verify solution was imported
-      const result = await cliStore.getSolution("import-cli-test");
+      const result = await cliStore.getSolution(importId);
       expect(result.success).toBe(true);
       expect(result.data?.name).toBe("Imported CLI Solution");
     });
 
     it("supports dry-run mode", async () => {
+      const dryRunId = crypto.randomUUID();
       const exportData = {
         solutions: [
           createTestSolution({
-            id: "dry-run-cli",
+            id: dryRunId,
             name: "Dry Run CLI Solution",
           }),
         ],
@@ -789,7 +803,7 @@ describe("solution CLI commands - E2E", () => {
       expect(stdout).toContain("Would import");
 
       // Verify solution was NOT imported
-      const result = await cliStore.getSolution("dry-run-cli");
+      const result = await cliStore.getSolution(dryRunId);
       expect(result.success).toBe(false);
     });
 
@@ -808,12 +822,14 @@ describe("solution CLI commands - E2E", () => {
     });
 
     it("skips existing solutions with --no-merge", async () => {
-      // Create existing solution
+      // Create existing solution with a valid UUID
+      const skipId = crypto.randomUUID();
       const existing = createTestSolution({
-        id: "skip-cli-test",
+        id: skipId,
         name: "Existing CLI Solution",
       });
-      await cliStore.saveSolution(existing);
+      const saveResult = await cliStore.saveSolution(existing);
+      expect(saveResult.success).toBe(true);
 
       // Create import file with same ID
       const exportData = {
@@ -837,7 +853,7 @@ describe("solution CLI commands - E2E", () => {
       expect(stdout).toContain("Skipped");
 
       // Verify original name is preserved
-      const result = await cliStore.getSolution("skip-cli-test");
+      const result = await cliStore.getSolution(skipId);
       expect(result.data?.name).toBe("Existing CLI Solution");
     });
   });
