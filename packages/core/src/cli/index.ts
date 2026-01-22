@@ -96,10 +96,18 @@ program
   .option("--scopes", "Sync custom scope packages")
   .option("--all", "Sync everything")
   .option("--dry-run", "Preview without syncing")
+  .option("--enable-sync", "Enable pattern sync")
+  .option("--disable-sync", "Disable pattern sync")
   .addHelpText(
     "after",
     `
 ${chalk.bold("Examples:")}
+  ${chalk.dim("# Enable sync")}
+  $ workflow sync --enable-sync
+
+  ${chalk.dim("# Disable sync")}
+  $ workflow sync --disable-sync
+
   ${chalk.dim("# Interactive sync (prompts for direction)")}
   $ workflow sync
 

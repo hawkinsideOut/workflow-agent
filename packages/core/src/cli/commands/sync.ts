@@ -39,6 +39,8 @@ export interface UnifiedSyncOptions {
   scopes?: boolean;
   all?: boolean;
   dryRun?: boolean;
+  enableSync?: boolean;
+  disableSync?: boolean;
 }
 
 function getWorkspacePath(): string {
@@ -53,6 +55,37 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
   const contributorManager = new ContributorManager(cwd);
 
   p.intro(chalk.bgBlue(" workflow sync "));
+
+  // Handle --enable-sync option
+  if (options.enableSync) {
+    const enableResult = await contributorManager.enableSync();
+    if (enableResult.success) {
+      console.log(chalk.green("\n✅ Sync enabled!"));
+      console.log(chalk.dim("  Your anonymized patterns can now be shared with the community.\n"));
+    } else {
+      console.log(chalk.red(`\n❌ Failed to enable sync: ${enableResult.error}\n`));
+      process.exit(1);
+    }
+    // If only --enable-sync was passed, exit after enabling
+    if (!options.push && !options.pull && !options.all && !options.solutions && !options.scopes) {
+      p.outro(chalk.green("Sync enabled"));
+      return;
+    }
+  }
+
+  // Handle --disable-sync option
+  if (options.disableSync) {
+    const disableResult = await contributorManager.disableSync();
+    if (disableResult.success) {
+      console.log(chalk.green("\n✅ Sync disabled!"));
+      console.log(chalk.dim("  Your patterns will no longer be shared.\n"));
+    } else {
+      console.log(chalk.red(`\n❌ Failed to disable sync: ${disableResult.error}\n`));
+      process.exit(1);
+    }
+    p.outro(chalk.green("Sync disabled"));
+    return;
+  }
 
   // Check if sync is enabled
   const config = await contributorManager.getConfig();
