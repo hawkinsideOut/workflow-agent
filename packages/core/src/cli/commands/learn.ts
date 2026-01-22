@@ -687,8 +687,11 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
   await store.initialize();
   const anonymizer = new PatternAnonymizer();
 
-  // Get patterns to sync
-  const { fixes, blueprints, solutions } = await store.getPatternsForSync();
+  // Get patterns to sync (with defaults in case of undefined)
+  const syncData = await store.getPatternsForSync();
+  const fixes = syncData.fixes ?? [];
+  const blueprints = syncData.blueprints ?? [];
+  const solutions = syncData.solutions ?? [];
 
   console.log(
     chalk.dim(

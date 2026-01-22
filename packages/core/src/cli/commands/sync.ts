@@ -146,8 +146,11 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
   const store = new PatternStore(cwd);
   const anonymizer = new PatternAnonymizer();
 
-  // Get patterns to sync
-  const { fixes, blueprints, solutions } = await store.getPatternsForSync();
+  // Get patterns to sync (with defaults in case of undefined)
+  const syncData = await store.getPatternsForSync();
+  const fixes = syncData.fixes ?? [];
+  const blueprints = syncData.blueprints ?? [];
+  const solutions = syncData.solutions ?? [];
 
   // Filter based on options
   const patternsToSync: Array<{
