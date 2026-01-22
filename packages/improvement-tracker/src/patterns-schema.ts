@@ -227,7 +227,7 @@ export const FixPatternSchema = z.object({
 
   // Privacy and sync
   /** Whether this pattern should be synced to central registry */
-  isPrivate: z.boolean().default(true),
+  isPrivate: z.boolean().default(false),
   /** When this pattern was last synced */
   syncedAt: z.string().datetime().optional(),
   /** Anonymous contributor identifier */
@@ -402,7 +402,7 @@ export const BlueprintSchema = z.object({
 
   // Privacy and sync
   /** Whether this blueprint should be synced */
-  isPrivate: z.boolean().default(true),
+  isPrivate: z.boolean().default(false),
   /** When this blueprint was last synced */
   syncedAt: z.string().datetime().optional(),
   /** Anonymous contributor identifier */
@@ -594,7 +594,7 @@ export const SolutionPatternSchema = z.object({
 
   // Privacy and sync
   /** Whether this solution should be synced */
-  isPrivate: z.boolean().default(true),
+  isPrivate: z.boolean().default(false),
   /** When this solution was last synced */
   syncedAt: z.string().datetime().optional(),
   /** Anonymous contributor identifier */

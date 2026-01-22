@@ -223,7 +223,29 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
     
     if (options.includePrivate) {
       console.log(chalk.dim(`  Found ${publicCount} solutions to sync (including private)`));
+    } else if (publicCount === 0 && privateCount > 0 && !options.dryRun) {
+      console.log(chalk.yellow(`  Found 0 solutions ready to sync (${privateCount} are private)`));
+      
+      // Prompt user to migrate solutions to public
+      const shouldMigrate = await p.confirm({
+        message: `Would you like to make your ${privateCount} solution(s) public for sync?`,
+      });
+      
+      if (p.isCancel(shouldMigrate) || !shouldMigrate) {
+        console.log(chalk.dim(`    Skipping private solutions. Use --include-private to force include them.`));
+      } else {
+        // Migrate all private solutions to public
+        const allSolutions = await store.listSolutions({ includeDeprecated: false });
+        for (const sol of allSolutions.data ?? []) {
+          if (sol.isPrivate) {
+            await store.updateSolution(sol.id, { ...sol, isPrivate: false });
+            solutions.push({ ...sol, isPrivate: false });
+          }
+        }
+        console.log(chalk.green(`  ✓ Migrated ${privateCount} solutions to public`));
+      }
     } else if (publicCount === 0 && privateCount > 0) {
+      // Dry run mode - just show the message
       console.log(chalk.yellow(`  Found 0 solutions ready to sync (${privateCount} are private)`));
       console.log(chalk.dim(`    Use --include-private to include them, or run 'workflow solution migrate --public'`));
     } else {
