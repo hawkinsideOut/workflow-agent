@@ -35,7 +35,7 @@ export interface AnalyzerOptions {
 /** Default analyzer options */
 export const DEFAULT_ANALYZER_OPTIONS: AnalyzerOptions = {
   maxFiles: 50,
-  extensions: [".ts", ".tsx", ".js", ".jsx", ".py", ".go", ".rs", ".java"],
+  extensions: [".ts", ".tsx", ".js", ".jsx", ".py", ".go", ".rs", ".java", ".yml", ".yaml", ".json", ".md", ".mdx"],
   ignoreDirs: [
     "node_modules",
     ".git",

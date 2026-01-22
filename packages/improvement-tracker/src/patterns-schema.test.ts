@@ -589,13 +589,13 @@ describe("FixPatternSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("should set isPrivate default to true", () => {
+  it("should set isPrivate default to false", () => {
     const pattern = createValidFixPattern();
     const { isPrivate, ...withoutIsPrivate } = pattern;
     const result = FixPatternSchema.safeParse(withoutIsPrivate);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.isPrivate).toBe(true);
+      expect(result.data.isPrivate).toBe(false);
     }
   });
 
@@ -816,13 +816,13 @@ describe("BlueprintSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("should set isPrivate default to true", () => {
+  it("should set isPrivate default to false", () => {
     const blueprint = createValidBlueprint();
     const { isPrivate, ...withoutIsPrivate } = blueprint;
     const result = BlueprintSchema.safeParse(withoutIsPrivate);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.isPrivate).toBe(true);
+      expect(result.data.isPrivate).toBe(false);
     }
   });
 
