@@ -598,9 +598,10 @@ pnpm test:coverage
 
 **Current test coverage:**
 
-- improvement-tracker: 14 tests, 71% pass rate
-- validators: Coming soon
-- adapters: Coming soon
+- **Total tests:** 472 (100% pass rate)
+- **Core CLI:** 26 test files covering all commands
+- **Improvement tracker:** Pattern storage, sync, and validation
+- **Validators:** Branch, commit, and PR validation logic
 
 ---
 

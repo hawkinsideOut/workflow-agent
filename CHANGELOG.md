@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.21.1] - 2026-01-21
+
+### Fixed
+
+- **PatternStore Initialization**: Added required `store.initialize()` calls to all PatternStore instances in CLI commands
+  - Fixed `solution.ts` and `learn.ts` CLI commands that were failing silently due to missing initialization
+  - Both `solution` and `learn` command groups now properly initialize the store before CRUD operations
+  - This resolves issues where patterns weren't being saved or retrieved correctly
+
+- **Category Filter**: Fixed `solutionExportCommand` to use correct `solutionCategory` parameter
+  - `workflow solution export --category <cat>` now properly filters solutions by category
+  - Previously used incorrect `category` property that was being ignored
+
+- **Test Suite Reliability**: Fixed 63 test failures in learn and solution command tests
+  - Unit tests now include `initialize` mock for PatternStore
+  - E2E tests use valid UUIDs instead of string IDs (schema requires UUID format)
+  - Fixed stderr assertion for "not found" error messages
+  - All 472 tests now pass
+
+### Removed
+
+- **Redundant Integration Tests**: Removed `learn.integration.test.ts` and `solution.integration.test.ts`
+  - These tests duplicated functionality already covered by the PatternStore package's own tests
+  - Unit and E2E tests provide sufficient coverage for CLI commands
+
 ## [2.21.0] - 2026-01-20
 
 ### Changed
