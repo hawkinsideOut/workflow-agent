@@ -7,6 +7,8 @@
 
 import { execa, type ExecaError } from "execa";
 import chalk from "chalk";
+import { existsSync, readFileSync } from "fs";
+import { join } from "path";
 
 export interface CheckDefinition {
   name: string;
@@ -16,6 +18,10 @@ export interface CheckDefinition {
   fixCommand?: string;
   fixArgs?: string[];
   canAutoFix: boolean;
+  /** The npm script name this check depends on (e.g., "typecheck", "lint") */
+  requiredScript?: string;
+  /** Fallback command if the script doesn't exist (e.g., ["tsc", "--noEmit"]) */
+  fallbackCommand?: string[];
 }
 
 export interface CheckResult {
@@ -63,6 +69,8 @@ export const QUALITY_CHECKS: CheckDefinition[] = [
     command: "pnpm",
     args: ["typecheck"],
     canAutoFix: false, // TypeScript errors need manual/LLM fix
+    requiredScript: "typecheck",
+    fallbackCommand: ["tsc", "--noEmit"],
   },
   {
     name: "lint",
@@ -72,6 +80,7 @@ export const QUALITY_CHECKS: CheckDefinition[] = [
     fixCommand: "pnpm",
     fixArgs: ["lint", "--fix"],
     canAutoFix: true,
+    requiredScript: "lint",
   },
   {
     name: "format",
@@ -81,6 +90,7 @@ export const QUALITY_CHECKS: CheckDefinition[] = [
     fixCommand: "pnpm",
     fixArgs: ["format"],
     canAutoFix: true,
+    requiredScript: "format",
   },
   {
     name: "test",
@@ -88,6 +98,7 @@ export const QUALITY_CHECKS: CheckDefinition[] = [
     command: "pnpm",
     args: ["test"],
     canAutoFix: false, // Tests need manual/LLM fix
+    requiredScript: "test",
   },
   {
     name: "build",
@@ -95,8 +106,80 @@ export const QUALITY_CHECKS: CheckDefinition[] = [
     command: "pnpm",
     args: ["build"],
     canAutoFix: false, // Build errors need manual/LLM fix
+    requiredScript: "build",
   },
 ];
+
+/**
+ * Get available scripts from the target project's package.json
+ */
+export function getAvailableScripts(cwd: string): Set<string> {
+  const packageJsonPath = join(cwd, "package.json");
+  
+  if (!existsSync(packageJsonPath)) {
+    return new Set();
+  }
+  
+  try {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+    return new Set(Object.keys(packageJson.scripts || {}));
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * Check if a command exists in PATH
+ */
+async function commandExists(cmd: string): Promise<boolean> {
+  try {
+    await execa("which", [cmd]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get applicable checks for the target project
+ * Filters out checks for scripts that don't exist, uses fallbacks when available
+ */
+export async function getApplicableChecks(cwd: string): Promise<CheckDefinition[]> {
+  const availableScripts = getAvailableScripts(cwd);
+  const applicableChecks: CheckDefinition[] = [];
+  
+  for (const check of QUALITY_CHECKS) {
+    // If no required script, always include
+    if (!check.requiredScript) {
+      applicableChecks.push(check);
+      continue;
+    }
+    
+    // If the script exists in package.json, use the pnpm command
+    if (availableScripts.has(check.requiredScript)) {
+      applicableChecks.push(check);
+      continue;
+    }
+    
+    // If there's a fallback command and it exists, use that
+    if (check.fallbackCommand && check.fallbackCommand.length > 0) {
+      const fallbackCmd = check.fallbackCommand[0];
+      if (await commandExists(fallbackCmd)) {
+        applicableChecks.push({
+          ...check,
+          command: fallbackCmd,
+          args: check.fallbackCommand.slice(1),
+        });
+        continue;
+      }
+    }
+    
+    // Script doesn't exist and no valid fallback - skip this check
+    // (will be logged as skipped in runAllChecks)
+  }
+  
+  return applicableChecks;
+}
 
 /**
  * Run a single check
@@ -233,6 +316,28 @@ export async function runAllChecks(
   const appliedFixes: AppliedFix[] = [];
   const pendingFixes: Array<{ check: CheckDefinition; command: string }> = [];
 
+  // Get applicable checks for this project (filters out missing scripts)
+  const applicableChecks = await getApplicableChecks(cwd);
+  
+  // Log skipped checks
+  const skippedChecks = QUALITY_CHECKS.filter(
+    qc => !applicableChecks.some(ac => ac.name === qc.name)
+  );
+  if (skippedChecks.length > 0) {
+    log(`\n⏭️  Skipping checks (scripts not found): ${skippedChecks.map(c => c.displayName).join(", ")}`, "warning");
+  }
+  
+  if (applicableChecks.length === 0) {
+    log(`\n⚠️  No applicable checks found. Add scripts to package.json: typecheck, lint, format, test, build`, "warning");
+    return {
+      success: true,
+      results: [],
+      totalAttempts: 0,
+      fixesApplied: 0,
+      appliedFixes: [],
+    };
+  }
+
   while (attempt < maxRetries) {
     attempt++;
 
@@ -245,10 +350,10 @@ export async function runAllChecks(
     let fixAppliedThisCycle = false;
 
     // Run each check in order
-    for (let i = 0; i < QUALITY_CHECKS.length; i++) {
-      const check = QUALITY_CHECKS[i];
+    for (let i = 0; i < applicableChecks.length; i++) {
+      const check = applicableChecks[i];
       const stepNum = i + 1;
-      const totalSteps = QUALITY_CHECKS.length;
+      const totalSteps = applicableChecks.length;
 
       log(`📋 Step ${stepNum}/${totalSteps}: ${check.displayName}...`, "info");
 
