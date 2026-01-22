@@ -9,6 +9,7 @@ import {
   type SolutionCategory,
   type SolutionFile,
   type DependencyVersion,
+  type PatternTagCategory,
 } from "@hawkinside_out/workflow-improvement-tracker";
 
 // ============================================
@@ -271,8 +272,12 @@ export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
     }
 
     // Save the pattern
-    await store.saveSolution(pattern);
-    console.log(chalk.green(`\n✓ Solution saved with ID: ${pattern.id}\n`));
+    const saveResult = await store.saveSolution(pattern);
+    if (!saveResult.success) {
+      console.error(chalk.red(`\n✗ Failed to save solution: ${saveResult.error}\n`));
+      process.exit(1);
+    }
+    console.log(chalk.green(`\n✓ Solution saved: .workflow/patterns/solutions/${pattern.id}.json\n`));
   } catch (error) {
     spinner.stop("Analysis failed");
     console.error(chalk.red(`\n✗ Error: ${(error as Error).message}\n`));
@@ -751,18 +756,40 @@ export async function solutionCreateCommand(options: SolutionCreateOptions) {
   const framework = options.framework || "generic";
   const now = new Date().toISOString();
 
-  // Create the solution pattern
+  // Create the solution pattern with all required fields
   const solution: SolutionPattern = {
     id: crypto.randomUUID(),
     name,
     description,
     category,
-    keywords,
+    tags: keywords.map((k) => ({ name: k, category: category as PatternTagCategory })),
+    problem: {
+      description: description,
+      keywords: keywords,
+      symptoms: [],
+      impact: "To be documented",
+      errorPatterns: [],
+    },
     implementation: {
-      files: [],
+      files: [
+        {
+          path: "placeholder.ts",
+          purpose: "Placeholder - add actual files with solution capture",
+          role: "service" as const,
+          content: "",
+          exports: [],
+          imports: [],
+          lineCount: 1,
+        },
+      ],
       dependencies: [],
       devDependencies: [],
       envVars: [],
+    },
+    architecture: {
+      entryPoints: [],
+      dataFlow: "To be documented",
+      keyDecisions: [],
     },
     compatibility: {
       framework,
@@ -777,16 +804,22 @@ export async function solutionCreateCommand(options: SolutionCreateOptions) {
       failures: 0,
       successRate: 0,
     },
+    relatedPatterns: [],
+    source: "manual" as const,
     isPrivate: true,
     createdAt: now,
     updatedAt: now,
   };
 
   // Save the pattern
-  await store.saveSolution(solution);
+  const saveResult = await store.saveSolution(solution);
+  if (!saveResult.success) {
+    console.error(chalk.red(`\n✗ Failed to save solution: ${saveResult.error}\n`));
+    process.exit(1);
+  }
 
   console.log(chalk.green("\n✓ Solution pattern created!\n"));
-  console.log(chalk.dim(`  ID: ${solution.id}`));
+  console.log(chalk.dim(`  Path: .workflow/patterns/solutions/${solution.id}.json`));
   console.log(chalk.dim(`  Name: ${name}`));
   console.log(chalk.dim(`  Category: ${category}`));
   console.log(chalk.dim(`\nAdd files using 'workflow solution capture --path <dir>'`));
@@ -1022,7 +1055,11 @@ export async function solutionImportCommand(
       continue;
     }
 
-    await store.saveSolution(solution);
+    const saveResult = await store.saveSolution(solution);
+    if (!saveResult.success) {
+      console.log(chalk.red(`    ✗ Failed to import: ${solution.name} - ${saveResult.error}`));
+      continue;
+    }
     console.log(chalk.green(`    ✓ Imported: ${solution.name}`));
     imported++;
   }
