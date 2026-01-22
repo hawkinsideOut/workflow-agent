@@ -3,9 +3,14 @@
  *
  * Consolidates solution pattern commands under `workflow solution <subcommand>`:
  *   - capture: Capture a solution pattern from working code
+ *   - create: Create a new solution pattern manually
+ *   - show: Display details of a specific solution
  *   - search: Search for solution patterns
  *   - list: List all solution patterns
  *   - apply: Apply a solution pattern to the current project
+ *   - export: Export solutions to a file
+ *   - import: Import solutions from a file
+ *   - analyze: Analyze codebase for potential solutions
  *   - deprecate: Deprecate a solution pattern
  *   - stats: Show solution pattern statistics
  */
@@ -14,9 +19,14 @@ import { Command } from "commander";
 import chalk from "chalk";
 import {
   solutionCaptureCommand,
+  solutionCreateCommand,
+  solutionShowCommand,
   solutionSearchCommand,
   solutionListCommand,
   solutionApplyCommand,
+  solutionExportCommand,
+  solutionImportCommand,
+  solutionAnalyzeCommand,
   solutionDeprecateCommand,
   solutionStatsCommand,
 } from "../solution.js";
@@ -31,13 +41,17 @@ export function createSolutionCommand(): Command {
       "after",
       `
 ${chalk.bold("Examples:")}
-  $ workflow solution capture                    ${chalk.dim("# Interactive solution capture")}
-  $ workflow solution capture --path ./src/auth  ${chalk.dim("# Capture from specific path")}
+  $ workflow solution capture --path ./src/auth  ${chalk.dim("# Capture from path")}
+  $ workflow solution create --name "My Auth"    ${chalk.dim("# Create manually")}
+  $ workflow solution show abc123                ${chalk.dim("# Show solution details")}
   $ workflow solution search "jwt auth"          ${chalk.dim("# Search solutions")}
   $ workflow solution list                       ${chalk.dim("# List all solutions")}
   $ workflow solution list --category auth       ${chalk.dim("# List by category")}
   $ workflow solution apply abc123               ${chalk.dim("# Apply a solution")}
   $ workflow solution apply abc123 --dry-run     ${chalk.dim("# Preview application")}
+  $ workflow solution export --format json       ${chalk.dim("# Export solutions")}
+  $ workflow solution import solutions.json      ${chalk.dim("# Import solutions")}
+  $ workflow solution analyze                    ${chalk.dim("# Find opportunities")}
   $ workflow solution stats                      ${chalk.dim("# Show statistics")}
 `,
     )
@@ -73,6 +87,38 @@ ${chalk.bold("Examples:")}
 `,
     )
     .action(solutionCaptureCommand);
+
+  // create subcommand
+  solutionCmd
+    .command("create")
+    .description("Create a new solution pattern manually")
+    .option("--name <name>", "Solution name")
+    .option("--description <desc>", "Solution description")
+    .option("--category <cat>", "Category")
+    .option("--keywords <kw>", "Comma-separated keywords")
+    .option("--framework <fw>", "Target framework")
+    .addHelpText(
+      "after",
+      `
+${chalk.bold("Examples:")}
+  $ workflow solution create                            ${chalk.dim("# Interactive mode")}
+  $ workflow solution create --name "Custom Auth"       ${chalk.dim("# With name")}
+`,
+    )
+    .action(solutionCreateCommand);
+
+  // show subcommand
+  solutionCmd
+    .command("show <solutionId>")
+    .description("Display details of a specific solution pattern")
+    .addHelpText(
+      "after",
+      `
+${chalk.bold("Examples:")}
+  $ workflow solution show abc123                       ${chalk.dim("# Show by ID")}
+`,
+    )
+    .action(solutionShowCommand);
 
   // search subcommand
   solutionCmd
@@ -132,6 +178,60 @@ ${chalk.bold("Examples:")}
     )
     .action(solutionApplyCommand);
 
+  // export subcommand
+  solutionCmd
+    .command("export")
+    .description("Export solution patterns to a file")
+    .option("-o, --output <path>", "Output file path", "solutions-export.json")
+    .option("-f, --format <format>", "Output format (json, yaml)", "json")
+    .option("--category <cat>", "Filter by category")
+    .addHelpText(
+      "after",
+      `
+${chalk.bold("Examples:")}
+  $ workflow solution export                            ${chalk.dim("# Export all as JSON")}
+  $ workflow solution export --format yaml              ${chalk.dim("# Export as YAML")}
+  $ workflow solution export --category auth            ${chalk.dim("# Export auth only")}
+  $ workflow solution export -o backup.json             ${chalk.dim("# Custom output path")}
+`,
+    )
+    .action(solutionExportCommand);
+
+  // import subcommand
+  solutionCmd
+    .command("import <file>")
+    .description("Import solution patterns from a file")
+    .option("-f, --format <format>", "Input format (json, yaml)", "json")
+    .option("--dry-run", "Preview import without making changes")
+    .option("--no-merge", "Skip existing solutions instead of merging")
+    .addHelpText(
+      "after",
+      `
+${chalk.bold("Examples:")}
+  $ workflow solution import solutions.json             ${chalk.dim("# Import from JSON")}
+  $ workflow solution import backup.json --dry-run      ${chalk.dim("# Preview import")}
+`,
+    )
+    .action(solutionImportCommand);
+
+  // analyze subcommand
+  solutionCmd
+    .command("analyze")
+    .description("Analyze codebase for potential solution patterns")
+    .addHelpText(
+      "after",
+      `
+${chalk.bold("Details:")}
+  Scans your codebase for common patterns that could be
+  captured as reusable solutions, such as:
+  - Authentication modules
+  - API layers
+  - Database utilities
+  - UI component libraries
+`,
+    )
+    .action(solutionAnalyzeCommand);
+
   // deprecate subcommand
   solutionCmd
     .command("deprecate <solutionId> <reason>")
@@ -165,9 +265,14 @@ ${chalk.bold("Examples:")}
 // Re-export individual commands for backward compatibility
 export {
   solutionCaptureCommand,
+  solutionCreateCommand,
+  solutionShowCommand,
   solutionSearchCommand,
   solutionListCommand,
   solutionApplyCommand,
+  solutionExportCommand,
+  solutionImportCommand,
+  solutionAnalyzeCommand,
   solutionDeprecateCommand,
   solutionStatsCommand,
 } from "../solution.js";

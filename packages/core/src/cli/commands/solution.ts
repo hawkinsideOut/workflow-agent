@@ -624,3 +624,462 @@ export async function solutionStatsCommand() {
 
   console.log();
 }
+
+// ============================================
+// solution:create Command
+// ============================================
+
+interface SolutionCreateOptions {
+  name?: string;
+  description?: string;
+  category?: SolutionCategory;
+  keywords?: string;
+  framework?: string;
+}
+
+/**
+ * Create a new solution pattern manually (without capturing from files)
+ */
+export async function solutionCreateCommand(options: SolutionCreateOptions) {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+
+  console.log(chalk.cyan("\n✨ Create Solution Pattern\n"));
+
+  // Get pattern name
+  let name = options.name;
+  if (!name) {
+    const nameInput = await p.text({
+      message: "Solution name:",
+      placeholder: "My Custom Solution",
+      validate: (val) => {
+        if (!val || val.length < 3) return "Name must be at least 3 characters";
+        return undefined;
+      },
+    });
+
+    if (p.isCancel(nameInput)) {
+      p.cancel("Operation cancelled");
+      process.exit(0);
+    }
+    name = nameInput as string;
+  }
+
+  // Get description
+  let description = options.description;
+  if (!description) {
+    const descInput = await p.text({
+      message: "Solution description:",
+      placeholder: "A description of what this solution does",
+      validate: (val) => {
+        if (!val || val.length < 10)
+          return "Description must be at least 10 characters";
+        return undefined;
+      },
+    });
+
+    if (p.isCancel(descInput)) {
+      p.cancel("Operation cancelled");
+      process.exit(0);
+    }
+    description = descInput as string;
+  }
+
+  // Get category
+  let category = options.category;
+  if (!category) {
+    const categoryChoice = await p.select({
+      message: "Solution category:",
+      options: [
+        { value: "auth", label: "🔐 Authentication" },
+        { value: "api", label: "🌐 API" },
+        { value: "database", label: "💾 Database" },
+        { value: "ui", label: "🎨 UI/Components" },
+        { value: "testing", label: "🧪 Testing" },
+        { value: "deployment", label: "🚀 Deployment" },
+        { value: "integrations", label: "🔗 Integrations" },
+        { value: "performance", label: "⚡ Performance" },
+        { value: "security", label: "🛡️ Security" },
+        { value: "other", label: "📦 Other" },
+      ],
+    });
+
+    if (p.isCancel(categoryChoice)) {
+      p.cancel("Operation cancelled");
+      process.exit(0);
+    }
+    category = categoryChoice as SolutionCategory;
+  }
+
+  // Get keywords
+  let keywords: string[] = [];
+  if (options.keywords) {
+    keywords = options.keywords.split(",").map((k) => k.trim());
+  } else {
+    const keywordsInput = await p.text({
+      message: "Keywords (comma-separated):",
+      placeholder: "auth, jwt, login",
+    });
+
+    if (p.isCancel(keywordsInput)) {
+      p.cancel("Operation cancelled");
+      process.exit(0);
+    }
+    if (keywordsInput) {
+      keywords = (keywordsInput as string).split(",").map((k) => k.trim());
+    }
+  }
+
+  const framework = options.framework || "generic";
+  const now = new Date().toISOString();
+
+  // Create the solution pattern
+  const solution: SolutionPattern = {
+    id: crypto.randomUUID(),
+    name,
+    description,
+    category,
+    keywords,
+    implementation: {
+      files: [],
+      dependencies: [],
+      devDependencies: [],
+      envVars: [],
+    },
+    compatibility: {
+      framework,
+      frameworkVersion: ">=1.0.0",
+      runtime: "node",
+      runtimeVersion: ">=18.0.0",
+      dependencies: [],
+    },
+    metrics: {
+      applications: 0,
+      successes: 0,
+      failures: 0,
+      successRate: 0,
+    },
+    isPrivate: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  // Save the pattern
+  await store.saveSolution(solution);
+
+  console.log(chalk.green("\n✓ Solution pattern created!\n"));
+  console.log(chalk.dim(`  ID: ${solution.id}`));
+  console.log(chalk.dim(`  Name: ${name}`));
+  console.log(chalk.dim(`  Category: ${category}`));
+  console.log(chalk.dim(`\nAdd files using 'workflow solution capture --path <dir>'`));
+}
+
+// ============================================
+// solution:show Command
+// ============================================
+
+/**
+ * Show details of a specific solution pattern
+ */
+export async function solutionShowCommand(solutionId: string) {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+
+  console.log(chalk.cyan("\n📋 Solution Details\n"));
+
+  const result = await store.getSolution(solutionId);
+  if (!result.success || !result.data) {
+    console.error(chalk.red(`\n✗ Solution not found: ${solutionId}\n`));
+    process.exit(1);
+  }
+
+  const solution = result.data;
+
+  console.log(chalk.dim("─".repeat(60)));
+  console.log(chalk.bold(`Name: ${solution.name}`));
+  console.log(`ID: ${chalk.dim(solution.id)}`);
+  console.log(`Category: ${formatCategory(solution.category)}`);
+  console.log(`Description: ${solution.description}`);
+  console.log(chalk.dim("─".repeat(60)));
+
+  // Compatibility
+  console.log(chalk.bold("\nCompatibility:"));
+  console.log(`  Framework: ${solution.compatibility.framework || "generic"}`);
+  console.log(`  Version: ${solution.compatibility.frameworkVersion}`);
+  console.log(`  Runtime: ${solution.compatibility.runtime} ${solution.compatibility.runtimeVersion}`);
+
+  // Implementation
+  console.log(chalk.bold("\nImplementation:"));
+  console.log(`  Files: ${solution.implementation.files.length}`);
+  for (const file of solution.implementation.files) {
+    console.log(chalk.dim(`    • ${file.path} (${file.role})`));
+  }
+
+  if (solution.implementation.dependencies.length > 0) {
+    console.log(`  Dependencies: ${solution.implementation.dependencies.length}`);
+    for (const dep of solution.implementation.dependencies) {
+      console.log(chalk.dim(`    • ${dep.name}@${dep.version}`));
+    }
+  }
+
+  if (solution.implementation.envVars.length > 0) {
+    console.log(`  Environment Variables: ${solution.implementation.envVars.length}`);
+    for (const env of solution.implementation.envVars) {
+      const required = env.required ? chalk.red("*") : "";
+      console.log(chalk.dim(`    • ${env.name}${required}`));
+    }
+  }
+
+  // Metrics
+  console.log(chalk.bold("\nMetrics:"));
+  console.log(`  Applications: ${solution.metrics.applications}`);
+  console.log(`  Success Rate: ${(solution.metrics.successRate * 100).toFixed(1)}%`);
+
+  // Metadata
+  console.log(chalk.bold("\nMetadata:"));
+  console.log(`  Created: ${formatDate(solution.createdAt)}`);
+  console.log(`  Updated: ${formatDate(solution.updatedAt)}`);
+  console.log(`  Private: ${solution.isPrivate ? "Yes" : "No"}`);
+  if (solution.deprecatedAt) {
+    console.log(chalk.red(`  Deprecated: ${formatDate(solution.deprecatedAt)}`));
+    console.log(chalk.dim(`    Reason: ${solution.deprecationReason || "No reason provided"}`));
+  }
+
+  console.log();
+}
+
+// ============================================
+// solution:export Command
+// ============================================
+
+interface SolutionExportOptions {
+  output?: string;
+  format?: "json" | "yaml";
+  category?: SolutionCategory;
+}
+
+/**
+ * Export solution patterns to a file
+ */
+export async function solutionExportCommand(options: SolutionExportOptions) {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+  const format = options.format ?? "json";
+  const outputPath = options.output ?? `solutions-export.${format}`;
+
+  console.log(chalk.cyan("\n📤 Exporting Solution Patterns\n"));
+
+  const result = await store.listSolutions({
+    category: options.category,
+    limit: 1000,
+  });
+
+  if (!result.success || !result.data) {
+    console.error(chalk.red(`\n✗ Export failed: ${result.error}\n`));
+    process.exit(1);
+  }
+
+  const solutions = result.data;
+
+  if (solutions.length === 0) {
+    console.log(chalk.yellow("  No solutions to export"));
+    return;
+  }
+
+  // Format output
+  const fs = await import("node:fs");
+  const pathModule = await import("node:path");
+
+  let output: string;
+  if (format === "yaml") {
+    output = `# Workflow Agent Solutions Export\n# Exported: ${new Date().toISOString()}\n\nsolutions:\n`;
+    for (const solution of solutions) {
+      output += `  - id: ${solution.id}\n`;
+      output += `    name: "${solution.name}"\n`;
+      output += `    category: ${solution.category}\n`;
+      output += `    description: "${solution.description}"\n\n`;
+    }
+  } else {
+    output = JSON.stringify(
+      {
+        version: "1.0",
+        exportedAt: new Date().toISOString(),
+        solutions,
+      },
+      null,
+      2,
+    );
+  }
+
+  // Write file
+  const fullOutputPath = pathModule.default.isAbsolute(outputPath)
+    ? outputPath
+    : pathModule.default.join(cwd, outputPath);
+
+  await fs.promises.writeFile(fullOutputPath, output, "utf-8");
+
+  console.log(chalk.green(`  ✓ Exported ${solutions.length} solutions\n`));
+  console.log(chalk.dim(`    Output: ${fullOutputPath}`));
+  console.log(chalk.dim(`    Format: ${format.toUpperCase()}`));
+}
+
+// ============================================
+// solution:import Command
+// ============================================
+
+interface SolutionImportOptions {
+  format?: "json" | "yaml";
+  dryRun?: boolean;
+  merge?: boolean;
+}
+
+/**
+ * Import solution patterns from a file
+ */
+export async function solutionImportCommand(
+  file: string,
+  options: SolutionImportOptions,
+) {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+  const dryRun = options.dryRun ?? false;
+  const merge = options.merge ?? true;
+
+  console.log(chalk.cyan("\n📥 Importing Solution Patterns\n"));
+
+  const fs = await import("node:fs");
+  const pathModule = await import("node:path");
+
+  const filePath = pathModule.default.isAbsolute(file) ? file : pathModule.default.join(cwd, file);
+
+  if (!fs.existsSync(filePath)) {
+    console.log(chalk.red(`  ✗ File not found: ${filePath}`));
+    process.exit(1);
+  }
+
+  const content = await fs.promises.readFile(filePath, "utf-8");
+
+  let importData: { solutions?: SolutionPattern[] };
+
+  try {
+    if (file.endsWith(".yaml") || file.endsWith(".yml")) {
+      console.log(chalk.yellow("  YAML import not fully supported, treating as JSON"));
+    }
+    importData = JSON.parse(content);
+  } catch {
+    console.log(chalk.red("  ✗ Failed to parse import file"));
+    process.exit(1);
+  }
+
+  const solutions = importData.solutions || [];
+
+  if (solutions.length === 0) {
+    console.log(chalk.yellow("  No solutions found in import file"));
+    return;
+  }
+
+  console.log(chalk.dim(`  Found ${solutions.length} solutions\n`));
+
+  if (dryRun) {
+    console.log(chalk.yellow("  🔍 Dry run - no changes will be made\n"));
+
+    for (const solution of solutions) {
+      console.log(chalk.dim(`    Would import: ${solution.name} (${solution.id})`));
+    }
+    return;
+  }
+
+  // Import solutions
+  let imported = 0;
+  let skipped = 0;
+
+  for (const solution of solutions) {
+    const existing = await store.getSolution(solution.id);
+    if (existing.success && existing.data && !merge) {
+      console.log(chalk.yellow(`    Skipped (exists): ${solution.name}`));
+      skipped++;
+      continue;
+    }
+
+    await store.saveSolution(solution);
+    console.log(chalk.green(`    ✓ Imported: ${solution.name}`));
+    imported++;
+  }
+
+  console.log(chalk.green(`\n  ✓ Import complete`));
+  console.log(chalk.dim(`    Imported: ${imported}`));
+  console.log(chalk.dim(`    Skipped: ${skipped}`));
+}
+
+// ============================================
+// solution:analyze Command
+// ============================================
+
+/**
+ * Analyze codebase for potential solution patterns
+ */
+export async function solutionAnalyzeCommand() {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+  const fs = await import("node:fs");
+  const pathModule = await import("node:path");
+
+  console.log(chalk.cyan("\n🔍 Analyzing Codebase for Solution Patterns\n"));
+
+  // Get existing solutions
+  const existingResult = await store.listSolutions({ limit: 1000 });
+  const existingNames = (existingResult.data || []).map((s) => s.name.toLowerCase());
+
+  const opportunities: Array<{
+    name: string;
+    category: SolutionCategory;
+    description: string;
+    path: string;
+  }> = [];
+
+  // Check for common solution patterns
+  const patterns = [
+    { path: "src/auth", name: "Authentication Module", category: "auth" as SolutionCategory, desc: "Authentication implementation" },
+    { path: "src/lib/auth", name: "Auth Library", category: "auth" as SolutionCategory, desc: "Authentication utilities" },
+    { path: "src/api", name: "API Layer", category: "api" as SolutionCategory, desc: "API routing structure" },
+    { path: "app/api", name: "Next.js API Routes", category: "api" as SolutionCategory, desc: "Next.js API implementation" },
+    { path: "src/db", name: "Database Layer", category: "database" as SolutionCategory, desc: "Database connection and queries" },
+    { path: "src/lib/db", name: "Database Utilities", category: "database" as SolutionCategory, desc: "Database helper functions" },
+    { path: "src/components/ui", name: "UI Components", category: "ui" as SolutionCategory, desc: "Reusable UI components" },
+    { path: "src/hooks", name: "Custom Hooks", category: "ui" as SolutionCategory, desc: "React custom hooks" },
+    { path: "__tests__", name: "Testing Setup", category: "testing" as SolutionCategory, desc: "Test configuration and utilities" },
+    { path: ".github/workflows", name: "CI/CD Pipeline", category: "deployment" as SolutionCategory, desc: "GitHub Actions workflows" },
+    { path: "src/integrations", name: "Integrations", category: "integrations" as SolutionCategory, desc: "Third-party integrations" },
+    { path: "src/middleware", name: "Middleware", category: "security" as SolutionCategory, desc: "Request middleware and guards" },
+  ];
+
+  for (const pattern of patterns) {
+    const fullPath = pathModule.default.join(cwd, pattern.path);
+    if (fs.existsSync(fullPath) && !existingNames.includes(pattern.name.toLowerCase())) {
+      opportunities.push({
+        name: pattern.name,
+        category: pattern.category,
+        description: pattern.desc,
+        path: pattern.path,
+      });
+    }
+  }
+
+  if (opportunities.length === 0) {
+    console.log(chalk.green("  ✓ No new solution opportunities found"));
+    console.log(chalk.dim("\n  Your solutions seem well-captured!"));
+    return;
+  }
+
+  console.log(chalk.bold(`  Found ${opportunities.length} potential solutions:\n`));
+
+  for (const opp of opportunities) {
+    console.log(`  ${formatCategory(opp.category)}`);
+    console.log(chalk.bold(`    ${opp.name}`));
+    console.log(chalk.dim(`    ${opp.description}`));
+    console.log(chalk.dim(`    Path: ${opp.path}\n`));
+  }
+
+  console.log(chalk.dim("  To capture a solution:"));
+  console.log(chalk.cyan("    workflow solution capture --path <path> --name <name>"));
+}

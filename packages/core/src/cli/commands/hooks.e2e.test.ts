@@ -5,14 +5,14 @@ import { join } from "path";
 import { execa } from "execa";
 
 /**
- * E2E Tests for the hooks command
+ * E2E Tests for the scope hooks command
  * Tests the git hooks management including:
- * - hooks install: Installing pre-commit and commit-msg hooks
- * - hooks uninstall: Removing hooks and restoring originals
- * - hooks status: Reporting current hook installation state
+ * - scope hooks install: Installing pre-commit and commit-msg hooks
+ * - scope hooks uninstall: Removing hooks and restoring originals
+ * - scope hooks status: Reporting current hook installation state
  * - Wrapper behavior for existing hooks
  */
-describe("workflow hooks - E2E", () => {
+describe("workflow scope hooks - E2E", () => {
   let tempDir: string;
   let cliPath: string;
 
@@ -49,7 +49,7 @@ describe("workflow hooks - E2E", () => {
     it("successfully installs hooks in empty hooks directory", async () => {
       const { exitCode, stdout } = await execa(
         "node",
-        [cliPath, "hooks", "install"],
+        [cliPath, "scope", "hooks", "install"],
         {
           cwd: tempDir,
           reject: false,
@@ -74,7 +74,7 @@ describe("workflow hooks - E2E", () => {
       await writeFile(join(hooksDir, "pre-commit"), existingHookContent);
       await chmod(join(hooksDir, "pre-commit"), 0o755);
 
-      const { exitCode } = await execa("node", [cliPath, "hooks", "install"], {
+      const { exitCode } = await execa("node", [cliPath, "scope", "hooks", "install"], {
         cwd: tempDir,
         reject: false,
       });
@@ -97,7 +97,7 @@ describe("workflow hooks - E2E", () => {
   describe("hooks uninstall", () => {
     it("removes installed hooks", async () => {
       // First install
-      await execa("node", [cliPath, "hooks", "install"], {
+      await execa("node", [cliPath, "scope", "hooks", "install"], {
         cwd: tempDir,
         reject: false,
       });
@@ -105,7 +105,7 @@ describe("workflow hooks - E2E", () => {
       // Then uninstall
       const { exitCode, stdout } = await execa(
         "node",
-        [cliPath, "hooks", "uninstall"],
+        [cliPath, "scope", "hooks", "uninstall"],
         {
           cwd: tempDir,
           reject: false,
@@ -125,13 +125,13 @@ describe("workflow hooks - E2E", () => {
       await chmod(join(hooksDir, "pre-commit"), 0o755);
 
       // Install (wraps the original)
-      await execa("node", [cliPath, "hooks", "install"], {
+      await execa("node", [cliPath, "scope", "hooks", "install"], {
         cwd: tempDir,
         reject: false,
       });
 
       // Uninstall
-      await execa("node", [cliPath, "hooks", "uninstall"], {
+      await execa("node", [cliPath, "scope", "hooks", "uninstall"], {
         cwd: tempDir,
         reject: false,
       });
@@ -146,7 +146,7 @@ describe("workflow hooks - E2E", () => {
     it("reports not installed when hooks are missing", async () => {
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "hooks", "status"],
+        [cliPath, "scope", "hooks", "status"],
         {
           cwd: tempDir,
           reject: false,
@@ -159,14 +159,14 @@ describe("workflow hooks - E2E", () => {
     });
 
     it("reports installed status after installation", async () => {
-      await execa("node", [cliPath, "hooks", "install"], {
+      await execa("node", [cliPath, "scope", "hooks", "install"], {
         cwd: tempDir,
         reject: false,
       });
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "hooks", "status"],
+        [cliPath, "scope", "hooks", "status"],
         {
           cwd: tempDir,
           reject: false,
@@ -185,7 +185,7 @@ describe("workflow hooks - E2E", () => {
       try {
         const { exitCode, stderr } = await execa(
           "node",
-          [cliPath, "hooks", "install"],
+          [cliPath, "scope", "hooks", "install"],
           {
             cwd: noGitDir,
             reject: false,

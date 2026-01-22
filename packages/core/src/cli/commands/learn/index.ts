@@ -6,11 +6,15 @@
  *   - list: List recorded learning patterns
  *   - apply: Apply a pattern to the current project
  *   - capture: Capture files as a blueprint pattern
+ *   - analyze: Analyze codebase for learning opportunities
+ *   - export: Export patterns to a file
+ *   - import: Import patterns from a file
  *   - sync: Sync patterns with remote registry
  *   - config: Configure learning settings
  *   - deprecate: Deprecate an outdated pattern
  *   - publish: Mark pattern(s) as public for syncing
  *   - stats: Show learning statistics
+ *   - clean: Clean old or stale patterns
  *   - validate: Validate pattern files
  */
 
@@ -26,6 +30,10 @@ import {
   learnPublishCommand,
   learnStatsCommand,
   learnValidateCommand,
+  learnAnalyzeCommand,
+  learnExportCommand,
+  learnImportCommand,
+  learnCleanCommand,
 } from "../learn.js";
 
 /**
@@ -42,9 +50,13 @@ ${chalk.bold("Examples:")}
   $ workflow learn list --type blueprint            ${chalk.dim("# List blueprints only")}
   $ workflow learn apply abc123 --dry-run           ${chalk.dim("# Preview pattern application")}
   $ workflow learn capture ./src/auth --name auth   ${chalk.dim("# Capture as blueprint")}
+  $ workflow learn analyze                          ${chalk.dim("# Find learning opportunities")}
+  $ workflow learn export --format json             ${chalk.dim("# Export patterns")}
+  $ workflow learn import patterns.json             ${chalk.dim("# Import patterns")}
   $ workflow learn sync --push                      ${chalk.dim("# Push patterns to registry")}
   $ workflow learn config --show                    ${chalk.dim("# Show current configuration")}
   $ workflow learn stats                            ${chalk.dim("# Show learning statistics")}
+  $ workflow learn clean --deprecated               ${chalk.dim("# Clean deprecated patterns")}
   $ workflow learn validate --fix                   ${chalk.dim("# Auto-fix pattern issues")}
 `,
     )
@@ -231,6 +243,77 @@ ${chalk.bold("Examples:")}
     )
     .action(learnStatsCommand);
 
+  // analyze subcommand
+  learnCmd
+    .command("analyze")
+    .description("Analyze codebase for learning opportunities")
+    .option("-v, --verbose", "Show detailed output including paths")
+    .addHelpText(
+      "after",
+      `
+${chalk.bold("Examples:")}
+  $ workflow learn analyze                             ${chalk.dim("# Find learning opportunities")}
+  $ workflow learn analyze --verbose                   ${chalk.dim("# Show paths and details")}
+`,
+    )
+    .action(learnAnalyzeCommand);
+
+  // export subcommand
+  learnCmd
+    .command("export")
+    .description("Export learning patterns to a file")
+    .option("-o, --output <path>", "Output file path", "patterns-export.json")
+    .option("-f, --format <format>", "Output format (json, yaml)", "json")
+    .option("-t, --type <type>", "Pattern type to export (fix, blueprint, all)", "all")
+    .addHelpText(
+      "after",
+      `
+${chalk.bold("Examples:")}
+  $ workflow learn export                              ${chalk.dim("# Export all as JSON")}
+  $ workflow learn export --format yaml                ${chalk.dim("# Export as YAML")}
+  $ workflow learn export --type fix                   ${chalk.dim("# Export only fixes")}
+  $ workflow learn export -o backup.json               ${chalk.dim("# Custom output path")}
+`,
+    )
+    .action(learnExportCommand);
+
+  // import subcommand
+  learnCmd
+    .command("import <file>")
+    .description("Import learning patterns from a file")
+    .option("-f, --format <format>", "Input format (json, yaml)", "json")
+    .option("--dry-run", "Preview import without making changes")
+    .option("--no-merge", "Skip existing patterns instead of merging")
+    .addHelpText(
+      "after",
+      `
+${chalk.bold("Examples:")}
+  $ workflow learn import patterns.json                ${chalk.dim("# Import from JSON")}
+  $ workflow learn import backup.json --dry-run        ${chalk.dim("# Preview import")}
+  $ workflow learn import patterns.yaml --format yaml  ${chalk.dim("# Import from YAML")}
+`,
+    )
+    .action(learnImportCommand);
+
+  // clean subcommand
+  learnCmd
+    .command("clean")
+    .description("Clean old or stale learning patterns")
+    .option("--deprecated", "Remove deprecated patterns")
+    .option("--stale", "Remove patterns not used in 90+ days")
+    .option("--all", "Remove all patterns (use with caution!)")
+    .option("--dry-run", "Preview what would be removed")
+    .addHelpText(
+      "after",
+      `
+${chalk.bold("Examples:")}
+  $ workflow learn clean --deprecated                  ${chalk.dim("# Remove deprecated")}
+  $ workflow learn clean --stale                       ${chalk.dim("# Remove stale patterns")}
+  $ workflow learn clean --all --dry-run               ${chalk.dim("# Preview full clean")}
+`,
+    )
+    .action(learnCleanCommand);
+
   // validate subcommand
   learnCmd
     .command("validate")
@@ -267,4 +350,8 @@ export {
   learnPublishCommand,
   learnStatsCommand,
   learnValidateCommand,
+  learnAnalyzeCommand,
+  learnExportCommand,
+  learnImportCommand,
+  learnCleanCommand,
 } from "../learn.js";

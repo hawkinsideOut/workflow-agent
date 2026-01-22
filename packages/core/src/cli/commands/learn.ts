@@ -2379,3 +2379,446 @@ function getAllFilesInDir(dirPath: string): string[] {
 
   return files;
 }
+
+// ============================================
+// learn:analyze Command
+// ============================================
+
+interface LearnAnalyzeOptions {
+  verbose?: boolean;
+}
+
+/**
+ * Analyze patterns in the codebase and suggest learnings
+ */
+export async function learnAnalyzeCommand(options: LearnAnalyzeOptions): Promise<void> {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+  const verbose = options.verbose ?? false;
+
+  console.log(chalk.cyan("\n🔍 Analyzing Codebase for Learning Opportunities\n"));
+
+  // Get existing patterns
+  const fixResult = await store.listFixPatterns({});
+  const bpResult = await store.listBlueprints({});
+
+  const existingPatterns = [
+    ...(fixResult.data || []).map((p) => p.name.toLowerCase()),
+    ...(bpResult.data || []).map((p) => p.name.toLowerCase()),
+  ];
+
+  // Scan for common patterns
+  const opportunities: Array<{ type: string; name: string; description: string; path?: string }> = [];
+
+  // Check for auth patterns
+  const authPaths = ["src/auth", "src/lib/auth", "lib/auth", "app/api/auth"];
+  for (const authPath of authPaths) {
+    if (fs.existsSync(path.join(cwd, authPath))) {
+      if (!existingPatterns.some((p) => p.includes("auth"))) {
+        opportunities.push({
+          type: "blueprint",
+          name: "Authentication Module",
+          description: "Capture your authentication implementation as a reusable pattern",
+          path: authPath,
+        });
+      }
+    }
+  }
+
+  // Check for API route patterns
+  const apiPaths = ["src/api", "app/api", "pages/api", "src/routes"];
+  for (const apiPath of apiPaths) {
+    if (fs.existsSync(path.join(cwd, apiPath))) {
+      if (!existingPatterns.some((p) => p.includes("api"))) {
+        opportunities.push({
+          type: "blueprint",
+          name: "API Structure",
+          description: "Capture your API routing structure as a blueprint",
+          path: apiPath,
+        });
+      }
+    }
+  }
+
+  // Check for component patterns
+  const componentPaths = ["src/components", "components", "src/ui"];
+  for (const compPath of componentPaths) {
+    if (fs.existsSync(path.join(cwd, compPath))) {
+      if (!existingPatterns.some((p) => p.includes("component"))) {
+        opportunities.push({
+          type: "blueprint",
+          name: "Component Library",
+          description: "Capture your component structure as a reusable pattern",
+          path: compPath,
+        });
+      }
+    }
+  }
+
+  // Check for test patterns
+  const testPaths = ["__tests__", "test", "tests", "src/__tests__"];
+  for (const testPath of testPaths) {
+    if (fs.existsSync(path.join(cwd, testPath))) {
+      if (!existingPatterns.some((p) => p.includes("test"))) {
+        opportunities.push({
+          type: "blueprint",
+          name: "Testing Structure",
+          description: "Capture your testing setup as a blueprint",
+          path: testPath,
+        });
+      }
+    }
+  }
+
+  // Display results
+  if (opportunities.length === 0) {
+    console.log(chalk.green("  ✓ No new learning opportunities identified"));
+    console.log(chalk.dim("\n  Your patterns seem well-captured!"));
+    return;
+  }
+
+  console.log(chalk.bold(`  Found ${opportunities.length} potential learning opportunities:\n`));
+
+  for (const opp of opportunities) {
+    const icon = opp.type === "blueprint" ? "📐" : "🔧";
+    console.log(`  ${icon} ${chalk.green(opp.name)}`);
+    console.log(chalk.dim(`     ${opp.description}`));
+    if (opp.path && verbose) {
+      console.log(chalk.dim(`     Path: ${opp.path}`));
+    }
+    console.log("");
+  }
+
+  console.log(chalk.dim("  To capture a pattern:"));
+  console.log(chalk.cyan("    workflow learn capture <path> --name <name>"));
+}
+
+// ============================================
+// learn:export Command
+// ============================================
+
+interface LearnExportOptions {
+  output?: string;
+  format?: "json" | "yaml";
+  type?: "fix" | "blueprint" | "all";
+}
+
+/**
+ * Export learning patterns to a file
+ */
+export async function learnExportCommand(options: LearnExportOptions): Promise<void> {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+  const format = options.format ?? "json";
+  const patternType = options.type ?? "all";
+  const outputPath = options.output ?? `patterns-export.${format}`;
+
+  console.log(chalk.cyan("\n📤 Exporting Learning Patterns\n"));
+
+  const exportData: { fixes: FixPattern[]; blueprints: Blueprint[] } = {
+    fixes: [],
+    blueprints: [],
+  };
+
+  // Export fix patterns
+  if (patternType === "all" || patternType === "fix") {
+    const fixResult = await store.listFixPatterns({});
+    if (fixResult.success && fixResult.data) {
+      exportData.fixes = fixResult.data;
+    }
+  }
+
+  // Export blueprints
+  if (patternType === "all" || patternType === "blueprint") {
+    const bpResult = await store.listBlueprints({});
+    if (bpResult.success && bpResult.data) {
+      exportData.blueprints = bpResult.data;
+    }
+  }
+
+  const totalCount = exportData.fixes.length + exportData.blueprints.length;
+
+  if (totalCount === 0) {
+    console.log(chalk.yellow("  No patterns to export"));
+    return;
+  }
+
+  // Format output
+  let output: string;
+  if (format === "yaml") {
+    // Simple YAML-like output (for actual YAML, would need a library)
+    output = `# Workflow Agent Patterns Export\n# Exported: ${new Date().toISOString()}\n\n`;
+    output += `fixes:\n`;
+    for (const fix of exportData.fixes) {
+      output += `  - id: ${fix.id}\n`;
+      output += `    name: "${fix.name}"\n`;
+      output += `    category: ${fix.category}\n`;
+      output += `    description: "${fix.description}"\n\n`;
+    }
+    output += `blueprints:\n`;
+    for (const bp of exportData.blueprints) {
+      output += `  - id: ${bp.id}\n`;
+      output += `    name: "${bp.name}"\n`;
+      output += `    description: "${bp.description}"\n\n`;
+    }
+  } else {
+    output = JSON.stringify(
+      {
+        version: "1.0",
+        exportedAt: new Date().toISOString(),
+        ...exportData,
+      },
+      null,
+      2,
+    );
+  }
+
+  // Write file
+  const fullOutputPath = path.isAbsolute(outputPath)
+    ? outputPath
+    : path.join(cwd, outputPath);
+
+  await fs.promises.writeFile(fullOutputPath, output, "utf-8");
+
+  console.log(chalk.green(`  ✓ Exported ${totalCount} patterns\n`));
+  console.log(chalk.dim(`    Fix patterns: ${exportData.fixes.length}`));
+  console.log(chalk.dim(`    Blueprints: ${exportData.blueprints.length}`));
+  console.log(chalk.dim(`    Output: ${fullOutputPath}`));
+  console.log(chalk.dim(`    Format: ${format.toUpperCase()}`));
+}
+
+// ============================================
+// learn:import Command
+// ============================================
+
+interface LearnImportOptions {
+  format?: "json" | "yaml";
+  dryRun?: boolean;
+  merge?: boolean;
+}
+
+/**
+ * Import learning patterns from a file
+ */
+export async function learnImportCommand(
+  file: string,
+  options: LearnImportOptions,
+): Promise<void> {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+  const dryRun = options.dryRun ?? false;
+  const merge = options.merge ?? true;
+
+  console.log(chalk.cyan("\n📥 Importing Learning Patterns\n"));
+
+  const filePath = path.isAbsolute(file) ? file : path.join(cwd, file);
+
+  if (!fs.existsSync(filePath)) {
+    console.log(chalk.red(`  ✗ File not found: ${filePath}`));
+    process.exit(1);
+  }
+
+  const content = await fs.promises.readFile(filePath, "utf-8");
+
+  let importData: { fixes?: FixPattern[]; blueprints?: Blueprint[] };
+
+  try {
+    // Detect format
+    if (file.endsWith(".yaml") || file.endsWith(".yml")) {
+      console.log(chalk.yellow("  YAML import not fully supported, treating as JSON"));
+    }
+    importData = JSON.parse(content);
+  } catch {
+    console.log(chalk.red("  ✗ Failed to parse import file"));
+    process.exit(1);
+  }
+
+  const fixes = importData.fixes || [];
+  const blueprints = importData.blueprints || [];
+  const totalCount = fixes.length + blueprints.length;
+
+  if (totalCount === 0) {
+    console.log(chalk.yellow("  No patterns found in import file"));
+    return;
+  }
+
+  console.log(chalk.dim(`  Found ${fixes.length} fix patterns`));
+  console.log(chalk.dim(`  Found ${blueprints.length} blueprints\n`));
+
+  if (dryRun) {
+    console.log(chalk.yellow("  🔍 Dry run - no changes will be made\n"));
+
+    for (const fix of fixes) {
+      console.log(chalk.dim(`    Would import fix: ${fix.name} (${fix.id})`));
+    }
+    for (const bp of blueprints) {
+      console.log(chalk.dim(`    Would import blueprint: ${bp.name} (${bp.id})`));
+    }
+    return;
+  }
+
+  // Import patterns
+  let imported = 0;
+  let skipped = 0;
+
+  for (const fix of fixes) {
+    // Check if exists
+    const existing = await store.getFixPattern(fix.id);
+    if (existing.success && existing.data && !merge) {
+      console.log(chalk.yellow(`    Skipped (exists): ${fix.name}`));
+      skipped++;
+      continue;
+    }
+
+    const result = await store.saveFixPattern(fix);
+    if (result.success) {
+      console.log(chalk.green(`    ✓ Imported: ${fix.name}`));
+      imported++;
+    } else {
+      console.log(chalk.red(`    ✗ Failed: ${fix.name}`));
+    }
+  }
+
+  for (const bp of blueprints) {
+    // Check if exists
+    const existing = await store.getBlueprint(bp.id);
+    if (existing.success && existing.data && !merge) {
+      console.log(chalk.yellow(`    Skipped (exists): ${bp.name}`));
+      skipped++;
+      continue;
+    }
+
+    const result = await store.saveBlueprint(bp);
+    if (result.success) {
+      console.log(chalk.green(`    ✓ Imported: ${bp.name}`));
+      imported++;
+    } else {
+      console.log(chalk.red(`    ✗ Failed: ${bp.name}`));
+    }
+  }
+
+  console.log(chalk.green(`\n  ✓ Import complete`));
+  console.log(chalk.dim(`    Imported: ${imported}`));
+  console.log(chalk.dim(`    Skipped: ${skipped}`));
+}
+
+// ============================================
+// learn:clean Command
+// ============================================
+
+interface LearnCleanOptions {
+  dryRun?: boolean;
+  deprecated?: boolean;
+  stale?: boolean;
+  all?: boolean;
+}
+
+/**
+ * Clean old or stale learning patterns
+ */
+export async function learnCleanCommand(options: LearnCleanOptions): Promise<void> {
+  const cwd = getWorkspacePath();
+  const store = new PatternStore(cwd);
+  const dryRun = options.dryRun ?? false;
+  const cleanDeprecated = options.deprecated ?? false;
+  const cleanStale = options.stale ?? false;
+  const cleanAll = options.all ?? false;
+
+  console.log(chalk.cyan("\n🧹 Cleaning Learning Patterns\n"));
+
+  if (!cleanDeprecated && !cleanStale && !cleanAll) {
+    console.log(chalk.yellow("  Specify what to clean:"));
+    console.log(chalk.dim("    --deprecated  Remove deprecated patterns"));
+    console.log(chalk.dim("    --stale       Remove patterns not used in 90+ days"));
+    console.log(chalk.dim("    --all         Remove all patterns (use with caution!)"));
+    return;
+  }
+
+  const toRemove: Array<{ id: string; name: string; type: "fix" | "blueprint"; reason: string }> = [];
+
+  // Get all patterns
+  const fixResult = await store.listFixPatterns({ includeDeprecated: true });
+  const bpResult = await store.listBlueprints({ includeDeprecated: true });
+
+  const fixes = fixResult.data || [];
+  const blueprints = bpResult.data || [];
+
+  const now = Date.now();
+  const staleDays = 90;
+  const staleThreshold = now - staleDays * 24 * 60 * 60 * 1000;
+
+  // Identify patterns to remove
+  for (const fix of fixes) {
+    if (cleanAll) {
+      toRemove.push({ id: fix.id, name: fix.name, type: "fix", reason: "all" });
+    } else if (cleanDeprecated && fix.deprecatedAt) {
+      toRemove.push({ id: fix.id, name: fix.name, type: "fix", reason: "deprecated" });
+    } else if (cleanStale) {
+      const lastUsed = new Date(fix.updatedAt).getTime();
+      if (lastUsed < staleThreshold) {
+        toRemove.push({ id: fix.id, name: fix.name, type: "fix", reason: "stale" });
+      }
+    }
+  }
+
+  for (const bp of blueprints) {
+    if (cleanAll) {
+      toRemove.push({ id: bp.id, name: bp.name, type: "blueprint", reason: "all" });
+    } else if (cleanDeprecated && bp.deprecatedAt) {
+      toRemove.push({ id: bp.id, name: bp.name, type: "blueprint", reason: "deprecated" });
+    } else if (cleanStale) {
+      const lastUsed = new Date(bp.updatedAt).getTime();
+      if (lastUsed < staleThreshold) {
+        toRemove.push({ id: bp.id, name: bp.name, type: "blueprint", reason: "stale" });
+      }
+    }
+  }
+
+  if (toRemove.length === 0) {
+    console.log(chalk.green("  ✓ Nothing to clean"));
+    return;
+  }
+
+  console.log(chalk.bold(`  Found ${toRemove.length} patterns to remove:\n`));
+
+  for (const item of toRemove) {
+    const icon = item.type === "fix" ? "🔧" : "📐";
+    console.log(`    ${icon} ${item.name} (${item.reason})`);
+  }
+
+  if (dryRun) {
+    console.log(chalk.yellow("\n  🔍 Dry run - no changes made"));
+    return;
+  }
+
+  // Confirm
+  const confirmed = await p.confirm({
+    message: `Remove ${toRemove.length} patterns? This cannot be undone.`,
+    initialValue: false,
+  });
+
+  if (p.isCancel(confirmed) || !confirmed) {
+    p.cancel("Clean cancelled");
+    return;
+  }
+
+  // Remove patterns
+  let removed = 0;
+  const patternsPath = path.join(cwd, ".workflow", "patterns");
+
+  for (const item of toRemove) {
+    const dir = item.type === "fix" ? "fixes" : "blueprints";
+    const filePath = path.join(patternsPath, dir, `${item.id}.json`);
+
+    try {
+      if (fs.existsSync(filePath)) {
+        await fs.promises.unlink(filePath);
+        removed++;
+      }
+    } catch {
+      console.log(chalk.red(`    ✗ Failed to remove: ${item.name}`));
+    }
+  }
+
+  console.log(chalk.green(`\n  ✓ Removed ${removed} patterns`));
+}

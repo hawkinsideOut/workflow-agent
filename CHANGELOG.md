@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.21.0] - 2026-01-20
+
+### Changed
+
+- **Script Restructuring**: Enforced strict `workflow:<command>-<action>` naming pattern
+  - All scripts now follow the pattern with exactly 13 valid top-level commands
+  - Valid commands: `version`, `init`, `validate`, `config`, `suggest`, `setup`, `doctor`, `scope`, `verify`, `pre-commit`, `learn`, `solution`, `sync`, `docs`
+  - Added script name validation with `validateScriptName()` and `validateAllScripts()` functions
+  - Postinstall now warns about non-standard workflow scripts
+
+- **Hooks Moved Under Scope**: `workflow hooks` → `workflow scope hooks`
+  - `workflow scope hooks install` - Install git hooks
+  - `workflow scope hooks uninstall` - Remove git hooks
+  - `workflow scope hooks status` - Check hook status
+  - `workflow scope hooks test [--dry-run]` - Verify installation
+  - Old `hooks` command shows deprecation warning pointing to `scope hooks`
+
+- **Setup Command Group**: `workflow setup` now has subcommands
+  - `workflow setup` - Add workflow scripts (default)
+  - `workflow setup scripts` - Same as default
+  - `workflow setup auto` - Auto-configure linting, formatting, testing, CI
+  - Old `auto-setup` command deprecated → use `setup auto`
+
+- **Version Command**: `workflow:version` now calls `workflow-agent --version`
+
+- **Pre-commit Command**: New standalone `workflow pre-commit` command
+  - Alias for `verify --fix --staged` with lower retry default (5 vs 10)
+
+### Deprecated
+
+- `workflow hooks` → use `workflow scope hooks`
+- `workflow hooks:install` → use `workflow scope hooks install`
+- `workflow hooks:uninstall` → use `workflow scope hooks uninstall`
+- `workflow hooks:status` → use `workflow scope hooks status`
+- `workflow auto-setup` → use `workflow setup auto`
+- All `workflow:hooks-*` scripts → use `workflow:scope-hooks-*`
+- `workflow:auto-setup` script → use `workflow:setup-auto`
+
 ## [2.15.0] - 2026-01-20
 
 ### Fixed

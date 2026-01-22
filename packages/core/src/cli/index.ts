@@ -7,14 +7,15 @@ import { validateCommand } from "./commands/validate.js";
 import { configCommand } from "./commands/config.js";
 import { suggestCommand } from "./commands/suggest.js";
 import { doctorCommand } from "./commands/doctor.js";
-import { setupCommand } from "./commands/setup.js";
+import { createSetupCommand } from "./commands/setup/index.js";
 import { scopeCreateCommand } from "./commands/scope-create.js";
 import { scopeMigrateCommand } from "./commands/scope-migrate.js";
 import { verifyCommand } from "./commands/verify.js";
+import { preCommitCommand } from "./commands/pre-commit.js";
 import { autoSetupCommand } from "./commands/auto-setup-command.js";
 // Command groups
 import { createDocsCommand, docsValidateCommand, docsGenerateCommand, docsUpdateCommand } from "./commands/docs/index.js";
-import { createHooksCommand, hooksCommand } from "./commands/hooks/index.js";
+import { hooksCommand } from "./commands/hooks/index.js";
 import {
   createSolutionCommand,
   solutionCaptureCommand,
@@ -70,12 +71,9 @@ program.addCommand(createSolutionCommand());
 // Register learn command group
 program.addCommand(createLearnCommand());
 
-// Register scope command group
+// Register scope command group (now includes hooks)
 import { createScopeCommand } from "./commands/scope/index.js";
 program.addCommand(createScopeCommand());
-
-// Register hooks command group
-program.addCommand(createHooksCommand());
 
 // Register unified sync command
 program
@@ -186,10 +184,8 @@ program
   )
   .action(suggestCommand);
 
-program
-  .command("setup")
-  .description("Add workflow scripts to package.json")
-  .action(setupCommand);
+// Register setup command group (includes setup scripts, setup auto)
+program.addCommand(createSetupCommand());
 
 program
   .command("doctor")
@@ -202,28 +198,28 @@ program
 // Deprecated Commands (Hidden, will be removed in v2.0)
 // ============================================
 
-// Legacy hooks command with action argument (replaced by subcommands)
+// Legacy hooks command with action argument (replaced by scope hooks subcommands)
 program
   .command("hooks:install", { hidden: true })
-  .description("[DEPRECATED] Use: workflow hooks install")
+  .description("[DEPRECATED] Use: workflow scope hooks install")
   .action(async () => {
-    deprecationWarning("workflow hooks:install", "workflow hooks install");
+    deprecationWarning("workflow hooks:install", "workflow scope hooks install");
     return hooksCommand("install");
   });
 
 program
   .command("hooks:uninstall", { hidden: true })
-  .description("[DEPRECATED] Use: workflow hooks uninstall")
+  .description("[DEPRECATED] Use: workflow scope hooks uninstall")
   .action(async () => {
-    deprecationWarning("workflow hooks:uninstall", "workflow hooks uninstall");
+    deprecationWarning("workflow hooks:uninstall", "workflow scope hooks uninstall");
     return hooksCommand("uninstall");
   });
 
 program
   .command("hooks:status", { hidden: true })
-  .description("[DEPRECATED] Use: workflow hooks status")
+  .description("[DEPRECATED] Use: workflow scope hooks status")
   .action(async () => {
-    deprecationWarning("workflow hooks:status", "workflow hooks status");
+    deprecationWarning("workflow hooks:status", "workflow scope hooks status");
     return hooksCommand("status");
   });
 
@@ -265,11 +261,21 @@ program
   .action(verifyCommand);
 
 program
-  .command("auto-setup")
-  .description("Automatically configure linting, formatting, testing, and CI")
+  .command("pre-commit")
+  .description("Run pre-commit checks (alias for verify --fix --staged)")
+  .option("--dry-run", "Preview fixes without applying them")
+  .action(preCommitCommand);
+
+// Deprecated: auto-setup → setup auto
+program
+  .command("auto-setup", { hidden: true })
+  .description("[DEPRECATED] Use: workflow setup auto")
   .option("-y, --yes", "Auto-approve all prompts")
   .option("--audit", "Show audit report without applying changes")
-  .action(autoSetupCommand);
+  .action(async (options) => {
+    deprecationWarning("workflow auto-setup", "workflow setup auto");
+    return autoSetupCommand(options);
+  });
 
 // ============================================
 // Deprecated Commands (Removed in v2.0)

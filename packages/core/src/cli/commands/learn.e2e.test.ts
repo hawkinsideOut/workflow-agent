@@ -1129,4 +1129,370 @@ export function MyComponent() {
       expect(stdout).toContain("custom:mytag");
     });
   });
+
+  // ============================================
+  // learn analyze - E2E Tests
+  // ============================================
+
+  describe("learn analyze", () => {
+    it("runs analyze command successfully", async () => {
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "analyze"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Analyzing Codebase for Learning Opportunities");
+    });
+
+    it("detects auth directory as learning opportunity", async () => {
+      await mkdir(join(tempDir, "src", "auth"), { recursive: true });
+      await writeFile(
+        join(tempDir, "src", "auth", "login.ts"),
+        "export const login = () => {};",
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "analyze"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Authentication Module");
+    });
+
+    it("shows verbose output with --verbose flag", async () => {
+      await mkdir(join(tempDir, "src", "api"), { recursive: true });
+      await writeFile(
+        join(tempDir, "src", "api", "routes.ts"),
+        "export const routes = [];",
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "analyze", "--verbose"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Path:");
+    });
+  });
+
+  // ============================================
+  // learn export - E2E Tests
+  // ============================================
+
+  describe("learn export", () => {
+    it("exports patterns to JSON file", async () => {
+      // Create a pattern first
+      const store = new PatternStore(tempDir);
+      const pattern = createTestFixPattern({ name: "Export E2E Test Fix" });
+      await store.saveFixPattern(pattern);
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "export", "--output", "export-e2e.json"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Exported");
+
+      // Verify file was created
+      const { readFile: fsReadFile } = await import("fs/promises");
+      const content = await fsReadFile(join(tempDir, "export-e2e.json"), "utf-8");
+      const data = JSON.parse(content);
+      expect(data.fixes.some((f: { name: string }) => f.name === "Export E2E Test Fix")).toBe(true);
+    });
+
+    it("exports with YAML format", async () => {
+      const store = new PatternStore(tempDir);
+      await store.saveFixPattern(createTestFixPattern({ name: "YAML Export E2E" }));
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "export", "--format", "yaml", "--output", "export.yaml"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Exported");
+      expect(stdout).toContain("YAML");
+    });
+
+    it("filters by type when --type is specified", async () => {
+      const store = new PatternStore(tempDir);
+      await store.saveFixPattern(createTestFixPattern({ name: "Fix Only E2E" }));
+      await store.saveBlueprint(createTestBlueprint({ name: "Blueprint Only E2E" }));
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "export", "--type", "fix", "--output", "fixes-only-e2e.json"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+
+      const { readFile: fsReadFile } = await import("fs/promises");
+      const content = await fsReadFile(join(tempDir, "fixes-only-e2e.json"), "utf-8");
+      const data = JSON.parse(content);
+      expect(data.fixes.length).toBeGreaterThanOrEqual(1);
+      expect(data.blueprints).toHaveLength(0);
+    });
+
+    it("reports no patterns when store is empty", async () => {
+      // Create a fresh temp directory for this test
+      const emptyDir = await mkdtemp(join(tmpdir(), "workflow-learn-empty-"));
+      await writeFile(
+        join(emptyDir, "workflow.config.json"),
+        JSON.stringify({
+          projectName: "empty-test",
+          scopes: [{ name: "feat", description: "Features" }],
+          enforcement: "strict",
+          language: "en",
+        }),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "export"],
+        {
+          cwd: emptyDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("No patterns to export");
+
+      await rm(emptyDir, { recursive: true, force: true });
+    });
+  });
+
+  // ============================================
+  // learn import - E2E Tests
+  // ============================================
+
+  describe("learn import", () => {
+    it("imports patterns from JSON file", async () => {
+      // Create export file
+      const exportData = {
+        version: "1.0",
+        exportedAt: new Date().toISOString(),
+        fixes: [createTestFixPattern({ id: "import-e2e-fix", name: "Imported E2E Fix" })],
+        blueprints: [],
+      };
+      await writeFile(
+        join(tempDir, "import-e2e.json"),
+        JSON.stringify(exportData, null, 2),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "import", "import-e2e.json"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Import complete");
+      expect(stdout).toContain("Imported:");
+
+      // Verify pattern was saved
+      const store = new PatternStore(tempDir);
+      const result = await store.getFixPattern("import-e2e-fix");
+      expect(result.success).toBe(true);
+      expect(result.data?.name).toBe("Imported E2E Fix");
+    });
+
+    it("supports dry-run mode", async () => {
+      const exportData = {
+        fixes: [createTestFixPattern({ id: "dry-run-e2e", name: "Dry Run E2E Import" })],
+        blueprints: [],
+      };
+      await writeFile(
+        join(tempDir, "dryrun-e2e.json"),
+        JSON.stringify(exportData, null, 2),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "import", "dryrun-e2e.json", "--dry-run"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Dry run");
+      expect(stdout).toContain("Would import");
+
+      // Verify pattern was NOT saved
+      const store = new PatternStore(tempDir);
+      const result = await store.getFixPattern("dry-run-e2e");
+      expect(result.success).toBe(false);
+    });
+
+    it("handles non-existent file gracefully", async () => {
+      const { exitCode, stdout } = await execa(
+        "node",
+        [cliPath, "learn", "import", "nonexistent-e2e.json"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(1);
+      expect(stdout).toContain("File not found");
+    });
+
+    it("skips existing patterns when --no-merge is used", async () => {
+      // Create existing pattern
+      const store = new PatternStore(tempDir);
+      const existingPattern = createTestFixPattern({
+        id: "skip-merge-e2e",
+        name: "Existing Pattern E2E",
+      });
+      await store.saveFixPattern(existingPattern);
+
+      // Create import file with same pattern
+      const exportData = {
+        fixes: [{ ...existingPattern, description: "Updated description" }],
+        blueprints: [],
+      };
+      await writeFile(
+        join(tempDir, "skip-e2e.json"),
+        JSON.stringify(exportData, null, 2),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "import", "skip-e2e.json", "--no-merge"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Skipped");
+    });
+  });
+
+  // ============================================
+  // learn clean - E2E Tests
+  // ============================================
+
+  describe("learn clean", () => {
+    it("shows help when no options provided", async () => {
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "clean"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Specify what to clean");
+      expect(stdout).toContain("--deprecated");
+      expect(stdout).toContain("--stale");
+    });
+
+    it("finds deprecated patterns with --deprecated --dry-run", async () => {
+      // Create deprecated pattern
+      const store = new PatternStore(tempDir);
+      const pattern = createTestFixPattern({
+        id: "deprecated-e2e",
+        name: "Deprecated Pattern E2E",
+        deprecatedAt: new Date().toISOString(),
+        deprecationReason: "No longer needed",
+      });
+      await store.saveFixPattern(pattern);
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "clean", "--deprecated", "--dry-run"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Deprecated Pattern E2E");
+      expect(stdout).toContain("Dry run");
+    });
+
+    it("finds stale patterns with --stale --dry-run", async () => {
+      // Create a stale pattern (updated > 90 days ago)
+      const store = new PatternStore(tempDir);
+      const staleDate = new Date();
+      staleDate.setDate(staleDate.getDate() - 100);
+
+      const pattern = createTestFixPattern({
+        id: "stale-e2e",
+        name: "Stale Pattern E2E",
+        updatedAt: staleDate.toISOString(),
+      });
+      await store.saveFixPattern(pattern);
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "clean", "--stale", "--dry-run"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Stale Pattern E2E");
+    });
+
+    it("shows all patterns with --all --dry-run", async () => {
+      const store = new PatternStore(tempDir);
+      await store.saveFixPattern(createTestFixPattern({ name: "All Clean E2E 1" }));
+      await store.saveFixPattern(createTestFixPattern({ name: "All Clean E2E 2" }));
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "learn", "clean", "--all", "--dry-run"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("patterns to remove");
+      expect(stdout).toContain("Dry run");
+    });
+  });
 });

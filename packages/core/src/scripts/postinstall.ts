@@ -16,6 +16,8 @@ import {
   WORKFLOW_SCRIPTS_VERSION,
   SCRIPT_CATEGORIES,
   TOTAL_SCRIPTS,
+  validateAllScripts,
+  VALID_COMMANDS,
 } from "./workflow-scripts.js";
 import { generateCopilotInstructions } from "./copilot-instructions-generator.js";
 import {
@@ -93,6 +95,24 @@ function addScriptsToPackageJson(): void {
         delete packageJson.scripts[deprecatedScript];
         removedScripts.push(deprecatedScript);
       }
+    }
+
+    // Step 1.5: Validate existing workflow: scripts follow the naming pattern
+    const existingWorkflowScripts = Object.keys(packageJson.scripts).filter(
+      (name) => name.startsWith("workflow:"),
+    );
+    const invalidScripts = validateAllScripts(
+      Object.fromEntries(existingWorkflowScripts.map((s) => [s, ""])),
+    );
+    if (invalidScripts.length > 0) {
+      console.log(
+        `\n⚠️  Warning: Found ${invalidScripts.length} workflow scripts with non-standard naming:`,
+      );
+      for (const script of invalidScripts) {
+        console.log(`    - ${script}`);
+      }
+      console.log(`\n  Valid top-level commands are: ${VALID_COMMANDS.join(", ")}`);
+      console.log(`  Scripts must follow: workflow:<command>[-<action>[-<subaction>]]\n`);
     }
 
     // Step 2: Add/update all workflow scripts (ensures updates get new scripts)

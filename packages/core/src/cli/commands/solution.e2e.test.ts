@@ -491,3 +491,442 @@ describe("Solution Pattern E2E Tests", () => {
     });
   });
 });
+
+// ============================================
+// CLI-based E2E Tests for New Solution Commands
+// ============================================
+
+import { execa } from "execa";
+
+describe("solution CLI commands - E2E", () => {
+  let tempDir: string;
+  let cliPath: string;
+  let cliStore: PatternStore;
+
+  beforeEach(async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "workflow-solution-cli-e2e-"));
+    cliPath = join(process.cwd(), "dist", "cli", "index.js");
+
+    // Create workflow.config.json
+    await writeFile(
+      join(tempDir, "workflow.config.json"),
+      JSON.stringify({
+        projectName: "test-project",
+        scopes: [{ name: "feat", description: "Features" }],
+        enforcement: "strict",
+        language: "en",
+      }),
+    );
+
+    // Create .workflow/patterns directories
+    await mkdir(join(tempDir, ".workflow", "patterns", "solutions"), {
+      recursive: true,
+    });
+
+    cliStore = new PatternStore(tempDir);
+  });
+
+  afterEach(async () => {
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  // ============================================
+  // solution show - CLI Tests
+  // ============================================
+
+  describe("solution show", () => {
+    it("displays solution details via CLI", async () => {
+      // Create a solution first
+      const solution = createTestSolution({
+        id: "show-cli-test",
+        name: "Show CLI Test Solution",
+      });
+      await cliStore.saveSolution(solution);
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "solution", "show", "show-cli-test"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Solution Details");
+      expect(stdout).toContain("Show CLI Test Solution");
+    });
+
+    it("exits with error for non-existent solution", async () => {
+      const { exitCode, stdout } = await execa(
+        "node",
+        [cliPath, "solution", "show", "nonexistent-id"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(1);
+      expect(stdout).toContain("not found");
+    });
+
+    it("shows compatibility information", async () => {
+      const solution = createTestSolution({
+        id: "compat-cli-test",
+        name: "Compatibility CLI Test",
+        compatibility: {
+          framework: "next",
+          frameworkVersion: ">=14.0.0",
+          runtime: "node",
+          runtimeVersion: ">=18.0.0",
+          dependencies: [],
+        },
+      });
+      await cliStore.saveSolution(solution);
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "solution", "show", "compat-cli-test"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Compatibility");
+      expect(stdout).toContain("next");
+    });
+  });
+
+  // ============================================
+  // solution export - CLI Tests
+  // ============================================
+
+  describe("solution export", () => {
+    it("exports solutions to JSON file", async () => {
+      await cliStore.saveSolution(
+        createTestSolution({ name: "Export CLI Test" }),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "solution", "export", "--output", "solutions-export.json"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Exported");
+
+      // Verify file was created
+      const { readFile: fsReadFile } = await import("fs/promises");
+      const content = await fsReadFile(
+        join(tempDir, "solutions-export.json"),
+        "utf-8",
+      );
+      const data = JSON.parse(content);
+      expect(data.solutions.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("exports to YAML format", async () => {
+      await cliStore.saveSolution(
+        createTestSolution({ name: "YAML CLI Export" }),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [
+          cliPath,
+          "solution",
+          "export",
+          "--format",
+          "yaml",
+          "--output",
+          "solutions.yaml",
+        ],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Exported");
+      expect(stdout).toContain("YAML");
+    });
+
+    it("filters by category", async () => {
+      await cliStore.saveSolution(
+        createTestSolution({ name: "Auth Solution", category: "auth" }),
+      );
+      await cliStore.saveSolution(
+        createTestSolution({ name: "API Solution", category: "api" }),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [
+          cliPath,
+          "solution",
+          "export",
+          "--category",
+          "auth",
+          "--output",
+          "auth-only.json",
+        ],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+
+      const { readFile: fsReadFile } = await import("fs/promises");
+      const content = await fsReadFile(join(tempDir, "auth-only.json"), "utf-8");
+      const data = JSON.parse(content);
+      expect(data.solutions.every((s: { category: string }) => s.category === "auth")).toBe(true);
+    });
+
+    it("reports no solutions when store is empty", async () => {
+      // Create empty temp dir
+      const emptyDir = await mkdtemp(join(tmpdir(), "workflow-solution-empty-"));
+      await writeFile(
+        join(emptyDir, "workflow.config.json"),
+        JSON.stringify({
+          projectName: "empty",
+          scopes: [],
+          enforcement: "strict",
+          language: "en",
+        }),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "solution", "export"],
+        {
+          cwd: emptyDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("No solutions to export");
+
+      await rm(emptyDir, { recursive: true, force: true });
+    });
+  });
+
+  // ============================================
+  // solution import - CLI Tests
+  // ============================================
+
+  describe("solution import", () => {
+    it("imports solutions from JSON file", async () => {
+      // Create export file
+      const exportData = {
+        version: "1.0",
+        exportedAt: new Date().toISOString(),
+        solutions: [
+          createTestSolution({
+            id: "import-cli-test",
+            name: "Imported CLI Solution",
+          }),
+        ],
+      };
+      await writeFile(
+        join(tempDir, "import.json"),
+        JSON.stringify(exportData, null, 2),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "solution", "import", "import.json"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Import complete");
+
+      // Verify solution was imported
+      const result = await cliStore.getSolution("import-cli-test");
+      expect(result.success).toBe(true);
+      expect(result.data?.name).toBe("Imported CLI Solution");
+    });
+
+    it("supports dry-run mode", async () => {
+      const exportData = {
+        solutions: [
+          createTestSolution({
+            id: "dry-run-cli",
+            name: "Dry Run CLI Solution",
+          }),
+        ],
+      };
+      await writeFile(
+        join(tempDir, "dryrun.json"),
+        JSON.stringify(exportData, null, 2),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "solution", "import", "dryrun.json", "--dry-run"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Dry run");
+      expect(stdout).toContain("Would import");
+
+      // Verify solution was NOT imported
+      const result = await cliStore.getSolution("dry-run-cli");
+      expect(result.success).toBe(false);
+    });
+
+    it("handles non-existent file gracefully", async () => {
+      const { exitCode, stdout } = await execa(
+        "node",
+        [cliPath, "solution", "import", "nonexistent.json"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(1);
+      expect(stdout).toContain("File not found");
+    });
+
+    it("skips existing solutions with --no-merge", async () => {
+      // Create existing solution
+      const existing = createTestSolution({
+        id: "skip-cli-test",
+        name: "Existing CLI Solution",
+      });
+      await cliStore.saveSolution(existing);
+
+      // Create import file with same ID
+      const exportData = {
+        solutions: [{ ...existing, name: "Updated Name" }],
+      };
+      await writeFile(
+        join(tempDir, "skip.json"),
+        JSON.stringify(exportData, null, 2),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "solution", "import", "skip.json", "--no-merge"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Skipped");
+
+      // Verify original name is preserved
+      const result = await cliStore.getSolution("skip-cli-test");
+      expect(result.data?.name).toBe("Existing CLI Solution");
+    });
+  });
+
+  // ============================================
+  // solution analyze - CLI Tests
+  // ============================================
+
+  describe("solution analyze", () => {
+    it("runs analyze command successfully", async () => {
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "solution", "analyze"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Analyzing Codebase for Solution Patterns");
+    });
+
+    it("detects auth directory as opportunity", async () => {
+      await mkdir(join(tempDir, "src", "auth"), { recursive: true });
+      await writeFile(
+        join(tempDir, "src", "auth", "login.ts"),
+        "export const login = () => {};",
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "solution", "analyze"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Authentication");
+    });
+
+    it("detects API layer as opportunity", async () => {
+      await mkdir(join(tempDir, "app", "api"), { recursive: true });
+      await writeFile(
+        join(tempDir, "app", "api", "route.ts"),
+        "export const GET = () => {};",
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "solution", "analyze"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("API");
+    });
+
+    it("reports no opportunities when none found", async () => {
+      // Empty directory should find no opportunities
+      const emptyDir = await mkdtemp(join(tmpdir(), "workflow-solution-analyze-"));
+      await writeFile(
+        join(emptyDir, "workflow.config.json"),
+        JSON.stringify({
+          projectName: "empty",
+          scopes: [],
+          enforcement: "strict",
+          language: "en",
+        }),
+      );
+
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "solution", "analyze"],
+        {
+          cwd: emptyDir,
+          reject: false,
+        },
+      );
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("No new solution opportunities");
+
+      await rm(emptyDir, { recursive: true, force: true });
+    });
+  });
+});
