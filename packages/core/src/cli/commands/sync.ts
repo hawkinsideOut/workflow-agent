@@ -146,6 +146,7 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
   console.log("");
 
   const store = new PatternStore(cwd);
+  await store.initialize();
   const anonymizer = new PatternAnonymizer();
 
   // Get patterns to sync
@@ -238,8 +239,9 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
         const allSolutions = await store.listSolutions({ includeDeprecated: false });
         for (const sol of allSolutions.data ?? []) {
           if (sol.isPrivate) {
-            await store.updateSolution(sol.id, { ...sol, isPrivate: false });
-            solutions.push({ ...sol, isPrivate: false });
+            const updated = { ...sol, isPrivate: false, updatedAt: new Date().toISOString() };
+            await store.saveSolution(updated);
+            solutions.push(updated);
           }
         }
         console.log(chalk.green(`  ✓ Migrated ${privateCount} solutions to public`));
@@ -248,6 +250,26 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
       // Dry run mode - just show the message
       console.log(chalk.yellow(`  Found 0 solutions ready to sync (${privateCount} are private)`));
       console.log(chalk.dim(`    Use --include-private to include them, or run 'workflow solution migrate --public'`));
+    } else if (publicCount === 0 && privateCount === 0) {
+      // No solutions at all - check for validation errors
+      const validationErrors = store.getValidationErrors();
+      const solutionErrors = validationErrors.filter((e) => e.type === "solution");
+      if (solutionErrors.length > 0) {
+        console.log(chalk.yellow(`  Found 0 solutions (${solutionErrors.length} failed schema validation)`));
+        for (const err of solutionErrors) {
+          console.log(chalk.dim(`    • ${err.file}: ${err.error}`));
+          if (err.details) {
+            for (const detail of err.details.slice(0, 3)) {
+              console.log(chalk.dim(`      - ${detail}`));
+            }
+            if (err.details.length > 3) {
+              console.log(chalk.dim(`      ... and ${err.details.length - 3} more issues`));
+            }
+          }
+        }
+      } else {
+        console.log(chalk.dim(`  Found 0 solutions to sync`));
+      }
     } else {
       console.log(chalk.dim(`  Found ${publicCount} solutions ready to sync`));
     }
