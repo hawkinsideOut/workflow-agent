@@ -7,8 +7,7 @@ import {
   WORKFLOW_SCRIPTS,
   DEPRECATED_SCRIPTS,
   WORKFLOW_SCRIPTS_VERSION,
-  SCRIPT_CATEGORIES,
-  TOTAL_SCRIPTS,
+  validateAllScripts,
 } from "../../scripts/workflow-scripts.js";
 import { generateCopilotInstructions } from "../../scripts/copilot-instructions-generator.js";
 import {
@@ -40,8 +39,8 @@ export async function setupCommand(): Promise<void> {
   }
 
   // Track changes
-  const addedScripts: string[] = [];
-  const updatedScripts: string[] = [];
+  let scriptAdded = false;
+  let scriptUpdated = false;
   const removedScripts: string[] = [];
 
   // Step 1: Remove deprecated scripts
@@ -52,28 +51,34 @@ export async function setupCommand(): Promise<void> {
     }
   }
 
-  // Step 2: Add/update all workflow scripts (ensures updates get new scripts)
-  for (const [scriptName, scriptCommand] of Object.entries(WORKFLOW_SCRIPTS)) {
-    if (!packageJson.scripts[scriptName]) {
-      // Script doesn't exist - add it
-      packageJson.scripts[scriptName] = scriptCommand;
-      addedScripts.push(scriptName);
-    } else if (packageJson.scripts[scriptName] !== scriptCommand) {
-      // Script exists but has different value - update it
-      packageJson.scripts[scriptName] = scriptCommand;
-      updatedScripts.push(scriptName);
+  // Also remove any remaining workflow:* or workflow-* scripts
+  const oldScripts = validateAllScripts(packageJson.scripts);
+  for (const oldScript of oldScripts) {
+    if (packageJson.scripts[oldScript] !== undefined) {
+      delete packageJson.scripts[oldScript];
+      if (!removedScripts.includes(oldScript)) {
+        removedScripts.push(oldScript);
+      }
     }
-    // If script exists with same value, do nothing (already up to date)
   }
 
-  const totalChanges =
-    addedScripts.length + updatedScripts.length + removedScripts.length;
+  // Step 2: Add the workflow script
+  const scriptName = "workflow";
+  const scriptCommand = WORKFLOW_SCRIPTS.workflow;
 
-  if (totalChanges === 0) {
+  if (!packageJson.scripts[scriptName]) {
+    packageJson.scripts[scriptName] = scriptCommand;
+    scriptAdded = true;
+  } else if (packageJson.scripts[scriptName] !== scriptCommand) {
+    packageJson.scripts[scriptName] = scriptCommand;
+    scriptUpdated = true;
+  }
+
+  const hasChanges = scriptAdded || scriptUpdated || removedScripts.length > 0;
+
+  if (!hasChanges) {
     p.outro(
-      chalk.green(
-        `✓ All ${TOTAL_SCRIPTS} workflow scripts are already configured!`,
-      ),
+      chalk.green(`✓ Workflow script is already configured!`)
     );
     return;
   }
@@ -82,66 +87,41 @@ export async function setupCommand(): Promise<void> {
   writeFileSync(
     packageJsonPath,
     JSON.stringify(packageJson, null, 2) + "\n",
-    "utf-8",
+    "utf-8"
   );
-
-  // Build summary message
-  const summaryParts: string[] = [];
-  if (addedScripts.length > 0) {
-    summaryParts.push(`${addedScripts.length} new`);
-  }
-  if (updatedScripts.length > 0) {
-    summaryParts.push(`${updatedScripts.length} updated`);
-  }
-  if (removedScripts.length > 0) {
-    summaryParts.push(`${removedScripts.length} deprecated removed`);
-  }
 
   console.log(
-    chalk.green(
-      `\n✓ Workflow scripts configured (${summaryParts.join(", ")}):`,
-    ),
+    chalk.green(`\n✓ Workflow Agent v${WORKFLOW_SCRIPTS_VERSION} configured`)
   );
+
+  if (scriptAdded) {
+    console.log(chalk.green(`\n  Added "workflow" script to package.json`));
+  } else if (scriptUpdated) {
+    console.log(chalk.green(`\n  Updated "workflow" script in package.json`));
+  }
 
   // Log removed deprecated scripts
   if (removedScripts.length > 0) {
-    console.log(chalk.yellow(`\n  ⚠️  Removed deprecated scripts:`));
-    for (const script of removedScripts) {
-      console.log(chalk.dim(`    - ${script}`));
-    }
     console.log(
-      chalk.cyan(
-        `\n  💡 Updated to workflow-agent v${WORKFLOW_SCRIPTS_VERSION} with new command syntax.`,
-      ),
+      chalk.yellow(`\n  ⚠️  Removed ${removedScripts.length} deprecated scripts`)
     );
-    console.log(chalk.dim(`     Old: workflow-agent learn:list`));
-    console.log(chalk.dim(`     New: workflow-agent learn list`));
+    console.log(
+      chalk.dim(
+        `     (Old workflow:* scripts replaced by single "workflow" command)`
+      )
+    );
   }
 
-  // Display scripts by category
-  console.log("");
-  for (const [category, scripts] of Object.entries(SCRIPT_CATEGORIES)) {
-    console.log(chalk.cyan(`  ${category}:`));
-    for (const script of scripts) {
-      const isNew = addedScripts.includes(script);
-      const isUpdated = updatedScripts.includes(script);
-      const marker = isNew
-        ? chalk.green(" (new)")
-        : isUpdated
-          ? chalk.yellow(" (updated)")
-          : "";
-      console.log(chalk.dim(`    - ${script}`) + marker);
-    }
-  }
+  console.log(chalk.cyan(`\n  Usage:`));
+  console.log(chalk.dim(`    npm run workflow -- init`));
+  console.log(chalk.dim(`    npm run workflow -- solution list`));
+  console.log(chalk.dim(`    npm run workflow -- --help`));
+  console.log(chalk.cyan(`\n  Or with pnpm:`));
+  console.log(chalk.dim(`    pnpm workflow init`));
+  console.log(chalk.dim(`    pnpm workflow solution list`));
+  console.log(chalk.dim(`    pnpm workflow --help`));
 
-  p.outro(
-    chalk.green(
-      `✓ ${TOTAL_SCRIPTS} workflow scripts available in package.json!`,
-    ),
-  );
-  console.log(chalk.dim("\nRun them with:"));
-  console.log(chalk.dim("  pnpm run workflow:init"));
-  console.log(chalk.dim("  npm run workflow:init\n"));
+  p.outro(chalk.green(`✓ Workflow script ready!`));
 
   // Install mandatory templates if guidelines directory doesn't exist
   const guidelinesDir = join(cwd, "guidelines");
@@ -156,8 +136,8 @@ export async function setupCommand(): Promise<void> {
       if (templateResult.installed.length > 0) {
         console.log(
           chalk.green(
-            `\n✓ Installed ${templateResult.installed.length} mandatory guideline templates`,
-          ),
+            `\n✓ Installed ${templateResult.installed.length} mandatory guideline templates`
+          )
         );
       }
     }
@@ -170,8 +150,8 @@ export async function setupCommand(): Promise<void> {
       const status = result.isNew ? "Generated" : "Updated";
       console.log(
         chalk.green(
-          `✓ ${status} .github/copilot-instructions.md from ${result.guidelinesCount} guidelines`,
-        ),
+          `✓ ${status} .github/copilot-instructions.md from ${result.guidelinesCount} guidelines`
+        )
       );
       if (result.preservedCustomContent) {
         console.log(chalk.dim("  (Custom content preserved)"));

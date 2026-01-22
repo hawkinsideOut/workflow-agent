@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Post-install script that automatically adds workflow scripts to package.json
+ * Post-install script that automatically adds the workflow script to package.json
  * when installed as a local dependency (not global).
  *
- * On package update, this will also add any new scripts that were added in newer versions.
+ * On package update, this will also remove deprecated scripts from older versions.
  */
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
@@ -14,10 +14,7 @@ import {
   WORKFLOW_SCRIPTS,
   DEPRECATED_SCRIPTS,
   WORKFLOW_SCRIPTS_VERSION,
-  SCRIPT_CATEGORIES,
-  TOTAL_SCRIPTS,
   validateAllScripts,
-  VALID_COMMANDS,
 } from "./workflow-scripts.js";
 import { generateCopilotInstructions } from "./copilot-instructions-generator.js";
 import {
@@ -28,36 +25,86 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-function isGlobalInstall(): boolean {
-  // Check if we're being installed globally
+/**
+ * Check if we're being installed globally
+ */
+export function isGlobalInstall(): boolean {
   const installPath = process.env.npm_config_global;
   return installPath === "true";
 }
 
-function findProjectRoot(): string | null {
-  // When installed as a dependency, npm/pnpm runs postinstall from the package directory
-  // which is inside node_modules/@hawkinside_out/workflow-agent
-  // We need to find the project root (the directory containing node_modules)
-
+/**
+ * Find the project root by navigating out of node_modules
+ */
+export function findProjectRoot(): string | null {
   const currentDir = process.cwd();
 
   // Check if we're inside node_modules
   if (currentDir.includes("node_modules")) {
-    // Split on 'node_modules' and take everything before it
-    // This handles both node_modules/@scope/package and node_modules/package
     const parts = currentDir.split("node_modules");
     if (parts.length > 0 && parts[0]) {
-      // Remove trailing slash
       return parts[0].replace(/\/$/, "");
     }
   }
 
   // If not in node_modules, we're probably in a monorepo workspace during development
-  // Don't modify package.json in this case
   return null;
 }
 
-function addScriptsToPackageJson(): void {
+/**
+ * Remove deprecated scripts from package.json
+ */
+export function removeDeprecatedScripts(
+  scripts: Record<string, string>
+): string[] {
+  const removedScripts: string[] = [];
+
+  // Remove explicitly deprecated scripts
+  for (const deprecatedScript of DEPRECATED_SCRIPTS) {
+    if (scripts[deprecatedScript] !== undefined) {
+      delete scripts[deprecatedScript];
+      removedScripts.push(deprecatedScript);
+    }
+  }
+
+  // Also remove any remaining workflow:* or workflow-* scripts (catch-all)
+  const oldScripts = validateAllScripts(scripts);
+  for (const oldScript of oldScripts) {
+    if (scripts[oldScript] !== undefined) {
+      delete scripts[oldScript];
+      if (!removedScripts.includes(oldScript)) {
+        removedScripts.push(oldScript);
+      }
+    }
+  }
+
+  return removedScripts;
+}
+
+/**
+ * Add the workflow script to package.json
+ */
+export function addWorkflowScript(
+  scripts: Record<string, string>
+): { added: boolean; updated: boolean } {
+  const scriptName = "workflow";
+  const scriptCommand = WORKFLOW_SCRIPTS.workflow;
+
+  if (!scripts[scriptName]) {
+    scripts[scriptName] = scriptCommand;
+    return { added: true, updated: false };
+  } else if (scripts[scriptName] !== scriptCommand) {
+    scripts[scriptName] = scriptCommand;
+    return { added: false, updated: true };
+  }
+
+  return { added: false, updated: false };
+}
+
+/**
+ * Main function to configure workflow scripts in package.json
+ */
+export function addScriptsToPackageJson(): void {
   try {
     // Don't run for global installs
     if (isGlobalInstall()) {
@@ -84,108 +131,51 @@ function addScriptsToPackageJson(): void {
       packageJson.scripts = {};
     }
 
-    // Track changes
-    const addedScripts: string[] = [];
-    const updatedScripts: string[] = [];
-    const removedScripts: string[] = [];
-
     // Step 1: Remove deprecated scripts
-    for (const deprecatedScript of DEPRECATED_SCRIPTS) {
-      if (packageJson.scripts[deprecatedScript] !== undefined) {
-        delete packageJson.scripts[deprecatedScript];
-        removedScripts.push(deprecatedScript);
-      }
-    }
+    const removedScripts = removeDeprecatedScripts(packageJson.scripts);
 
-    // Step 1.5: Validate existing workflow: scripts follow the naming pattern
-    const existingWorkflowScripts = Object.keys(packageJson.scripts).filter(
-      (name) => name.startsWith("workflow:"),
-    );
-    const invalidScripts = validateAllScripts(
-      Object.fromEntries(existingWorkflowScripts.map((s) => [s, ""])),
-    );
-    if (invalidScripts.length > 0) {
-      console.log(
-        `\n⚠️  Warning: Found ${invalidScripts.length} workflow scripts with non-standard naming:`,
-      );
-      for (const script of invalidScripts) {
-        console.log(`    - ${script}`);
-      }
-      console.log(`\n  Valid top-level commands are: ${VALID_COMMANDS.join(", ")}`);
-      console.log(`  Scripts must follow: workflow:<command>[-<action>[-<subaction>]]\n`);
-    }
+    // Step 2: Add the workflow script
+    const { added, updated } = addWorkflowScript(packageJson.scripts);
 
-    // Step 2: Add/update all workflow scripts (ensures updates get new scripts)
-    for (const [scriptName, scriptCommand] of Object.entries(
-      WORKFLOW_SCRIPTS,
-    )) {
-      if (!packageJson.scripts[scriptName]) {
-        // Script doesn't exist - add it
-        packageJson.scripts[scriptName] = scriptCommand;
-        addedScripts.push(scriptName);
-      } else if (packageJson.scripts[scriptName] !== scriptCommand) {
-        // Script exists but has different value - update it
-        packageJson.scripts[scriptName] = scriptCommand;
-        updatedScripts.push(scriptName);
-      }
-      // If script exists with same value, do nothing (already up to date)
-    }
+    const hasChanges = removedScripts.length > 0 || added || updated;
 
-    const totalChanges =
-      addedScripts.length + updatedScripts.length + removedScripts.length;
-
-    if (totalChanges > 0) {
+    if (hasChanges) {
       // Write back to package.json with proper formatting
       writeFileSync(
         packageJsonPath,
         JSON.stringify(packageJson, null, 2) + "\n",
-        "utf-8",
+        "utf-8"
       );
 
-      // Build summary message
-      const summaryParts: string[] = [];
-      if (addedScripts.length > 0) {
-        summaryParts.push(`${addedScripts.length} new`);
-      }
-      if (updatedScripts.length > 0) {
-        summaryParts.push(`${updatedScripts.length} updated`);
-      }
-      if (removedScripts.length > 0) {
-        summaryParts.push(`${removedScripts.length} deprecated removed`);
-      }
+      console.log(`\n✓ Workflow Agent v${WORKFLOW_SCRIPTS_VERSION} configured`);
 
-      console.log(
-        `\n✓ Workflow scripts configured in package.json (${summaryParts.join(", ")}):`,
-      );
+      if (added) {
+        console.log(`\n  Added "workflow" script to package.json`);
+      } else if (updated) {
+        console.log(`\n  Updated "workflow" script in package.json`);
+      }
 
       // Log removed deprecated scripts
       if (removedScripts.length > 0) {
-        console.log(`\n  ⚠️  Removed deprecated scripts:`);
-        for (const script of removedScripts) {
-          console.log(`    - ${script}`);
-        }
         console.log(
-          `\n  💡 Updated to workflow-agent v${WORKFLOW_SCRIPTS_VERSION} with new command syntax.`,
+          `\n  ⚠️  Removed ${removedScripts.length} deprecated scripts`
         );
-        console.log(`     Old: workflow-agent learn:list`);
-        console.log(`     New: workflow-agent learn list\n`);
+        console.log(
+          `     (Old workflow:* scripts replaced by single "workflow" command)`
+        );
       }
 
-      // Display scripts by category
-      for (const [category, scripts] of Object.entries(SCRIPT_CATEGORIES)) {
-        console.log(`\n  ${category}:`);
-        for (const script of scripts) {
-          const isNew = addedScripts.includes(script);
-          const isUpdated = updatedScripts.includes(script);
-          const marker = isNew ? " (new)" : isUpdated ? " (updated)" : "";
-          console.log(`    - ${script}${marker}`);
-        }
-      }
-
-      console.log(`\n  Total: ${TOTAL_SCRIPTS} scripts available`);
-      console.log(
-        "\nRun them with: npm run workflow:init (or pnpm run workflow:init)\n",
-      );
+      console.log(`\n  Usage:`);
+      console.log(`    npm run workflow -- init`);
+      console.log(`    npm run workflow -- solution list`);
+      console.log(`    npm run workflow -- --help`);
+      console.log(`\n  Or with pnpm:`);
+      console.log(`    pnpm workflow init`);
+      console.log(`    pnpm workflow solution list`);
+      console.log(`    pnpm workflow --help`);
+      console.log(`\n  Or if installed globally:`);
+      console.log(`    workflow-agent init`);
+      console.log(`    workflow-agent --help\n`);
     }
 
     // Install mandatory templates if guidelines directory doesn't exist
@@ -196,11 +186,11 @@ function addScriptsToPackageJson(): void {
         const templateResult = installMandatoryTemplates(
           projectRoot,
           templatesDir,
-          { silent: false, skipIfExists: true, mandatoryOnly: true },
+          { silent: false, skipIfExists: true, mandatoryOnly: true }
         );
         if (templateResult.installed.length > 0) {
           console.log(
-            `✓ Installed ${templateResult.installed.length} mandatory guideline templates`,
+            `✓ Installed ${templateResult.installed.length} mandatory guideline templates`
           );
         }
       }
@@ -212,7 +202,7 @@ function addScriptsToPackageJson(): void {
       if (result.success) {
         const status = result.isNew ? "Generated" : "Updated";
         console.log(
-          `✓ ${status} .github/copilot-instructions.md from ${result.guidelinesCount} guidelines`,
+          `✓ ${status} .github/copilot-instructions.md from ${result.guidelinesCount} guidelines`
         );
         if (result.preservedCustomContent) {
           console.log("  (Custom content preserved)");

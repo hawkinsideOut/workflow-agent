@@ -2,20 +2,19 @@
  * Shared workflow scripts definition
  * Used by postinstall.ts and setup.ts to ensure consistency
  *
- * Version 2.21.0: Script restructuring - strict `workflow:<command>-<action>` format
- * Valid top-level commands: version, init, validate, config, suggest, setup, doctor,
- *                           scope, verify, pre-commit, learn, solution, sync, docs
+ * Version 2.22.0: Simplified to single "workflow" script
+ * Users run commands directly: npm run workflow -- init
  */
 
 /**
  * Current version of the workflow scripts schema
  * Used for tracking which version installed the scripts
  */
-export const WORKFLOW_SCRIPTS_VERSION = "2.21.0";
+export const WORKFLOW_SCRIPTS_VERSION = "2.22.0";
 
 /**
- * The 13 valid top-level commands for the workflow CLI
- * All script names MUST follow: workflow:<command>[-<action>[-<subaction>]]
+ * The valid top-level commands for the workflow CLI
+ * Run with: npm run workflow -- <command> [subcommand] [options]
  */
 export const VALID_COMMANDS = [
   "version",
@@ -37,33 +36,30 @@ export const VALID_COMMANDS = [
 export type ValidCommand = (typeof VALID_COMMANDS)[number];
 
 /**
- * Validates that a script name follows the required naming pattern
- * @param scriptName - The script name to validate (e.g., "workflow:scope-hooks-install")
+ * Validates that a script name is the expected "workflow" script
+ * @param scriptName - The script name to validate
  * @returns true if valid, false otherwise
  */
 export function validateScriptName(scriptName: string): boolean {
-  if (!scriptName.startsWith("workflow:")) {
-    return false;
-  }
-  
-  const command = scriptName.slice("workflow:".length);
-  const topLevelCommand = command.split("-")[0];
-  
-  return VALID_COMMANDS.includes(topLevelCommand as ValidCommand);
+  return scriptName === "workflow";
 }
 
 /**
- * Validates all script names in an object
+ * Finds old workflow scripts that should be removed
  * @param scripts - Object with script names as keys
- * @returns Array of invalid script names
+ * @returns Array of old workflow script names that should be removed
  */
 export function validateAllScripts(scripts: Record<string, string>): string[] {
-  return Object.keys(scripts).filter(name => !validateScriptName(name));
+  return Object.keys(scripts).filter(
+    (name) =>
+      (name.startsWith("workflow:") || name.startsWith("workflow-")) &&
+      name !== "workflow"
+  );
 }
 
 /**
  * Deprecated scripts that should be removed from package.json
- * These are old colon-style commands replaced by the new subcommand structure
+ * These are replaced by the single "workflow" script
  */
 export const DEPRECATED_SCRIPTS = [
   // Old colon-style scope commands
@@ -92,7 +88,7 @@ export const DEPRECATED_SCRIPTS = [
   "workflow:solution:deprecate",
   "workflow:solution:stats",
 
-  // Old advisory commands (now under docs)
+  // Old advisory commands
   "workflow:advisory",
   "workflow:advisory:quick",
   "workflow:advisory:standard",
@@ -100,7 +96,7 @@ export const DEPRECATED_SCRIPTS = [
   "workflow:advisory:executive",
   "workflow:advisory:ci",
 
-  // Old standalone commands (now under docs)
+  // Old standalone commands
   "workflow:generate-instructions",
   "workflow:update-templates",
   "workflow:update-templates:force",
@@ -109,7 +105,7 @@ export const DEPRECATED_SCRIPTS = [
   "workflow:docs:validate",
   "workflow:docs:validate:fix",
 
-  // Old verify shortcuts without prefix
+  // Old verify shortcuts
   "verify",
   "verify:fix",
   "pre-commit",
@@ -117,7 +113,7 @@ export const DEPRECATED_SCRIPTS = [
   // Old colon-style verify
   "workflow:verify:fix",
 
-  // Old standalone hooks commands (now under scope hooks)
+  // Old hooks commands
   "workflow:hooks",
   "workflow:hooks-install",
   "workflow:hooks-uninstall",
@@ -126,188 +122,94 @@ export const DEPRECATED_SCRIPTS = [
   "workflow:hooks:uninstall",
   "workflow:hooks:status",
 
-  // Old auto-setup (now setup-auto)
+  // Old auto-setup
   "workflow:auto-setup",
+
+  // v2.21.x dash-style scripts (deprecated in favor of single "workflow" command)
+  "workflow:version",
+  "workflow:init",
+  "workflow:validate",
+  "workflow:config",
+  "workflow:config-show",
+  "workflow:config-set",
+  "workflow:suggest",
+  "workflow:setup",
+  "workflow:setup-auto",
+  "workflow:doctor",
+  "workflow:scope",
+  "workflow:scope-list",
+  "workflow:scope-create",
+  "workflow:scope-migrate",
+  "workflow:scope-add",
+  "workflow:scope-remove",
+  "workflow:scope-sync",
+  "workflow:scope-analyze",
+  "workflow:scope-hooks",
+  "workflow:scope-hooks-status",
+  "workflow:scope-hooks-install",
+  "workflow:scope-hooks-uninstall",
+  "workflow:scope-hooks-test",
+  "workflow:verify",
+  "workflow:verify-fix",
+  "workflow:pre-commit",
+  "workflow:learn-list",
+  "workflow:learn-analyze",
+  "workflow:learn-capture",
+  "workflow:learn-apply",
+  "workflow:learn-export",
+  "workflow:learn-import",
+  "workflow:learn-status",
+  "workflow:learn-stats",
+  "workflow:learn-clean",
+  "workflow:learn-config",
+  "workflow:learn-config-enable",
+  "workflow:learn-config-disable",
+  "workflow:learn-sync",
+  "workflow:learn-sync-push",
+  "workflow:learn-sync-pull",
+  "workflow:solution-list",
+  "workflow:solution-create",
+  "workflow:solution-show",
+  "workflow:solution-search",
+  "workflow:solution-apply",
+  "workflow:solution-export",
+  "workflow:solution-import",
+  "workflow:solution-analyze",
+  "workflow:sync",
+  "workflow:sync-status",
+  "workflow:sync-push",
+  "workflow:sync-pull",
+  "workflow:docs",
+  "workflow:docs-validate",
+  "workflow:docs-validate-fix",
+  "workflow:docs-advisory",
+  "workflow:docs-advisory-quick",
+  "workflow:docs-advisory-standard",
+  "workflow:docs-advisory-comprehensive",
+  "workflow:docs-advisory-executive",
+  "workflow:docs-advisory-ci",
+  "workflow:docs-generate",
+  "workflow:docs-update",
+  "workflow:docs-update-force",
 ] as const;
 
 export type DeprecatedScriptName = (typeof DEPRECATED_SCRIPTS)[number];
 
+/**
+ * The only script that should be added to package.json
+ * Users run commands with: npm run workflow -- init
+ */
 export const WORKFLOW_SCRIPTS = {
-  // Version marker for tracking
-  "workflow:version": "workflow-agent --version",
-
-  // Core Commands
-  "workflow:init": "workflow-agent init",
-  "workflow:validate": "workflow-agent validate",
-  "workflow:config": "workflow-agent config show",
-  "workflow:config-show": "workflow-agent config show",
-  "workflow:config-set": "workflow-agent config set",
-  "workflow:suggest": "workflow-agent suggest",
-  "workflow:setup": "workflow-agent setup",
-  "workflow:setup-auto": "workflow-agent setup auto",
-  "workflow:doctor": "workflow-agent doctor",
-
-  // Scope Commands (new subcommand syntax)
-  "workflow:scope": "workflow-agent scope list",
-  "workflow:scope-list": "workflow-agent scope list",
-  "workflow:scope-create": "workflow-agent scope create",
-  "workflow:scope-migrate": "workflow-agent scope migrate",
-  "workflow:scope-add": "workflow-agent scope add",
-  "workflow:scope-remove": "workflow-agent scope remove",
-  "workflow:scope-sync": "workflow-agent scope sync",
-  "workflow:scope-analyze": "workflow-agent scope analyze",
-
-  // Scope Hooks Commands (hooks moved under scope)
-  "workflow:scope-hooks": "workflow-agent scope hooks status",
-  "workflow:scope-hooks-status": "workflow-agent scope hooks status",
-  "workflow:scope-hooks-install": "workflow-agent scope hooks install",
-  "workflow:scope-hooks-uninstall": "workflow-agent scope hooks uninstall",
-  "workflow:scope-hooks-test": "workflow-agent scope hooks test",
-
-  // Verification
-  "workflow:verify": "workflow-agent verify",
-  "workflow:verify-fix": "workflow-agent verify --fix",
-  "workflow:pre-commit": "workflow-agent pre-commit",
-
-  // Learning System Commands (new subcommand syntax)
-  "workflow:learn": "workflow-agent learn list",
-  "workflow:learn-list": "workflow-agent learn list",
-  "workflow:learn-analyze": "workflow-agent learn analyze",
-  "workflow:learn-capture": "workflow-agent learn capture",
-  "workflow:learn-apply": "workflow-agent learn apply",
-  "workflow:learn-export": "workflow-agent learn export",
-  "workflow:learn-import": "workflow-agent learn import",
-  "workflow:learn-status": "workflow-agent learn status",
-  "workflow:learn-stats": "workflow-agent learn stats",
-  "workflow:learn-clean": "workflow-agent learn clean",
-  "workflow:learn-config": "workflow-agent learn config --show",
-  "workflow:learn-config-enable": "workflow-agent learn config --enable-sync",
-  "workflow:learn-config-disable": "workflow-agent learn config --disable-sync",
-  "workflow:learn-sync": "workflow-agent learn sync",
-  "workflow:learn-sync-push": "workflow-agent learn sync --push",
-  "workflow:learn-sync-pull": "workflow-agent learn sync --pull",
-
-  // Solution Pattern Commands (new subcommand syntax)
-  "workflow:solution": "workflow-agent solution list",
-  "workflow:solution-list": "workflow-agent solution list",
-  "workflow:solution-create": "workflow-agent solution create",
-  "workflow:solution-show": "workflow-agent solution show",
-  "workflow:solution-search": "workflow-agent solution search",
-  "workflow:solution-apply": "workflow-agent solution apply",
-  "workflow:solution-export": "workflow-agent solution export",
-  "workflow:solution-import": "workflow-agent solution import",
-  "workflow:solution-analyze": "workflow-agent solution analyze",
-
-  // Sync Commands (new unified sync)
-  "workflow:sync": "workflow-agent sync status",
-  "workflow:sync-status": "workflow-agent sync status",
-  "workflow:sync-push": "workflow-agent sync push",
-  "workflow:sync-pull": "workflow-agent sync pull",
-
-  // Docs Commands (new subcommand syntax)
-  "workflow:docs": "workflow-agent docs validate",
-  "workflow:docs-validate": "workflow-agent docs validate",
-  "workflow:docs-validate-fix": "workflow-agent docs validate --fix",
-  "workflow:docs-advisory": "workflow-agent docs advisory",
-  "workflow:docs-advisory-quick": "workflow-agent docs advisory --depth quick",
-  "workflow:docs-advisory-standard": "workflow-agent docs advisory --depth standard",
-  "workflow:docs-advisory-comprehensive": "workflow-agent docs advisory --depth comprehensive",
-  "workflow:docs-advisory-executive": "workflow-agent docs advisory --depth executive",
-  "workflow:docs-advisory-ci": "workflow-agent docs advisory --ci",
-  "workflow:docs-generate": "workflow-agent docs generate",
-  "workflow:docs-update": "workflow-agent docs update",
-  "workflow:docs-update-force": "workflow-agent docs update --force",
+  workflow: "workflow-agent",
 } as const;
 
 export type WorkflowScriptName = keyof typeof WORKFLOW_SCRIPTS;
 
 /**
- * Script categories for organized console output
+ * Script categories - simplified
  */
 export const SCRIPT_CATEGORIES = {
-  "Core Commands": [
-    "workflow:init",
-    "workflow:validate",
-    "workflow:config",
-    "workflow:config-show",
-    "workflow:config-set",
-    "workflow:suggest",
-    "workflow:setup",
-    "workflow:setup-auto",
-    "workflow:doctor",
-  ],
-  "Scope Commands": [
-    "workflow:scope",
-    "workflow:scope-list",
-    "workflow:scope-create",
-    "workflow:scope-migrate",
-    "workflow:scope-add",
-    "workflow:scope-remove",
-    "workflow:scope-sync",
-    "workflow:scope-analyze",
-  ],
-  "Scope Hooks": [
-    "workflow:scope-hooks",
-    "workflow:scope-hooks-status",
-    "workflow:scope-hooks-install",
-    "workflow:scope-hooks-uninstall",
-    "workflow:scope-hooks-test",
-  ],
-  Verification: [
-    "workflow:verify",
-    "workflow:verify-fix",
-    "workflow:pre-commit",
-  ],
-  "Learning System": [
-    "workflow:learn",
-    "workflow:learn-list",
-    "workflow:learn-analyze",
-    "workflow:learn-capture",
-    "workflow:learn-apply",
-    "workflow:learn-export",
-    "workflow:learn-import",
-    "workflow:learn-status",
-    "workflow:learn-stats",
-    "workflow:learn-clean",
-    "workflow:learn-config",
-    "workflow:learn-config-enable",
-    "workflow:learn-config-disable",
-    "workflow:learn-sync",
-    "workflow:learn-sync-push",
-    "workflow:learn-sync-pull",
-  ],
-  "Solution Patterns": [
-    "workflow:solution",
-    "workflow:solution-list",
-    "workflow:solution-create",
-    "workflow:solution-show",
-    "workflow:solution-search",
-    "workflow:solution-apply",
-    "workflow:solution-export",
-    "workflow:solution-import",
-    "workflow:solution-analyze",
-  ],
-  Sync: [
-    "workflow:sync",
-    "workflow:sync-status",
-    "workflow:sync-push",
-    "workflow:sync-pull",
-  ],
-  Documentation: [
-    "workflow:docs",
-    "workflow:docs-validate",
-    "workflow:docs-validate-fix",
-    "workflow:docs-advisory",
-    "workflow:docs-advisory-quick",
-    "workflow:docs-advisory-standard",
-    "workflow:docs-advisory-comprehensive",
-    "workflow:docs-advisory-executive",
-    "workflow:docs-advisory-ci",
-    "workflow:docs-generate",
-    "workflow:docs-update",
-    "workflow:docs-update-force",
-  ],
-  Meta: ["workflow:version"],
+  Main: ["workflow"],
 } as const;
 
 export const TOTAL_SCRIPTS = Object.keys(WORKFLOW_SCRIPTS).length;
