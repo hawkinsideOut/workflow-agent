@@ -77,6 +77,24 @@ function extractDescription(content: string): string {
 }
 
 /**
+ * Rewrite markdown links to include ../guidelines/ prefix
+ * Transforms links like [FILE.md](FILE.md) to [FILE.md](../guidelines/FILE.md)
+ */
+function rewriteGuidelineLinks(text: string): string {
+  // Match markdown links: [text](file.md) where file.md is a .md file without path
+  return text.replace(
+    /\[([^\]]+)\]\(([A-Z_]+\.md)\)/g,
+    (match, linkText, filename) => {
+      // Only rewrite if it's just the filename (no path)
+      if (!filename.includes("/")) {
+        return `[${linkText}](../guidelines/${filename})`;
+      }
+      return match;
+    }
+  );
+}
+
+/**
  * Extract key rules from markdown content
  * Looks for lists, bold text, and important patterns
  */
@@ -288,7 +306,8 @@ ${guideline.description}
         content += `**Key Rules:**
 `;
         for (const rule of guideline.keyRules) {
-          content += `- ${rule}\n`;
+          // Rewrite any markdown links to include ../guidelines/ prefix
+          content += `- ${rewriteGuidelineLinks(rule)}\n`;
         }
         content += "\n";
       }

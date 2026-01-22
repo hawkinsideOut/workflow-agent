@@ -234,60 +234,6 @@ describe("scope CLI commands - E2E", () => {
   });
 
   // ============================================
-  // scope hooks test - E2E Tests
-  // ============================================
-
-  describe("scope hooks test", () => {
-    it("runs hooks test command", async () => {
-      const { stdout, exitCode } = await execa(
-        "node",
-        [cliPath, "scope", "hooks", "test"],
-        {
-          cwd: tempDir,
-          reject: false,
-        },
-      );
-
-      // Should run (may report no hooks installed yet)
-      expect([0, 1]).toContain(exitCode);
-      expect(stdout.includes("Testing") || stdout.includes("hooks") || stdout.includes("Hooks")).toBe(true);
-    });
-
-    it("reports hooks status after installation", async () => {
-      // Install hooks first
-      await execa("node", [cliPath, "scope", "hooks", "install"], {
-        cwd: tempDir,
-        reject: false,
-      });
-
-      const { stdout } = await execa(
-        "node",
-        [cliPath, "scope", "hooks", "test"],
-        {
-          cwd: tempDir,
-          reject: false,
-        },
-      );
-
-      expect(stdout.length).toBeGreaterThan(0);
-    });
-
-    it("supports dry-run mode", async () => {
-      const { exitCode } = await execa(
-        "node",
-        [cliPath, "scope", "hooks", "test", "--dry-run"],
-        {
-          cwd: tempDir,
-          reject: false,
-        },
-      );
-
-      // Dry run should complete (exit code 0 or 1 is acceptable)
-      expect([0, 1]).toContain(exitCode);
-    });
-  });
-
-  // ============================================
   // scope sync - E2E Tests
   // ============================================
 

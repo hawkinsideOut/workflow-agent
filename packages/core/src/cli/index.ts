@@ -18,7 +18,7 @@ import { preCommitCommand } from "./commands/pre-commit.js";
 import { autoSetupCommand } from "./commands/auto-setup-command.js";
 // Command groups
 import { createDocsCommand, docsValidateCommand, docsGenerateCommand, docsUpdateCommand } from "./commands/docs/index.js";
-import { hooksCommand } from "./commands/hooks/index.js";
+import { hooksCommand, createHooksCommand } from "./commands/hooks/index.js";
 import {
   createSolutionCommand,
   solutionCaptureCommand,
@@ -81,9 +81,12 @@ program.addCommand(createSolutionCommand());
 // Register learn command group
 program.addCommand(createLearnCommand());
 
-// Register scope command group (now includes hooks)
+// Register scope command group
 import { createScopeCommand } from "./commands/scope/index.js";
 program.addCommand(createScopeCommand());
+
+// Register hooks command group (top-level access)
+program.addCommand(createHooksCommand());
 
 // Register unified sync command
 program
@@ -216,28 +219,28 @@ program
 // Deprecated Commands (Hidden, will be removed in v2.0)
 // ============================================
 
-// Legacy hooks command with action argument (replaced by scope hooks subcommands)
+// Legacy hooks command with action argument (replaced by top-level hooks subcommands)
 program
   .command("hooks:install", { hidden: true })
-  .description("[DEPRECATED] Use: workflow scope hooks install")
+  .description("[DEPRECATED] Use: workflow hooks install")
   .action(async () => {
-    deprecationWarning("workflow hooks:install", "workflow scope hooks install");
+    deprecationWarning("workflow hooks:install", "workflow hooks install");
     return hooksCommand("install");
   });
 
 program
   .command("hooks:uninstall", { hidden: true })
-  .description("[DEPRECATED] Use: workflow scope hooks uninstall")
+  .description("[DEPRECATED] Use: workflow hooks uninstall")
   .action(async () => {
-    deprecationWarning("workflow hooks:uninstall", "workflow scope hooks uninstall");
+    deprecationWarning("workflow hooks:uninstall", "workflow hooks uninstall");
     return hooksCommand("uninstall");
   });
 
 program
   .command("hooks:status", { hidden: true })
-  .description("[DEPRECATED] Use: workflow scope hooks status")
+  .description("[DEPRECATED] Use: workflow hooks status")
   .action(async () => {
-    deprecationWarning("workflow hooks:status", "workflow scope hooks status");
+    deprecationWarning("workflow hooks:status", "workflow hooks status");
     return hooksCommand("status");
   });
 

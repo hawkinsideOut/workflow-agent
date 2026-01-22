@@ -9,14 +9,12 @@
  *   - remove: Remove a scope from the project
  *   - sync: Sync scopes with the registry
  *   - analyze: Analyze scope usage in the project
- *   - hooks: Manage git hooks (install, uninstall, test)
  */
 
 import { Command } from "commander";
 import chalk from "chalk";
 import { scopeCreateCommand } from "../scope-create.js";
 import { scopeMigrateCommand } from "../scope-migrate.js";
-import { hooksCommand } from "../hooks.js";
 import { loadConfig } from "../../../config/index.js";
 
 // Re-export for backward compatibility
@@ -265,82 +263,11 @@ async function scopeAnalyzeCommand(): Promise<void> {
 }
 
 /**
- * Hooks test command - validates hook installation with optional dry-run
- */
-async function hooksTestCommand(options: { dryRun?: boolean }): Promise<void> {
-  console.log(chalk.bold.cyan("\n🧪 Testing Git Hooks\n"));
-
-  const fs = await import("fs");
-  const path = await import("path");
-  const cwd = process.cwd();
-  const gitDir = path.join(cwd, ".git");
-  const hooksDir = path.join(gitDir, "hooks");
-
-  // Check git repo exists
-  if (!fs.existsSync(gitDir)) {
-    console.log(chalk.red("✗ Not a git repository"));
-    process.exit(1);
-  }
-
-  // Check hooks directory
-  if (!fs.existsSync(hooksDir)) {
-    console.log(chalk.yellow("  No hooks directory found"));
-    console.log(chalk.dim("  Run: workflow scope hooks install"));
-    process.exit(1);
-  }
-
-  const hookTypes = ["pre-commit", "commit-msg"];
-  let allInstalled = true;
-
-  for (const hookType of hookTypes) {
-    const hookPath = path.join(hooksDir, hookType);
-    const exists = fs.existsSync(hookPath);
-    const isExecutable = exists && (fs.statSync(hookPath).mode & 0o111) !== 0;
-    const isWorkflowHook = exists && fs.readFileSync(hookPath, "utf-8").includes("workflow-agent");
-
-    if (exists && isExecutable && isWorkflowHook) {
-      console.log(chalk.green(`  ✓ ${hookType} - installed and executable`));
-    } else if (exists && !isWorkflowHook) {
-      console.log(chalk.yellow(`  ⚠ ${hookType} - exists but not managed by workflow-agent`));
-      allInstalled = false;
-    } else if (exists && !isExecutable) {
-      console.log(chalk.red(`  ✗ ${hookType} - exists but not executable`));
-      allInstalled = false;
-    } else {
-      console.log(chalk.red(`  ✗ ${hookType} - not installed`));
-      allInstalled = false;
-    }
-  }
-
-  // Optional dry-run: simulate hook execution
-  if (options.dryRun) {
-    console.log(chalk.bold.cyan("\n  Dry-run hook simulation:\n"));
-
-    // Simulate pre-commit
-    console.log(chalk.dim("  Simulating pre-commit hook..."));
-    const { verifyCommand } = await import("../verify.js");
-    try {
-      await verifyCommand({ fix: false, dryRun: true, maxRetries: "1" });
-    } catch {
-      // Expected to potentially fail, that's ok for dry-run
-    }
-  }
-
-  if (!allInstalled) {
-    console.log(chalk.yellow("\n  Some hooks are not properly installed"));
-    console.log(chalk.dim("  Run: workflow scope hooks install"));
-    process.exit(1);
-  }
-
-  console.log(chalk.green("\n✓ All hooks are properly installed"));
-}
-
-/**
  * Create the scope command group with all subcommands
  */
 export function createScopeCommand(): Command {
   const scopeCmd = new Command("scope")
-    .description("Manage custom scope packages and git hooks")
+    .description("Manage custom scope packages")
     .addHelpText(
       "after",
       `
@@ -351,7 +278,6 @@ ${chalk.bold("Examples:")}
   $ workflow scope add auth                       ${chalk.dim("# Add auth scope")}
   $ workflow scope remove legacy                  ${chalk.dim("# Remove legacy scope")}
   $ workflow scope analyze                        ${chalk.dim("# Analyze scope usage")}
-  $ workflow scope hooks install                  ${chalk.dim("# Install git hooks")}
 `,
     )
     .action(() => {
@@ -473,46 +399,6 @@ ${chalk.bold("Details:")}
     )
     .action(scopeAnalyzeCommand);
 
-  // hooks subcommand group
-  const hooksCmd = scopeCmd
-    .command("hooks")
-    .description("Manage git hooks for the project")
-    .addHelpText(
-      "after",
-      `
-${chalk.bold("Examples:")}
-  $ workflow scope hooks install                      ${chalk.dim("# Install git hooks")}
-  $ workflow scope hooks uninstall                    ${chalk.dim("# Remove git hooks")}
-  $ workflow scope hooks test                         ${chalk.dim("# Verify installation")}
-  $ workflow scope hooks test --dry-run               ${chalk.dim("# Test with simulation")}
-`,
-    )
-    .action(() => {
-      // Default: show status
-      hooksCommand("status");
-    });
-
-  hooksCmd
-    .command("install")
-    .description("Install git hooks for the project")
-    .action(() => hooksCommand("install"));
-
-  hooksCmd
-    .command("uninstall")
-    .description("Remove installed git hooks")
-    .action(() => hooksCommand("uninstall"));
-
-  hooksCmd
-    .command("status")
-    .description("Show current hooks installation status")
-    .action(() => hooksCommand("status"));
-
-  hooksCmd
-    .command("test")
-    .description("Test that hooks are properly installed")
-    .option("--dry-run", "Simulate hook execution without making changes")
-    .action(hooksTestCommand);
-
   return scopeCmd;
 }
 
@@ -523,5 +409,4 @@ export {
   scopeRemoveCommand,
   scopeSyncCommand,
   scopeAnalyzeCommand,
-  hooksTestCommand,
 };
