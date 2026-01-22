@@ -27,7 +27,7 @@
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "typecheck": "pnpm -r run typecheck",
+    "typecheck": "pnpm -r --if-present run typecheck",
     "clean": "pnpm -r run clean && rm -rf node_modules",
     "dev": "pnpm -r --parallel run dev",
     "changeset": "changeset",

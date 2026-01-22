@@ -2,6 +2,9 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 import { initCommand } from "./commands/init.js";
 import { validateCommand } from "./commands/validate.js";
 import { configCommand } from "./commands/config.js";
@@ -27,6 +30,13 @@ import {
 } from "./commands/solution/index.js";
 // Legacy imports for backward compatibility
 import { advisoryCommand } from "./commands/advisory.js";
+
+// Read version from package.json dynamically
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, "../../package.json"), "utf-8")
+);
 
 /**
  * Show deprecation warning for old command syntax
@@ -56,7 +66,7 @@ program
   .description(
     "A self-evolving workflow management system for AI agent development",
   )
-  .version("1.0.0");
+  .version(packageJson.version);
 
 // ============================================
 // Command Groups (New Subcommand Pattern)
