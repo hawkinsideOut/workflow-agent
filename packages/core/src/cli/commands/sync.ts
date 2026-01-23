@@ -436,17 +436,23 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
           for (const pulled of pullResult.patterns) {
             try {
               if (pulled.type === "fix" && pulled.data) {
-                await store.saveFixPattern(pulled.data as FixPattern);
+                const fixData = pulled.data as FixPattern;
+                await store.saveFixPattern(fixData);
+                console.log(chalk.dim(`  ✓ ${fixData.name} (fix)`));
                 savedCount++;
               } else if (pulled.type === "blueprint" && pulled.data) {
-                await store.saveBlueprint(pulled.data as Blueprint);
+                const blueprintData = pulled.data as Blueprint;
+                await store.saveBlueprint(blueprintData);
+                console.log(chalk.dim(`  ✓ ${blueprintData.name} (blueprint)`));
                 savedCount++;
               } else if (pulled.type === "solution" && pulled.data) {
-                await store.saveSolution(pulled.data as SolutionPattern);
+                const solutionData = pulled.data as SolutionPattern;
+                await store.saveSolution(solutionData);
+                console.log(chalk.dim(`  ✓ ${solutionData.name} (solution)`));
                 savedCount++;
               }
             } catch {
-              // Pattern might already exist
+              // Pattern might already exist - silently skip
             }
           }
         }
