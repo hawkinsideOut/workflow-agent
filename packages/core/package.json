@@ -1,6 +1,6 @@
 {
   "name": "workflow-agent-cli",
-  "version": "2.22.10",
+  "version": "2.22.11",
   "description": "A self-evolving workflow management system for AI agent development",
   "keywords": [
     "workflow",
