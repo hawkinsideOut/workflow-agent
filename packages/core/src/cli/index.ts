@@ -85,6 +85,27 @@ program.addCommand(createLearnCommand());
 import { createScopeCommand } from "./commands/scope/index.js";
 program.addCommand(createScopeCommand());
 
+// Register migrate command
+import { migrateCommand } from "./commands/migrate.js";
+program
+  .command("migrate <subcommand>")
+  .description("Migrate patterns and configurations")
+  .option("--dry-run", "Preview without making changes")
+  .option("--type <type>", "Pattern type to migrate (fix, blueprint, solution, or all)", "all")
+  .addHelpText(
+    "after",
+    `
+${chalk.bold("Subcommands:")}
+  filenames                                           ${chalk.dim("# Migrate to slugified filenames")}
+
+${chalk.bold("Examples:")}
+  $ workflow migrate filenames --dry-run              ${chalk.dim("# Preview migration")}
+  $ workflow migrate filenames                        ${chalk.dim("# Migrate all patterns")}
+  $ workflow migrate filenames --type fix             ${chalk.dim("# Migrate only fixes")}
+`,
+  )
+  .action(migrateCommand);
+
 // Register hooks command group (top-level access)
 program.addCommand(createHooksCommand());
 

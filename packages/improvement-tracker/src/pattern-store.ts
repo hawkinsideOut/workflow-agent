@@ -61,6 +61,24 @@ export interface ConflictResult {
   suggestedVersion?: number;
 }
 
+/**
+ * Slugify a string for use in filenames
+ * Converts to lowercase, replaces spaces/special chars with hyphens
+ * Maximum length: 50 characters
+ */
+function slugify(text: string): string {
+  const slug = text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special chars
+    .replace(/[\s_]+/g, '-') // Replace spaces/underscores with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+  
+  // Truncate to 50 characters
+  return slug.substring(0, 50);
+}
+
 /** Statistics about stored patterns */
 export interface PatternStats {
   totalFixes: number;
@@ -182,8 +200,19 @@ export class PatternStore {
         };
       }
 
-      const filePath = this.getFixFilePath(pattern.id);
+      const filePath = this.getFixFilePath(pattern.id, pattern.name);
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+      
+      // Check if old UUID-only file exists and remove it
+      const oldFilePath = this.getFixFilePath(pattern.id);
+      if (oldFilePath !== filePath) {
+        try {
+          await fs.promises.unlink(oldFilePath);
+        } catch {
+          // Old file doesn't exist, which is fine
+        }
+      }
+      
       await fs.promises.writeFile(filePath, JSON.stringify(pattern, null, 2));
 
       return { success: true, data: pattern };
@@ -200,7 +229,17 @@ export class PatternStore {
    */
   async getFixPattern(id: string): Promise<PatternResult<FixPattern>> {
     try {
-      const filePath = this.getFixFilePath(id);
+      // Try to find the pattern file (could be either UUID.json or slug-UUID.json)
+      const files = await fs.promises.readdir(this.fixesPath);
+      const matchingFile = files.find(
+        (file) => file.endsWith(`-${id}.json`) || file === `${id}.json`,
+      );
+
+      if (!matchingFile) {
+        return { success: false, error: "Pattern not found" };
+      }
+
+      const filePath = path.join(this.fixesPath, matchingFile);
       const content = await fs.promises.readFile(filePath, "utf-8");
       const pattern = JSON.parse(content);
       const validation = FixPatternSchema.safeParse(pattern);
@@ -229,7 +268,17 @@ export class PatternStore {
    */
   async deleteFixPattern(id: string): Promise<PatternResult<void>> {
     try {
-      const filePath = this.getFixFilePath(id);
+      // Find the file (could be either UUID.json or slug-UUID.json)
+      const files = await fs.promises.readdir(this.fixesPath);
+      const matchingFile = files.find(
+        (file) => file.endsWith(`-${id}.json`) || file === `${id}.json`,
+      );
+
+      if (!matchingFile) {
+        return { success: false, error: "Pattern not found" };
+      }
+
+      const filePath = path.join(this.fixesPath, matchingFile);
       await fs.promises.unlink(filePath);
       return { success: true };
     } catch (error) {
@@ -331,8 +380,19 @@ export class PatternStore {
         };
       }
 
-      const filePath = this.getBlueprintFilePath(blueprint.id);
+      const filePath = this.getBlueprintFilePath(blueprint.id, blueprint.name);
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+      
+      // Check if old UUID-only file exists and remove it
+      const oldFilePath = this.getBlueprintFilePath(blueprint.id);
+      if (oldFilePath !== filePath) {
+        try {
+          await fs.promises.unlink(oldFilePath);
+        } catch {
+          // Old file doesn't exist, which is fine
+        }
+      }
+      
       await fs.promises.writeFile(filePath, JSON.stringify(blueprint, null, 2));
 
       return { success: true, data: blueprint };
@@ -349,7 +409,17 @@ export class PatternStore {
    */
   async getBlueprint(id: string): Promise<PatternResult<Blueprint>> {
     try {
-      const filePath = this.getBlueprintFilePath(id);
+      // Try to find the blueprint file (could be either UUID.json or slug-UUID.json)
+      const files = await fs.promises.readdir(this.blueprintsPath);
+      const matchingFile = files.find(
+        (file) => file.endsWith(`-${id}.json`) || file === `${id}.json`,
+      );
+
+      if (!matchingFile) {
+        return { success: false, error: "Blueprint not found" };
+      }
+
+      const filePath = path.join(this.blueprintsPath, matchingFile);
       const content = await fs.promises.readFile(filePath, "utf-8");
       const blueprint = JSON.parse(content);
       const validation = BlueprintSchema.safeParse(blueprint);
@@ -378,7 +448,17 @@ export class PatternStore {
    */
   async deleteBlueprint(id: string): Promise<PatternResult<void>> {
     try {
-      const filePath = this.getBlueprintFilePath(id);
+      // Find the file (could be either UUID.json or slug-UUID.json)
+      const files = await fs.promises.readdir(this.blueprintsPath);
+      const matchingFile = files.find(
+        (file) => file.endsWith(`-${id}.json`) || file === `${id}.json`,
+      );
+
+      if (!matchingFile) {
+        return { success: false, error: "Blueprint not found" };
+      }
+
+      const filePath = path.join(this.blueprintsPath, matchingFile);
       await fs.promises.unlink(filePath);
       return { success: true };
     } catch (error) {
@@ -483,8 +563,19 @@ export class PatternStore {
         };
       }
 
-      const filePath = this.getSolutionFilePath(pattern.id);
+      const filePath = this.getSolutionFilePath(pattern.id, pattern.name);
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+      
+      // Check if old UUID-only file exists and remove it
+      const oldFilePath = this.getSolutionFilePath(pattern.id);
+      if (oldFilePath !== filePath) {
+        try {
+          await fs.promises.unlink(oldFilePath);
+        } catch {
+          // Old file doesn't exist, which is fine
+        }
+      }
+      
       await fs.promises.writeFile(filePath, JSON.stringify(pattern, null, 2));
 
       return { success: true, data: pattern };
@@ -501,7 +592,17 @@ export class PatternStore {
    */
   async getSolution(id: string): Promise<PatternResult<SolutionPattern>> {
     try {
-      const filePath = this.getSolutionFilePath(id);
+      // Try to find the solution file (could be either UUID.json or slug-UUID.json)
+      const files = await fs.promises.readdir(this.solutionsPath);
+      const matchingFile = files.find(
+        (file) => file.endsWith(`-${id}.json`) || file === `${id}.json`,
+      );
+
+      if (!matchingFile) {
+        return { success: false, error: "Solution not found" };
+      }
+
+      const filePath = path.join(this.solutionsPath, matchingFile);
       const content = await fs.promises.readFile(filePath, "utf-8");
       const pattern = JSON.parse(content);
       const validation = SolutionPatternSchema.safeParse(pattern);
@@ -530,7 +631,17 @@ export class PatternStore {
    */
   async deleteSolution(id: string): Promise<PatternResult<void>> {
     try {
-      const filePath = this.getSolutionFilePath(id);
+      // Find the file (could be either UUID.json or slug-UUID.json)
+      const files = await fs.promises.readdir(this.solutionsPath);
+      const matchingFile = files.find(
+        (file) => file.endsWith(`-${id}.json`) || file === `${id}.json`,
+      );
+
+      if (!matchingFile) {
+        return { success: false, error: "Solution not found" };
+      }
+
+      const filePath = path.join(this.solutionsPath, matchingFile);
       await fs.promises.unlink(filePath);
       return { success: true };
     } catch (error) {
@@ -1044,15 +1155,27 @@ export class PatternStore {
   // Private Helpers
   // ============================================
 
-  private getFixFilePath(id: string): string {
+  private getFixFilePath(id: string, name?: string): string {
+    if (name) {
+      const slug = slugify(name);
+      return path.join(this.fixesPath, `${slug}-${id}.json`);
+    }
     return path.join(this.fixesPath, `${id}.json`);
   }
 
-  private getBlueprintFilePath(id: string): string {
+  private getBlueprintFilePath(id: string, name?: string): string {
+    if (name) {
+      const slug = slugify(name);
+      return path.join(this.blueprintsPath, `${slug}-${id}.json`);
+    }
     return path.join(this.blueprintsPath, `${id}.json`);
   }
 
-  private getSolutionFilePath(id: string): string {
+  private getSolutionFilePath(id: string, name?: string): string {
+    if (name) {
+      const slug = slugify(name);
+      return path.join(this.solutionsPath, `${slug}-${id}.json`);
+    }
     return path.join(this.solutionsPath, `${id}.json`);
   }
 
