@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, writeFile, mkdir } from "fs/promises";
+import { mkdtemp, rm, writeFile, mkdir, readdir } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import { execa } from "execa";
@@ -859,13 +859,15 @@ describe("workflow learn - E2E", () => {
       const blueprint = createTestBlueprint({ name: "Specific Blueprint" });
       await store.saveBlueprint(blueprint);
 
-      const blueprintPath = join(
-        tempDir,
-        ".workflow",
-        "patterns",
-        "blueprints",
-        `${blueprint.id}.json`,
+      // Find the file (could be either UUID.json or slug-UUID.json)
+      const blueprintsDir = join(tempDir, ".workflow", "patterns", "blueprints");
+      const files = await readdir(blueprintsDir);
+      const matchingFile = files.find(
+        (file) => file.endsWith(`-${blueprint.id}.json`) || file === `${blueprint.id}.json`,
       );
+      
+      expect(matchingFile).toBeDefined();
+      const blueprintPath = join(blueprintsDir, matchingFile!);
 
       const { stdout, exitCode } = await execa(
         "node",
