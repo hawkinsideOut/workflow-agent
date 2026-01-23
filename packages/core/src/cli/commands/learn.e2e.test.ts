@@ -1022,7 +1022,7 @@ export function MyComponent() {
       );
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("category:hooks");
+      expect(stdout).toContain("pattern:hooks");
       expect(stdout).toContain("language:typescript");
     });
 
