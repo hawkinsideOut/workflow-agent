@@ -28,8 +28,8 @@ export const DependencyVersionSchema = z.object({
   name: z.string().min(1),
   /** Exact version used: "15.1.0" */
   version: z.string().min(1),
-  /** Semver compatible range: "^15.0.0" */
-  compatibleRange: z.string().min(1),
+  /** Semver compatible range: "^15.0.0" (optional, defaults to "*") */
+  compatibleRange: z.string().min(1).optional().default("*"),
 });
 
 // ============================================
@@ -104,6 +104,10 @@ export const FixCategoryEnum = z.enum([
   "build",
   "test",
   "security",
+  "migration",
+  "deprecation",
+  "performance",
+  "compatibility",
 ]);
 
 /** Valid solution types */

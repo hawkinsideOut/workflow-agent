@@ -208,16 +208,18 @@ export async function learnRecordCommand(options: LearnRecordOptions) {
     const catChoice = await p.select({
       message: "Category:",
       options: [
-        { value: "migration", label: "🔄 Migration" },
+        { value: "lint", label: "🔧 Lint Error" },
+        { value: "type-error", label: "🔷 Type Error" },
+        { value: "dependency", label: "📦 Dependency" },
+        { value: "config", label: "⚙️ Configuration" },
+        { value: "runtime", label: "🏃 Runtime" },
+        { value: "build", label: "🏗️ Build" },
+        { value: "test", label: "🧪 Test" },
         { value: "security", label: "🔒 Security" },
+        { value: "migration", label: "🔄 Migration" },
+        { value: "deprecation", label: "⚠️ Deprecation" },
         { value: "performance", label: "⚡ Performance" },
         { value: "compatibility", label: "🔗 Compatibility" },
-        { value: "deprecation", label: "⚠️ Deprecation" },
-        { value: "configuration", label: "⚙️ Configuration" },
-        { value: "best-practice", label: "✨ Best Practice" },
-        { value: "error-handling", label: "🚨 Error Handling" },
-        { value: "testing", label: "🧪 Testing" },
-        { value: "other", label: "📦 Other" },
       ],
     });
 
@@ -1815,93 +1817,93 @@ const LIBRARY_TAG_MAP: Record<string, { category: PatternTag["category"]; name: 
   "hapi": [{ category: "framework", name: "hapi" }],
 
   // Testing
-  "vitest": [{ category: "tooling", name: "vitest" }, { category: "category", name: "testing" }],
-  "jest": [{ category: "tooling", name: "jest" }, { category: "category", name: "testing" }],
-  "@testing-library/react": [{ category: "tooling", name: "testing-library" }],
-  "playwright": [{ category: "tooling", name: "playwright" }, { category: "category", name: "e2e" }],
-  "cypress": [{ category: "tooling", name: "cypress" }, { category: "category", name: "e2e" }],
+  "vitest": [{ category: "tool", name: "vitest" }, { category: "testing", name: "testing" }],
+  "jest": [{ category: "tool", name: "jest" }, { category: "testing", name: "testing" }],
+  "@testing-library/react": [{ category: "tool", name: "testing-library" }],
+  "playwright": [{ category: "tool", name: "playwright" }, { category: "testing", name: "e2e" }],
+  "cypress": [{ category: "tool", name: "cypress" }, { category: "testing", name: "e2e" }],
 
   // State Management
-  "zustand": [{ category: "tooling", name: "zustand" }, { category: "category", name: "state" }],
-  "redux": [{ category: "tooling", name: "redux" }, { category: "category", name: "state" }],
-  "@reduxjs/toolkit": [{ category: "tooling", name: "redux-toolkit" }, { category: "category", name: "state" }],
-  "jotai": [{ category: "tooling", name: "jotai" }, { category: "category", name: "state" }],
-  "recoil": [{ category: "tooling", name: "recoil" }, { category: "category", name: "state" }],
-  "mobx": [{ category: "tooling", name: "mobx" }, { category: "category", name: "state" }],
-  "pinia": [{ category: "tooling", name: "pinia" }, { category: "category", name: "state" }],
-  "xstate": [{ category: "tooling", name: "xstate" }, { category: "category", name: "state-machine" }],
+  "zustand": [{ category: "tool", name: "zustand" }, { category: "state", name: "state" }],
+  "redux": [{ category: "tool", name: "redux" }, { category: "state", name: "state" }],
+  "@reduxjs/toolkit": [{ category: "tool", name: "redux-toolkit" }, { category: "state", name: "state" }],
+  "jotai": [{ category: "tool", name: "jotai" }, { category: "state", name: "state" }],
+  "recoil": [{ category: "tool", name: "recoil" }, { category: "state", name: "state" }],
+  "mobx": [{ category: "tool", name: "mobx" }, { category: "state", name: "state" }],
+  "pinia": [{ category: "tool", name: "pinia" }, { category: "state", name: "state" }],
+  "xstate": [{ category: "tool", name: "xstate" }, { category: "state", name: "state-machine" }],
 
   // Database & ORM
-  "prisma": [{ category: "tooling", name: "prisma" }, { category: "category", name: "database" }],
-  "@prisma/client": [{ category: "tooling", name: "prisma" }, { category: "category", name: "database" }],
-  "drizzle-orm": [{ category: "tooling", name: "drizzle" }, { category: "category", name: "database" }],
-  "typeorm": [{ category: "tooling", name: "typeorm" }, { category: "category", name: "database" }],
-  "mongoose": [{ category: "tooling", name: "mongoose" }, { category: "category", name: "mongodb" }],
-  "knex": [{ category: "tooling", name: "knex" }, { category: "category", name: "database" }],
-  "sequelize": [{ category: "tooling", name: "sequelize" }, { category: "category", name: "database" }],
+  "prisma": [{ category: "tool", name: "prisma" }, { category: "database", name: "database" }],
+  "@prisma/client": [{ category: "tool", name: "prisma" }, { category: "database", name: "database" }],
+  "drizzle-orm": [{ category: "tool", name: "drizzle" }, { category: "database", name: "database" }],
+  "typeorm": [{ category: "tool", name: "typeorm" }, { category: "database", name: "database" }],
+  "mongoose": [{ category: "tool", name: "mongoose" }, { category: "database", name: "mongodb" }],
+  "knex": [{ category: "tool", name: "knex" }, { category: "database", name: "database" }],
+  "sequelize": [{ category: "tool", name: "sequelize" }, { category: "database", name: "database" }],
 
   // Authentication
-  "next-auth": [{ category: "tooling", name: "next-auth" }, { category: "category", name: "auth" }],
-  "@auth/core": [{ category: "tooling", name: "authjs" }, { category: "category", name: "auth" }],
-  "passport": [{ category: "tooling", name: "passport" }, { category: "category", name: "auth" }],
-  "lucia": [{ category: "tooling", name: "lucia" }, { category: "category", name: "auth" }],
-  "@clerk/nextjs": [{ category: "tooling", name: "clerk" }, { category: "category", name: "auth" }],
+  "next-auth": [{ category: "tool", name: "next-auth" }, { category: "auth", name: "auth" }],
+  "@auth/core": [{ category: "tool", name: "authjs" }, { category: "auth", name: "auth" }],
+  "passport": [{ category: "tool", name: "passport" }, { category: "auth", name: "auth" }],
+  "lucia": [{ category: "tool", name: "lucia" }, { category: "auth", name: "auth" }],
+  "@clerk/nextjs": [{ category: "tool", name: "clerk" }, { category: "auth", name: "auth" }],
 
   // UI Libraries
-  "@radix-ui/react-dialog": [{ category: "tooling", name: "radix-ui" }],
-  "@radix-ui/react-dropdown-menu": [{ category: "tooling", name: "radix-ui" }],
-  "@shadcn/ui": [{ category: "tooling", name: "shadcn" }],
-  "@chakra-ui/react": [{ category: "tooling", name: "chakra-ui" }],
-  "@mantine/core": [{ category: "tooling", name: "mantine" }],
-  "@headlessui/react": [{ category: "tooling", name: "headlessui" }],
-  "antd": [{ category: "tooling", name: "antd" }],
-  "@mui/material": [{ category: "tooling", name: "material-ui" }],
+  "@radix-ui/react-dialog": [{ category: "tool", name: "radix-ui" }],
+  "@radix-ui/react-dropdown-menu": [{ category: "tool", name: "radix-ui" }],
+  "@shadcn/ui": [{ category: "tool", name: "shadcn" }],
+  "@chakra-ui/react": [{ category: "tool", name: "chakra-ui" }],
+  "@mantine/core": [{ category: "tool", name: "mantine" }],
+  "@headlessui/react": [{ category: "tool", name: "headlessui" }],
+  "antd": [{ category: "tool", name: "antd" }],
+  "@mui/material": [{ category: "tool", name: "material-ui" }],
 
   // Styling
-  "tailwindcss": [{ category: "tooling", name: "tailwind" }],
-  "styled-components": [{ category: "tooling", name: "styled-components" }],
-  "@emotion/react": [{ category: "tooling", name: "emotion" }],
-  "sass": [{ category: "tooling", name: "sass" }],
+  "tailwindcss": [{ category: "tool", name: "tailwind" }],
+  "styled-components": [{ category: "tool", name: "styled-components" }],
+  "@emotion/react": [{ category: "tool", name: "emotion" }],
+  "sass": [{ category: "tool", name: "sass" }],
 
   // API & Data Fetching
-  "@tanstack/react-query": [{ category: "tooling", name: "tanstack-query" }, { category: "category", name: "data-fetching" }],
-  "swr": [{ category: "tooling", name: "swr" }, { category: "category", name: "data-fetching" }],
-  "@trpc/server": [{ category: "tooling", name: "trpc" }, { category: "category", name: "api" }],
-  "@trpc/client": [{ category: "tooling", name: "trpc" }, { category: "category", name: "api" }],
-  "graphql": [{ category: "tooling", name: "graphql" }, { category: "category", name: "api" }],
-  "@apollo/client": [{ category: "tooling", name: "apollo" }, { category: "category", name: "graphql" }],
-  "axios": [{ category: "tooling", name: "axios" }],
+  "@tanstack/react-query": [{ category: "tool", name: "tanstack-query" }, { category: "api", name: "data-fetching" }],
+  "swr": [{ category: "tool", name: "swr" }, { category: "api", name: "data-fetching" }],
+  "@trpc/server": [{ category: "tool", name: "trpc" }, { category: "api", name: "api" }],
+  "@trpc/client": [{ category: "tool", name: "trpc" }, { category: "api", name: "api" }],
+  "graphql": [{ category: "tool", name: "graphql" }, { category: "api", name: "api" }],
+  "@apollo/client": [{ category: "tool", name: "apollo" }, { category: "api", name: "graphql" }],
+  "axios": [{ category: "tool", name: "axios" }],
 
   // Form Libraries
-  "react-hook-form": [{ category: "tooling", name: "react-hook-form" }, { category: "category", name: "forms" }],
-  "formik": [{ category: "tooling", name: "formik" }, { category: "category", name: "forms" }],
-  "@tanstack/react-form": [{ category: "tooling", name: "tanstack-form" }, { category: "category", name: "forms" }],
+  "react-hook-form": [{ category: "tool", name: "react-hook-form" }, { category: "feature", name: "forms" }],
+  "formik": [{ category: "tool", name: "formik" }, { category: "feature", name: "forms" }],
+  "@tanstack/react-form": [{ category: "tool", name: "tanstack-form" }, { category: "feature", name: "forms" }],
 
   // Validation
-  "zod": [{ category: "tooling", name: "zod" }, { category: "category", name: "validation" }],
-  "yup": [{ category: "tooling", name: "yup" }, { category: "category", name: "validation" }],
-  "valibot": [{ category: "tooling", name: "valibot" }, { category: "category", name: "validation" }],
+  "zod": [{ category: "tool", name: "zod" }, { category: "feature", name: "validation" }],
+  "yup": [{ category: "tool", name: "yup" }, { category: "feature", name: "validation" }],
+  "valibot": [{ category: "tool", name: "valibot" }, { category: "feature", name: "validation" }],
 
   // Build Tools
-  "vite": [{ category: "tooling", name: "vite" }],
-  "esbuild": [{ category: "tooling", name: "esbuild" }],
-  "tsup": [{ category: "tooling", name: "tsup" }],
-  "webpack": [{ category: "tooling", name: "webpack" }],
-  "turbo": [{ category: "tooling", name: "turborepo" }],
+  "vite": [{ category: "tool", name: "vite" }],
+  "esbuild": [{ category: "tool", name: "esbuild" }],
+  "tsup": [{ category: "tool", name: "tsup" }],
+  "webpack": [{ category: "tool", name: "webpack" }],
+  "turbo": [{ category: "tool", name: "turborepo" }],
 
   // Utilities
-  "lodash": [{ category: "tooling", name: "lodash" }],
-  "date-fns": [{ category: "tooling", name: "date-fns" }],
-  "dayjs": [{ category: "tooling", name: "dayjs" }],
-  "uuid": [{ category: "tooling", name: "uuid" }],
-  "nanoid": [{ category: "tooling", name: "nanoid" }],
+  "lodash": [{ category: "tool", name: "lodash" }],
+  "date-fns": [{ category: "tool", name: "date-fns" }],
+  "dayjs": [{ category: "tool", name: "dayjs" }],
+  "uuid": [{ category: "tool", name: "uuid" }],
+  "nanoid": [{ category: "tool", name: "nanoid" }],
 
   // CLI & Developer Tools
-  "commander": [{ category: "tooling", name: "commander" }, { category: "category", name: "cli" }],
-  "yargs": [{ category: "tooling", name: "yargs" }, { category: "category", name: "cli" }],
-  "@clack/prompts": [{ category: "tooling", name: "clack" }, { category: "category", name: "cli" }],
-  "inquirer": [{ category: "tooling", name: "inquirer" }, { category: "category", name: "cli" }],
-  "chalk": [{ category: "tooling", name: "chalk" }],
+  "commander": [{ category: "tool", name: "commander" }, { category: "feature", name: "cli" }],
+  "yargs": [{ category: "tool", name: "yargs" }, { category: "feature", name: "cli" }],
+  "@clack/prompts": [{ category: "tool", name: "clack" }, { category: "feature", name: "cli" }],
+  "inquirer": [{ category: "tool", name: "inquirer" }, { category: "feature", name: "cli" }],
+  "chalk": [{ category: "tool", name: "chalk" }],
 
   // Runtime & Languages
   "typescript": [{ category: "language", name: "typescript" }],
@@ -2042,7 +2044,7 @@ function inferTagsFromContent(filePaths: string[]): PatternTag[] {
     } else if (ext === ".rs") {
       addTag("language", "rust");
     } else if (ext === ".css" || ext === ".scss" || ext === ".sass") {
-      addTag("tooling", "css");
+      addTag("file-type", "css");
     }
 
     // React detection
@@ -2052,32 +2054,32 @@ function inferTagsFromContent(filePaths: string[]): PatternTag[] {
 
     // Test file detection
     if (fileName.includes(".test.") || fileName.includes(".spec.") || fileName.startsWith("test_")) {
-      addTag("category", "testing");
+      addTag("testing", "testing");
     }
 
     // Config file detection
     if (fileName.includes("config") || fileName.startsWith(".")) {
-      addTag("category", "configuration");
+      addTag("file-type", "configuration");
     }
 
     // Component detection
     if (filePath.includes("/components/") || filePath.includes("\\components\\")) {
-      addTag("category", "component");
+      addTag("ui", "component");
     }
 
     // Hook detection
     if (filePath.includes("/hooks/") || filePath.includes("\\hooks\\") || fileName.startsWith("use")) {
-      addTag("category", "hooks");
+      addTag("pattern", "hooks");
     }
 
     // API/route detection
     if (filePath.includes("/api/") || filePath.includes("\\api\\") || filePath.includes("/routes/")) {
-      addTag("category", "api");
+      addTag("api", "api");
     }
 
     // Utils detection
     if (filePath.includes("/utils/") || filePath.includes("\\utils\\") || filePath.includes("/lib/")) {
-      addTag("category", "utilities");
+      addTag("library", "utilities");
     }
   }
 
