@@ -247,12 +247,15 @@ describe("PatternStore", () => {
         const pattern = createTestFixPattern();
         await store.saveFixPattern(pattern);
 
-        const filePath = path.join(
-          TEST_WORKSPACE,
-          PATTERNS_DIR,
-          "fixes",
-          `${pattern.id}.json`,
+        // Find the file (could be either UUID.json or slug-UUID.json)
+        const fixesDir = path.join(TEST_WORKSPACE, PATTERNS_DIR, "fixes");
+        const files = await fs.promises.readdir(fixesDir);
+        const matchingFile = files.find(
+          (file) => file.endsWith(`-${pattern.id}.json`) || file === `${pattern.id}.json`,
         );
+        
+        expect(matchingFile).toBeDefined();
+        const filePath = path.join(fixesDir, matchingFile!);
         const content = await fs.promises.readFile(filePath, "utf-8");
         const saved = JSON.parse(content);
 
@@ -1307,12 +1310,15 @@ describe("PatternStore", () => {
         const solution = createTestSolution();
         await store.saveSolution(solution);
 
-        const filePath = path.join(
-          TEST_WORKSPACE,
-          PATTERNS_DIR,
-          "solutions",
-          `${solution.id}.json`,
+        // Find the file (could be either UUID.json or slug-UUID.json)
+        const solutionsDir = path.join(TEST_WORKSPACE, PATTERNS_DIR, "solutions");
+        const files = await fs.promises.readdir(solutionsDir);
+        const matchingFile = files.find(
+          (file) => file.endsWith(`-${solution.id}.json`) || file === `${solution.id}.json`,
         );
+        
+        expect(matchingFile).toBeDefined();
+        const filePath = path.join(solutionsDir, matchingFile!);
         const content = await fs.promises.readFile(filePath, "utf-8");
         const saved = JSON.parse(content);
 
