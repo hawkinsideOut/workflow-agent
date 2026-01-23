@@ -354,6 +354,7 @@ export async function learnRecordCommand(options: LearnRecordOptions) {
       console.log(chalk.dim(`  ID: ${blueprint.id}`));
       console.log(chalk.dim(`  Name: ${name}`));
       console.log(chalk.dim(`  Framework: ${framework} ${version}`));
+      console.log(chalk.dim(`  Path: .workflow/patterns/blueprints/${blueprint.id}.json`));
     } else {
       console.log(chalk.red("\n❌ Failed to record blueprint"));
       console.log(chalk.dim(`  Error: ${result.error}`));
@@ -2356,6 +2357,7 @@ export async function learnCaptureCommand(paths: string[], options: LearnCapture
   console.log(chalk.dim(`Name: ${name}`));
   console.log(chalk.dim(`Files: ${files.length}`));
   console.log(chalk.dim(`Tags: ${formatTags(uniqueTags)}`));
+  console.log(chalk.dim(`Path: .workflow/patterns/blueprints/${blueprint.id}.json`));
   console.log(chalk.dim(`\nTo apply this pattern:`));
   console.log(chalk.cyan(`  pnpm workflow:learn:apply ${blueprint.id}`));
   console.log(chalk.dim(`\nTo publish to registry:`));

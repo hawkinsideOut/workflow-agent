@@ -285,6 +285,7 @@ async function recordSuccessfulFixes(
               frameworkVersion,
             );
             console.log(chalk.dim(`  ✓ Recorded: ${patternName}`));
+            console.log(chalk.dim(`    Path: .workflow/patterns/fixes/${newPattern.id}.json`));
           }
         }
       }
