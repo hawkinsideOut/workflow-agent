@@ -55,7 +55,7 @@ export function findProjectRoot(): string | null {
  * Remove deprecated scripts from package.json
  */
 export function removeDeprecatedScripts(
-  scripts: Record<string, string>
+  scripts: Record<string, string>,
 ): string[] {
   const removedScripts: string[] = [];
 
@@ -84,9 +84,10 @@ export function removeDeprecatedScripts(
 /**
  * Add the workflow script to package.json
  */
-export function addWorkflowScript(
-  scripts: Record<string, string>
-): { added: boolean; updated: boolean } {
+export function addWorkflowScript(scripts: Record<string, string>): {
+  added: boolean;
+  updated: boolean;
+} {
   const scriptName = "workflow";
   const scriptCommand = WORKFLOW_SCRIPTS.workflow;
 
@@ -144,7 +145,7 @@ export function addScriptsToPackageJson(): void {
       writeFileSync(
         packageJsonPath,
         JSON.stringify(packageJson, null, 2) + "\n",
-        "utf-8"
+        "utf-8",
       );
 
       console.log(`\n✓ Workflow Agent v${WORKFLOW_SCRIPTS_VERSION} configured`);
@@ -158,10 +159,10 @@ export function addScriptsToPackageJson(): void {
       // Log removed deprecated scripts
       if (removedScripts.length > 0) {
         console.log(
-          `\n  ⚠️  Removed ${removedScripts.length} deprecated scripts`
+          `\n  ⚠️  Removed ${removedScripts.length} deprecated scripts`,
         );
         console.log(
-          `     (Old workflow:* scripts replaced by single "workflow" command)`
+          `     (Old workflow:* scripts replaced by single "workflow" command)`,
         );
       }
 
@@ -186,11 +187,11 @@ export function addScriptsToPackageJson(): void {
         const templateResult = installMandatoryTemplates(
           projectRoot,
           templatesDir,
-          { silent: false, skipIfExists: true, mandatoryOnly: true }
+          { silent: false, skipIfExists: true, mandatoryOnly: true },
         );
         if (templateResult.installed.length > 0) {
           console.log(
-            `✓ Installed ${templateResult.installed.length} mandatory guideline templates`
+            `✓ Installed ${templateResult.installed.length} mandatory guideline templates`,
           );
         }
       }
@@ -202,7 +203,7 @@ export function addScriptsToPackageJson(): void {
       if (result.success) {
         const status = result.isNew ? "Generated" : "Updated";
         console.log(
-          `✓ ${status} .github/copilot-instructions.md from ${result.guidelinesCount} guidelines`
+          `✓ ${status} .github/copilot-instructions.md from ${result.guidelinesCount} guidelines`,
         );
         if (result.preservedCustomContent) {
           console.log("  (Custom content preserved)");

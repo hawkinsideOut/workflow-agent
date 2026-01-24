@@ -110,7 +110,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Contributor ID header for anonymous attribution
   - Patterns marked as synced (`syncedAt` timestamp) after successful push
   - Pulled patterns saved with `source: "community"` and default private visibility
-  
 - **GitHub App Registry Endpoints**: New pattern registry API in github-app server
   - `POST /patterns/push` - Submit anonymized patterns to the community registry
   - `GET /patterns/pull` - Fetch patterns with pagination and type filtering

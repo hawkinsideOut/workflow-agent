@@ -62,13 +62,25 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
     const enableResult = await contributorManager.enableSync();
     if (enableResult.success) {
       console.log(chalk.green("\n✅ Sync enabled!"));
-      console.log(chalk.dim("  Your anonymized patterns can now be shared with the community.\n"));
+      console.log(
+        chalk.dim(
+          "  Your anonymized patterns can now be shared with the community.\n",
+        ),
+      );
     } else {
-      console.log(chalk.red(`\n❌ Failed to enable sync: ${enableResult.error}\n`));
+      console.log(
+        chalk.red(`\n❌ Failed to enable sync: ${enableResult.error}\n`),
+      );
       process.exit(1);
     }
     // If only --enable-sync was passed, exit after enabling
-    if (!options.push && !options.pull && !options.all && !options.solutions && !options.scopes) {
+    if (
+      !options.push &&
+      !options.pull &&
+      !options.all &&
+      !options.solutions &&
+      !options.scopes
+    ) {
       p.outro(chalk.green("Sync enabled"));
       return;
     }
@@ -81,7 +93,9 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
       console.log(chalk.green("\n✅ Sync disabled!"));
       console.log(chalk.dim("  Your patterns will no longer be shared.\n"));
     } else {
-      console.log(chalk.red(`\n❌ Failed to disable sync: ${disableResult.error}\n`));
+      console.log(
+        chalk.red(`\n❌ Failed to disable sync: ${disableResult.error}\n`),
+      );
       process.exit(1);
     }
     p.outro(chalk.green("Sync disabled"));
@@ -104,7 +118,8 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
   }
 
   // Determine what to sync
-  const syncLearn = options.learn || options.all || (!options.solutions && !options.scopes);
+  const syncLearn =
+    options.learn || options.all || (!options.solutions && !options.scopes);
   const syncSolutions = options.solutions || options.all;
   const syncScopes = options.scopes || options.all;
 
@@ -138,11 +153,17 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
 
   // Show what will be synced
   console.log(chalk.cyan("\n📦 Syncing:"));
-  if (syncLearn) console.log(chalk.dim("  • Learning patterns (fixes, blueprints)"));
+  if (syncLearn)
+    console.log(chalk.dim("  • Learning patterns (fixes, blueprints)"));
   if (syncSolutions) console.log(chalk.dim("  • Solution patterns"));
   if (syncScopes) console.log(chalk.dim("  • Custom scopes"));
-  console.log(chalk.dim(`  • Direction: ${direction === "both" ? "push + pull" : direction}`));
-  if (options.includePrivate) console.log(chalk.dim("  • Including private patterns"));
+  console.log(
+    chalk.dim(
+      `  • Direction: ${direction === "both" ? "push + pull" : direction}`,
+    ),
+  );
+  if (options.includePrivate)
+    console.log(chalk.dim("  • Including private patterns"));
   console.log("");
 
   const store = new PatternStore(cwd);
@@ -158,6 +179,7 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
 
   // Get stats for all patterns to show why some might be excluded
   const stats = await store.getStats();
+  // Note: These variables are used to provide context about excluded patterns
   const totalLocalFixes = stats.totalFixes;
   const totalLocalBlueprints = stats.totalBlueprints;
   const totalLocalSolutions = stats.totalSolutions;
@@ -165,11 +187,21 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
   const privateBlueprints = stats.privateBlueprints;
   const privateSolutions = stats.privateSolutions;
 
+  // Use the stats to show info about local patterns
+  void totalLocalFixes;
+  void totalLocalBlueprints;
+  void totalLocalSolutions;
+  void privateBlueprints;
+
   // If --include-private, we need to get all patterns including private ones
   if (options.includePrivate) {
     const allFixes = await store.listFixPatterns({ includeDeprecated: false });
-    const allBlueprints = await store.listBlueprints({ includeDeprecated: false });
-    const allSolutions = await store.listSolutions({ includeDeprecated: false });
+    const allBlueprints = await store.listBlueprints({
+      includeDeprecated: false,
+    });
+    const allSolutions = await store.listSolutions({
+      includeDeprecated: false,
+    });
     fixes = allFixes.data ?? [];
     blueprints = allBlueprints.data ?? [];
     solutions = allSolutions.data ?? [];
@@ -185,14 +217,30 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
   if (syncLearn) {
     const publicCount = fixes.length;
     const privateCount = privateFixes;
-    
+
     if (options.includePrivate) {
-      console.log(chalk.dim(`  Found ${publicCount} fixes, ${blueprints.length} blueprints to sync (including private)`));
+      console.log(
+        chalk.dim(
+          `  Found ${publicCount} fixes, ${blueprints.length} blueprints to sync (including private)`,
+        ),
+      );
     } else if (publicCount === 0 && privateCount > 0) {
-      console.log(chalk.yellow(`  Found 0 fixes ready to sync (${privateCount} are private)`));
-      console.log(chalk.dim(`    Use --include-private to include them, or run 'workflow learn migrate --public'`));
+      console.log(
+        chalk.yellow(
+          `  Found 0 fixes ready to sync (${privateCount} are private)`,
+        ),
+      );
+      console.log(
+        chalk.dim(
+          `    Use --include-private to include them, or run 'workflow learn migrate --public'`,
+        ),
+      );
     } else {
-      console.log(chalk.dim(`  Found ${publicCount} fixes, ${blueprints.length} blueprints ready to sync`));
+      console.log(
+        chalk.dim(
+          `  Found ${publicCount} fixes, ${blueprints.length} blueprints ready to sync`,
+        ),
+      );
     }
 
     for (const fix of fixes) {
@@ -221,41 +269,75 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
   if (syncSolutions) {
     const publicCount = solutions.length;
     const privateCount = privateSolutions;
-    
+
     if (options.includePrivate) {
-      console.log(chalk.dim(`  Found ${publicCount} solutions to sync (including private)`));
+      console.log(
+        chalk.dim(
+          `  Found ${publicCount} solutions to sync (including private)`,
+        ),
+      );
     } else if (publicCount === 0 && privateCount > 0 && !options.dryRun) {
-      console.log(chalk.yellow(`  Found 0 solutions ready to sync (${privateCount} are private)`));
-      
+      console.log(
+        chalk.yellow(
+          `  Found 0 solutions ready to sync (${privateCount} are private)`,
+        ),
+      );
+
       // Prompt user to migrate solutions to public
       const shouldMigrate = await p.confirm({
         message: `Would you like to make your ${privateCount} solution(s) public for sync?`,
       });
-      
+
       if (p.isCancel(shouldMigrate) || !shouldMigrate) {
-        console.log(chalk.dim(`    Skipping private solutions. Use --include-private to force include them.`));
+        console.log(
+          chalk.dim(
+            `    Skipping private solutions. Use --include-private to force include them.`,
+          ),
+        );
       } else {
         // Migrate all private solutions to public
-        const allSolutions = await store.listSolutions({ includeDeprecated: false });
+        const allSolutions = await store.listSolutions({
+          includeDeprecated: false,
+        });
         for (const sol of allSolutions.data ?? []) {
           if (sol.isPrivate) {
-            const updated = { ...sol, isPrivate: false, updatedAt: new Date().toISOString() };
+            const updated = {
+              ...sol,
+              isPrivate: false,
+              updatedAt: new Date().toISOString(),
+            };
             await store.saveSolution(updated);
             solutions.push(updated);
           }
         }
-        console.log(chalk.green(`  ✓ Migrated ${privateCount} solutions to public`));
+        console.log(
+          chalk.green(`  ✓ Migrated ${privateCount} solutions to public`),
+        );
       }
     } else if (publicCount === 0 && privateCount > 0) {
       // Dry run mode - just show the message
-      console.log(chalk.yellow(`  Found 0 solutions ready to sync (${privateCount} are private)`));
-      console.log(chalk.dim(`    Use --include-private to include them, or run 'workflow solution migrate --public'`));
+      console.log(
+        chalk.yellow(
+          `  Found 0 solutions ready to sync (${privateCount} are private)`,
+        ),
+      );
+      console.log(
+        chalk.dim(
+          `    Use --include-private to include them, or run 'workflow solution migrate --public'`,
+        ),
+      );
     } else if (publicCount === 0 && privateCount === 0) {
       // No solutions at all - check for validation errors
       const validationErrors = store.getValidationErrors();
-      const solutionErrors = validationErrors.filter((e) => e.type === "solution");
+      const solutionErrors = validationErrors.filter(
+        (e) => e.type === "solution",
+      );
       if (solutionErrors.length > 0) {
-        console.log(chalk.yellow(`  Found 0 solutions (${solutionErrors.length} failed schema validation)`));
+        console.log(
+          chalk.yellow(
+            `  Found 0 solutions (${solutionErrors.length} failed schema validation)`,
+          ),
+        );
         for (const err of solutionErrors) {
           console.log(chalk.dim(`    • ${err.file}: ${err.error}`));
           if (err.details) {
@@ -263,7 +345,11 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
               console.log(chalk.dim(`      - ${detail}`));
             }
             if (err.details.length > 3) {
-              console.log(chalk.dim(`      ... and ${err.details.length - 3} more issues`));
+              console.log(
+                chalk.dim(
+                  `      ... and ${err.details.length - 3} more issues`,
+                ),
+              );
             }
           }
         }
@@ -299,8 +385,12 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
       console.log(chalk.yellow("  No patterns to push\n"));
     } else {
       const fixCount = patternsToSync.filter((p) => p.type === "fix").length;
-      const bpCount = patternsToSync.filter((p) => p.type === "blueprint").length;
-      const solutionCount = patternsToSync.filter((p) => p.type === "solution").length;
+      const bpCount = patternsToSync.filter(
+        (p) => p.type === "blueprint",
+      ).length;
+      const solutionCount = patternsToSync.filter(
+        (p) => p.type === "solution",
+      ).length;
 
       console.log(
         chalk.dim(
@@ -309,7 +399,9 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
       );
 
       if (options.dryRun) {
-        console.log(chalk.yellow("\n  [DRY-RUN] Would push patterns to registry"));
+        console.log(
+          chalk.yellow("\n  [DRY-RUN] Would push patterns to registry"),
+        );
       } else {
         // Get contributor ID
         const contributorResult = await contributorManager.getOrCreateId();
@@ -356,7 +448,9 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
           }
 
           console.log(
-            chalk.green(`\n  ✅ Pushed ${pushResult.pushed} patterns to registry`),
+            chalk.green(
+              `\n  ✅ Pushed ${pushResult.pushed} patterns to registry`,
+            ),
           );
 
           if (pushResult.skipped > 0) {
@@ -381,9 +475,7 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
           if (error instanceof RateLimitedException) {
             console.log(chalk.red("\n  ❌ Rate limit exceeded"));
             console.log(
-              chalk.dim(
-                `     Try again in ${error.getTimeUntilReset()}`,
-              ),
+              chalk.dim(`     Try again in ${error.getTimeUntilReset()}`),
             );
           } else if (error instanceof RegistryError) {
             console.log(chalk.red(`\n  ❌ Registry error: ${error.message}`));
@@ -405,7 +497,9 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
     console.log(chalk.cyan("\n📥 Pulling patterns from registry...\n"));
 
     if (options.dryRun) {
-      console.log(chalk.yellow("  [DRY-RUN] Would pull patterns from registry"));
+      console.log(
+        chalk.yellow("  [DRY-RUN] Would pull patterns from registry"),
+      );
     } else {
       const registryClient = new RegistryClient();
 
@@ -459,31 +553,43 @@ export async function syncCommand(options: UnifiedSyncOptions): Promise<void> {
 
         // Show registry stats
         if (syncSolutions && typeCounts["solution"] !== undefined) {
-          console.log(chalk.dim(`  Registry has ${typeCounts["solution"]} solution(s) available`));
+          console.log(
+            chalk.dim(
+              `  Registry has ${typeCounts["solution"]} solution(s) available`,
+            ),
+          );
         }
         if (syncLearn) {
           const fixCount = typeCounts["fix"] ?? 0;
           const bpCount = typeCounts["blueprint"] ?? 0;
-          console.log(chalk.dim(`  Registry has ${fixCount} fix(es), ${bpCount} blueprint(s) available`));
+          console.log(
+            chalk.dim(
+              `  Registry has ${fixCount} fix(es), ${bpCount} blueprint(s) available`,
+            ),
+          );
         }
 
         if (totalPatterns === 0) {
           console.log(chalk.dim("  No new patterns to pull"));
         } else {
           console.log(
-            chalk.green(`\n  ✅ Pulled ${savedCount} new patterns from registry`),
+            chalk.green(
+              `\n  ✅ Pulled ${savedCount} new patterns from registry`,
+            ),
           );
           if (savedCount < totalPatterns) {
-            console.log(chalk.dim(`     (${totalPatterns - savedCount} already existed locally)`));
+            console.log(
+              chalk.dim(
+                `     (${totalPatterns - savedCount} already existed locally)`,
+              ),
+            );
           }
         }
       } catch (error) {
         if (error instanceof RateLimitedException) {
           console.log(chalk.red("\n  ❌ Rate limit exceeded"));
           console.log(
-            chalk.dim(
-              `     Try again in ${error.getTimeUntilReset()}`,
-            ),
+            chalk.dim(`     Try again in ${error.getTimeUntilReset()}`),
           );
         } else if (error instanceof RegistryError) {
           console.log(chalk.red(`\n  ❌ Registry error: ${error.message}`));

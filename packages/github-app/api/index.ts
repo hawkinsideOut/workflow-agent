@@ -33,16 +33,17 @@ app.get("/ping", (c) => {
 // For production, consider using a persistent database service
 app.post("/webhooks/github", async (c) => {
   const payload = await c.req.json();
-  
+
   // Log webhook received (actual processing would need db/config)
   console.log("Webhook received:", {
     event: c.req.header("x-github-event"),
     delivery: c.req.header("x-github-delivery"),
   });
 
-  return c.json({ 
+  return c.json({
     received: true,
-    message: "Webhook received. Note: Full processing requires database configuration." 
+    message:
+      "Webhook received. Note: Full processing requires database configuration.",
   });
 });
 

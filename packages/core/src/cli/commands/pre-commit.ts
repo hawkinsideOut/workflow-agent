@@ -22,7 +22,9 @@ interface PreCommitOptions {
  * - Focuses on staged changes
  * - Optimized for speed in pre-commit context
  */
-export async function preCommitCommand(options: PreCommitOptions): Promise<void> {
+export async function preCommitCommand(
+  options: PreCommitOptions,
+): Promise<void> {
   const stagedOnly = options.stagedOnly ?? true;
   const dryRun = options.dryRun ?? false;
   const maxRetries = options.maxRetries ?? "5"; // Lower default for pre-commit speed

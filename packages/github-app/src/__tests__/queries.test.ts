@@ -611,9 +611,21 @@ describe("Database Queries", () => {
     describe("getPatterns", () => {
       it("should return all patterns with pagination", () => {
         // Create some test patterns
-        createPattern("patterns-test-1", "fix", JSON.stringify({ name: "Fix 1" }));
-        createPattern("patterns-test-2", "blueprint", JSON.stringify({ name: "Blueprint 1" }));
-        createPattern("patterns-test-3", "fix", JSON.stringify({ name: "Fix 2" }));
+        createPattern(
+          "patterns-test-1",
+          "fix",
+          JSON.stringify({ name: "Fix 1" }),
+        );
+        createPattern(
+          "patterns-test-2",
+          "blueprint",
+          JSON.stringify({ name: "Blueprint 1" }),
+        );
+        createPattern(
+          "patterns-test-3",
+          "fix",
+          JSON.stringify({ name: "Fix 2" }),
+        );
 
         const result = getPatterns(undefined, 50, 0);
         expect(result.patterns.length).toBeGreaterThanOrEqual(3);
@@ -622,20 +634,32 @@ describe("Database Queries", () => {
 
       it("should filter by pattern type", () => {
         createPattern("filter-type-1", "fix", JSON.stringify({ name: "Fix" }));
-        createPattern("filter-type-2", "blueprint", JSON.stringify({ name: "Blueprint" }));
+        createPattern(
+          "filter-type-2",
+          "blueprint",
+          JSON.stringify({ name: "Blueprint" }),
+        );
 
         const fixResult = getPatterns("fix", 50, 0);
         const bpResult = getPatterns("blueprint", 50, 0);
 
         // All results should be of the correct type
-        expect(fixResult.patterns.every((p) => p.pattern_type === "fix")).toBe(true);
-        expect(bpResult.patterns.every((p) => p.pattern_type === "blueprint")).toBe(true);
+        expect(fixResult.patterns.every((p) => p.pattern_type === "fix")).toBe(
+          true,
+        );
+        expect(
+          bpResult.patterns.every((p) => p.pattern_type === "blueprint"),
+        ).toBe(true);
       });
 
       it("should respect limit parameter", () => {
         // Create more patterns
         for (let i = 0; i < 5; i++) {
-          createPattern(`limit-test-${i}`, "fix", JSON.stringify({ name: `Pattern ${i}` }));
+          createPattern(
+            `limit-test-${i}`,
+            "fix",
+            JSON.stringify({ name: `Pattern ${i}` }),
+          );
         }
 
         const result = getPatterns(undefined, 3, 0);
@@ -648,7 +672,9 @@ describe("Database Queries", () => {
 
         // Different patterns should be returned
         if (result1.patterns.length > 0 && result2.patterns.length > 0) {
-          expect(result1.patterns[0].pattern_id).not.toBe(result2.patterns[0].pattern_id);
+          expect(result1.patterns[0].pattern_id).not.toBe(
+            result2.patterns[0].pattern_id,
+          );
         }
       });
     });
@@ -676,7 +702,11 @@ describe("Database Queries", () => {
       });
 
       it("should skip duplicate patterns by ID", () => {
-        createPattern("batch-dup-id", "fix", JSON.stringify({ name: "Original" }));
+        createPattern(
+          "batch-dup-id",
+          "fix",
+          JSON.stringify({ name: "Original" }),
+        );
 
         const result = batchCreatePatterns([
           {
@@ -733,7 +763,11 @@ describe("Database Queries", () => {
     describe("getPatternsNewerThan", () => {
       it("should return patterns newer than the given date", () => {
         const oldDate = "2020-01-01T00:00:00.000Z";
-        createPattern("newer-than-test", "fix", JSON.stringify({ name: "New" }));
+        createPattern(
+          "newer-than-test",
+          "fix",
+          JSON.stringify({ name: "New" }),
+        );
 
         const patterns = getPatternsNewerThan(oldDate, 100);
         expect(patterns.length).toBeGreaterThan(0);

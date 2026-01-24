@@ -29,10 +29,10 @@ All database/API access MUST go through designated modules. Never create clients
 
 ### Database Client
 
-| Location | Purpose | Usage Context |
-| -------- | ------- | ------------- |
-| `lib/db/client` | Database client singleton | All database operations |
-| `lib/db/queries/` | Reusable query functions | Common data access patterns |
+| Location          | Purpose                   | Usage Context               |
+| ----------------- | ------------------------- | --------------------------- |
+| `lib/db/client`   | Database client singleton | All database operations     |
+| `lib/db/queries/` | Reusable query functions  | Common data access patterns |
 
 **Usage Pattern:**
 
@@ -47,8 +47,8 @@ const users = await db.query("SELECT * FROM users");
 
 ### External API Clients
 
-| Location | Purpose | Usage Context |
-| -------- | ------- | ------------- |
+| Location               | Purpose                  | Usage Context            |
+| ---------------------- | ------------------------ | ------------------------ |
 | `lib/api/[service].ts` | External service clients | Third-party integrations |
 
 ---
@@ -61,10 +61,10 @@ Authorization logic is centralized. Never implement permission checks inline.
 
 ### Authorization Utilities
 
-| Location | Purpose | Usage Context |
-| -------- | ------- | ------------- |
-| `lib/auth/index.ts` | Auth helpers, session management | All auth operations |
-| `lib/auth/permissions.ts` | Permission constants, role checks | Access control |
+| Location                  | Purpose                           | Usage Context       |
+| ------------------------- | --------------------------------- | ------------------- |
+| `lib/auth/index.ts`       | Auth helpers, session management  | All auth operations |
+| `lib/auth/permissions.ts` | Permission constants, role checks | Access control      |
 
 **Usage Pattern:**
 
@@ -102,12 +102,12 @@ All shared types live in designated locations. Never define types inline for sha
 
 <!-- PROJECT-SPECIFIC: Define your type locations -->
 
-| Location | Contents | When to Update |
-| -------- | -------- | -------------- |
-| `types/index.ts` | Application types | Adding new entities |
-| `types/api.ts` | API request/response types | API changes |
-| `types/database.ts` | Database types | After schema changes |
-| `lib/validations/` | Validation schemas (Zod, etc.) | Adding new inputs |
+| Location            | Contents                       | When to Update       |
+| ------------------- | ------------------------------ | -------------------- |
+| `types/index.ts`    | Application types              | Adding new entities  |
+| `types/api.ts`      | API request/response types     | API changes          |
+| `types/database.ts` | Database types                 | After schema changes |
+| `lib/validations/`  | Validation schemas (Zod, etc.) | Adding new inputs    |
 
 **Usage Pattern:**
 
@@ -139,16 +139,18 @@ Core business logic lives in service modules, not in route handlers or UI compon
 
 ### Service Layer
 
-| Location | Purpose |
-| -------- | ------- |
+| Location                   | Purpose                        |
+| -------------------------- | ------------------------------ |
 | `lib/services/[entity].ts` | Entity-specific business logic |
-| `lib/services/[domain]/` | Domain-grouped services |
+| `lib/services/[domain]/`   | Domain-grouped services        |
 
 **Service Pattern:**
 
 ```typescript
 // lib/services/users.ts
-export async function createUser(input: CreateUserInput): Promise<Result<User>> {
+export async function createUser(
+  input: CreateUserInput,
+): Promise<Result<User>> {
   // 1. Validate input
   const validated = userSchema.parse(input);
 
@@ -186,12 +188,12 @@ Utility functions are organized by category in the utils directory.
 
 <!-- PROJECT-SPECIFIC: Define your utility locations -->
 
-| Location | Purpose |
-| -------- | ------- |
-| `lib/utils/string.ts` | String manipulation |
-| `lib/utils/date.ts` | Date formatting/parsing |
-| `lib/utils/validation.ts` | Validation helpers |
-| `lib/utils/formatting.ts` | Display formatting |
+| Location                  | Purpose                 |
+| ------------------------- | ----------------------- |
+| `lib/utils/string.ts`     | String manipulation     |
+| `lib/utils/date.ts`       | Date formatting/parsing |
+| `lib/utils/validation.ts` | Validation helpers      |
+| `lib/utils/formatting.ts` | Display formatting      |
 
 **Before Creating a New Utility:**
 
@@ -207,11 +209,11 @@ Application configuration is centralized.
 
 <!-- PROJECT-SPECIFIC: Define your config locations -->
 
-| Location | Purpose |
-| -------- | ------- |
-| `config/index.ts` | Application configuration |
-| `config/constants.ts` | Application constants |
-| `.env` / `.env.local` | Environment variables |
+| Location              | Purpose                   |
+| --------------------- | ------------------------- |
+| `config/index.ts`     | Application configuration |
+| `config/constants.ts` | Application constants     |
+| `.env` / `.env.local` | Environment variables     |
 
 **Usage Pattern:**
 
@@ -228,17 +230,17 @@ const API_URL = config.apiUrl;
 
 ## Quick Reference: Where Does It Go?
 
-| I need to create... | Location |
-| ------------------- | -------- |
-| Database query function | `lib/db/queries/` |
-| API route handler | `app/api/` or `routes/` |
-| Business logic | `lib/services/` |
-| Shared type | `types/` |
-| Validation schema | `lib/validations/` |
-| Utility function | `lib/utils/` |
-| Configuration | `config/` |
-| Auth helper | `lib/auth/` |
-| External API client | `lib/api/` |
+| I need to create...     | Location                |
+| ----------------------- | ----------------------- |
+| Database query function | `lib/db/queries/`       |
+| API route handler       | `app/api/` or `routes/` |
+| Business logic          | `lib/services/`         |
+| Shared type             | `types/`                |
+| Validation schema       | `lib/validations/`      |
+| Utility function        | `lib/utils/`            |
+| Configuration           | `config/`               |
+| Auth helper             | `lib/auth/`             |
+| External API client     | `lib/api/`              |
 
 ---
 

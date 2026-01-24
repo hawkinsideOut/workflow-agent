@@ -10,7 +10,7 @@ import { createRedisClient } from "../src/redis";
 
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ): Promise<void> {
   // Only allow GET
   if (req.method !== "GET") {

@@ -33,7 +33,9 @@ export function isValidUUID(id: unknown): boolean {
 /**
  * Validate a push request
  */
-export function validatePushRequest(body: unknown): ValidationResult<PushRequest> {
+export function validatePushRequest(
+  body: unknown,
+): ValidationResult<PushRequest> {
   const errors: Array<{ path: string[]; message: string }> = [];
 
   if (!body || typeof body !== "object") {
@@ -55,7 +57,9 @@ export function validatePushRequest(body: unknown): ValidationResult<PushRequest
   if (data.patterns.length === 0) {
     return {
       success: false,
-      errors: [{ path: ["patterns"], message: "patterns array cannot be empty" }],
+      errors: [
+        { path: ["patterns"], message: "patterns array cannot be empty" },
+      ],
     };
   }
 
@@ -63,7 +67,10 @@ export function validatePushRequest(body: unknown): ValidationResult<PushRequest
     return {
       success: false,
       errors: [
-        { path: ["patterns"], message: "Cannot push more than 50 patterns at once" },
+        {
+          path: ["patterns"],
+          message: "Cannot push more than 50 patterns at once",
+        },
       ],
     };
   }
@@ -73,7 +80,10 @@ export function validatePushRequest(body: unknown): ValidationResult<PushRequest
     const pattern = data.patterns[i] as Record<string, unknown>;
 
     if (!pattern || typeof pattern !== "object") {
-      errors.push({ path: ["patterns", String(i)], message: "must be an object" });
+      errors.push({
+        path: ["patterns", String(i)],
+        message: "must be an object",
+      });
       continue;
     }
 
@@ -109,7 +119,10 @@ export function validatePushRequest(body: unknown): ValidationResult<PushRequest
         });
       }
 
-      if (!patternData.description || typeof patternData.description !== "string") {
+      if (
+        !patternData.description ||
+        typeof patternData.description !== "string"
+      ) {
         errors.push({
           path: ["patterns", String(i), "data", "description"],
           message: "pattern must have a description",
@@ -130,7 +143,8 @@ export function validatePushRequest(body: unknown): ValidationResult<PushRequest
       // Validate description length
       if (
         typeof patternData.description === "string" &&
-        (patternData.description.length < 10 || patternData.description.length > 2000)
+        (patternData.description.length < 10 ||
+          patternData.description.length > 2000)
       ) {
         errors.push({
           path: ["patterns", String(i), "data", "description"],
@@ -151,7 +165,7 @@ export function validatePushRequest(body: unknown): ValidationResult<PushRequest
  * Validate pull query parameters
  */
 export function validatePullQuery(
-  query: Record<string, string | string[] | undefined>
+  query: Record<string, string | string[] | undefined>,
 ): ValidationResult<PullQuery> {
   const errors: Array<{ path: string[]; message: string }> = [];
   const result: PullQuery = {};
@@ -173,7 +187,7 @@ export function validatePullQuery(
   if (query.limit !== undefined) {
     const limit = parseInt(
       Array.isArray(query.limit) ? query.limit[0] : query.limit,
-      10
+      10,
     );
     if (isNaN(limit) || limit < 1 || limit > 100) {
       errors.push({ path: ["limit"], message: "must be between 1 and 100" });
@@ -186,10 +200,13 @@ export function validatePullQuery(
   if (query.offset !== undefined) {
     const offset = parseInt(
       Array.isArray(query.offset) ? query.offset[0] : query.offset,
-      10
+      10,
     );
     if (isNaN(offset) || offset < 0) {
-      errors.push({ path: ["offset"], message: "must be a non-negative number" });
+      errors.push({
+        path: ["offset"],
+        message: "must be a non-negative number",
+      });
     } else {
       result.offset = offset;
     }
@@ -200,7 +217,10 @@ export function validatePullQuery(
     const since = Array.isArray(query.since) ? query.since[0] : query.since;
     const date = new Date(since);
     if (isNaN(date.getTime())) {
-      errors.push({ path: ["since"], message: "must be a valid ISO timestamp" });
+      errors.push({
+        path: ["since"],
+        message: "must be a valid ISO timestamp",
+      });
     } else {
       result.since = since;
     }
@@ -217,7 +237,7 @@ export function validatePullQuery(
  * Validate contributor ID header
  */
 export function validateContributorId(
-  contributorId: string | null | undefined
+  contributorId: string | null | undefined,
 ): ValidationResult<string> {
   if (!contributorId || typeof contributorId !== "string") {
     return {

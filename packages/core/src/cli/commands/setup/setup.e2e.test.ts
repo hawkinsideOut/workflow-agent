@@ -3,22 +3,11 @@
  * Tests CLI invocation for setup and setup auto
  */
 
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  beforeEach,
-  afterEach,
-} from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from "vitest";
 import { writeFile, mkdir, readFile } from "fs/promises";
 import { join } from "path";
 import { execa } from "execa";
-import {
-  setupTempDir,
-  cleanupTempDir,
-  initGitRepo,
-} from "../test-utils.js";
+import { setupTempDir, cleanupTempDir, initGitRepo } from "../test-utils.js";
 
 describe("setup CLI commands - E2E", () => {
   let tempDir: string;
@@ -40,7 +29,7 @@ describe("setup CLI commands - E2E", () => {
     };
     await writeFile(
       join(tempDir, "package.json"),
-      JSON.stringify(packageJson, null, 2)
+      JSON.stringify(packageJson, null, 2),
     );
   });
 
@@ -69,7 +58,7 @@ describe("setup CLI commands - E2E", () => {
       });
 
       const pkg = JSON.parse(
-        await readFile(join(tempDir, "package.json"), "utf-8")
+        await readFile(join(tempDir, "package.json"), "utf-8"),
       );
 
       // Should have the single workflow script
@@ -93,7 +82,7 @@ describe("setup CLI commands - E2E", () => {
       };
       await writeFile(
         join(tempDir, "package.json"),
-        JSON.stringify(packageJson, null, 2)
+        JSON.stringify(packageJson, null, 2),
       );
 
       const { stdout } = await execa("node", [cliPath, "setup"], {
@@ -102,7 +91,7 @@ describe("setup CLI commands - E2E", () => {
       });
 
       const pkg = JSON.parse(
-        await readFile(join(tempDir, "package.json"), "utf-8")
+        await readFile(join(tempDir, "package.json"), "utf-8"),
       );
 
       // Should have new workflow script
@@ -166,7 +155,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toContain("Auto-Setup");
@@ -179,7 +168,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toContain("Audit Report");
@@ -192,7 +181,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toContain("Auto-Setup");
@@ -205,7 +194,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toContain("Framework:");
@@ -218,7 +207,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toContain("Package Manager:");
@@ -231,7 +220,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toContain("TypeScript:");
@@ -246,7 +235,7 @@ describe("setup CLI commands - E2E", () => {
     it("detects TypeScript project", async () => {
       await writeFile(
         join(tempDir, "tsconfig.json"),
-        JSON.stringify({ compilerOptions: {} })
+        JSON.stringify({ compilerOptions: {} }),
       );
 
       const { stdout } = await execa(
@@ -255,7 +244,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toContain("TypeScript: Yes");
@@ -271,7 +260,7 @@ describe("setup CLI commands - E2E", () => {
       };
       await writeFile(
         join(tempDir, "package.json"),
-        JSON.stringify(pkg, null, 2)
+        JSON.stringify(pkg, null, 2),
       );
 
       const { stdout } = await execa(
@@ -280,7 +269,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toContain("Framework:");
@@ -290,7 +279,7 @@ describe("setup CLI commands - E2E", () => {
       await mkdir(join(tempDir, "packages", "a"), { recursive: true });
       await writeFile(
         join(tempDir, "pnpm-workspace.yaml"),
-        "packages:\n  - 'packages/*'"
+        "packages:\n  - 'packages/*'",
       );
 
       const { stdout } = await execa(
@@ -299,7 +288,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toContain("Monorepo:");
@@ -318,7 +307,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       const output = (stdout + stderr).toLowerCase();
@@ -332,7 +321,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toContain("Auto-Setup");
@@ -360,7 +349,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toMatch(/list|solution|pattern/i);
@@ -373,7 +362,7 @@ describe("setup CLI commands - E2E", () => {
         {
           cwd: tempDir,
           reject: false,
-        }
+        },
       );
 
       expect(stdout).toMatch(/list|learn|pattern/i);

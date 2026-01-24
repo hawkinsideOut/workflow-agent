@@ -7,8 +7,9 @@ import { autoSetupCommand } from "../auto-setup-command.js";
  * Handles: setup, setup scripts, setup auto
  */
 export function createSetupCommand(): Command {
-  const setupCmd = new Command("setup")
-    .description("Setup and configuration commands");
+  const setupCmd = new Command("setup").description(
+    "Setup and configuration commands",
+  );
 
   // Default action - add workflow scripts
   setupCmd.action(setupCommand);

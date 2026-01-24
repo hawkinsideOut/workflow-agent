@@ -71,7 +71,10 @@ ${chalk.bold("Examples:")}
     .description("Record a new pattern from a successful implementation")
     .option("--name <name>", "Pattern name")
     .option("--description <desc>", "Pattern description")
-    .option("--category <cat>", "Category (migration, security, performance, etc.)")
+    .option(
+      "--category <cat>",
+      "Category (migration, security, performance, etc.)",
+    )
     .option("--framework <fw>", "Framework (next, react, vue, etc.)")
     .option("--version <ver>", "Framework version range")
     .option("--tags <tags>", "Comma-separated tags (category:value)")
@@ -130,7 +133,9 @@ ${chalk.bold("Examples:")}
   // capture subcommand
   learnCmd
     .command("capture <paths...>")
-    .description("Capture files as a blueprint pattern with auto-inferred metadata")
+    .description(
+      "Capture files as a blueprint pattern with auto-inferred metadata",
+    )
     .option("--name <name>", "Pattern name (inferred from paths if omitted)")
     .option("--description <desc>", "Pattern description")
     .option("--framework <fw>", "Override inferred framework")
@@ -151,7 +156,9 @@ ${chalk.bold("Examples:")}
   // sync subcommand
   learnCmd
     .command("sync")
-    .description("Sync patterns with remote registry (alias for: workflow sync --learn)")
+    .description(
+      "Sync patterns with remote registry (alias for: workflow sync --learn)",
+    )
     .option("--push", "Push local patterns to registry")
     .option("--pull", "Pull patterns from registry")
     .option("--dry-run", "Preview without syncing")
@@ -264,7 +271,11 @@ ${chalk.bold("Examples:")}
     .description("Export learning patterns to a file")
     .option("-o, --output <path>", "Output file path", "patterns-export.json")
     .option("-f, --format <format>", "Output format (json, yaml)", "json")
-    .option("-t, --type <type>", "Pattern type to export (fix, blueprint, all)", "all")
+    .option(
+      "-t, --type <type>",
+      "Pattern type to export (fix, blueprint, all)",
+      "all",
+    )
     .addHelpText(
       "after",
       `
@@ -318,7 +329,11 @@ ${chalk.bold("Examples:")}
   learnCmd
     .command("validate")
     .description("Validate pattern files and optionally auto-fix common issues")
-    .option("-t, --type <type>", "Pattern type to validate (fix, blueprint, solution, all)", "all")
+    .option(
+      "-t, --type <type>",
+      "Pattern type to validate (fix, blueprint, solution, all)",
+      "all",
+    )
     .option("-f, --file <path>", "Validate a specific file by path")
     .option("--fix", "Automatically fix common issues")
     .option("-v, --verbose", "Show detailed validation output")

@@ -9,6 +9,12 @@ import { execa, type ExecaError } from "execa";
 import chalk from "chalk";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+import * as p from "@clack/prompts";
+import {
+  detectAllPlatforms,
+  type FrameworkType,
+  type PlatformDetectionResult,
+} from "./auto-setup.js";
 
 export interface CheckDefinition {
   name: string;
@@ -55,6 +61,8 @@ export interface CheckRunnerOptions {
   autoFix?: boolean;
   dryRun?: boolean;
   onProgress?: (message: string, type: ProgressType) => void;
+  /** Whether to include platform-specific checks (default: true) */
+  includePlatformChecks?: boolean;
 }
 
 /**
@@ -110,16 +118,143 @@ export const QUALITY_CHECKS: CheckDefinition[] = [
   },
 ];
 
+// ============================================================================
+// Platform-Specific Checks
+// ============================================================================
+
+/**
+ * Platform types that have specific checks
+ */
+export type PlatformType =
+  | "shopify-theme"
+  | "shopify-hydrogen"
+  | "wordpress"
+  | "magento"
+  | "woocommerce";
+
+/**
+ * Platform CLI installation configuration
+ */
+export interface PlatformCLIConfig {
+  /** The CLI command to check for */
+  cli: string;
+  /** Command to install the CLI */
+  install: string;
+  /** Whether this platform requires Composer (PHP package manager) */
+  requiresComposer: boolean;
+  /** Human-readable platform name */
+  displayName: string;
+}
+
+/**
+ * Platform check definition extending CheckDefinition
+ */
+export interface PlatformCheckDefinition extends CheckDefinition {
+  /** The platform this check applies to */
+  platform: PlatformType;
+}
+
+/**
+ * CLI installation commands for each platform
+ */
+export const PLATFORM_CLI_INSTALL: Record<PlatformType, PlatformCLIConfig> = {
+  "shopify-theme": {
+    cli: "shopify",
+    install: "npm install -g @shopify/cli @shopify/theme",
+    requiresComposer: false,
+    displayName: "Shopify Theme",
+  },
+  "shopify-hydrogen": {
+    cli: "shopify",
+    install: "npm install -g @shopify/cli",
+    requiresComposer: false,
+    displayName: "Shopify Hydrogen",
+  },
+  wordpress: {
+    cli: "phpcs",
+    install:
+      "composer global require squizlabs/php_codesniffer wp-coding-standards/wpcs && phpcs --config-set installed_paths $(composer global config home)/vendor/wp-coding-standards/wpcs",
+    requiresComposer: true,
+    displayName: "WordPress",
+  },
+  magento: {
+    cli: "phpcs",
+    install:
+      "composer global require squizlabs/php_codesniffer magento/magento-coding-standard && phpcs --config-set installed_paths $(composer global config home)/vendor/magento/magento-coding-standard",
+    requiresComposer: true,
+    displayName: "Magento",
+  },
+  woocommerce: {
+    cli: "phpcs",
+    install:
+      "composer global require squizlabs/php_codesniffer automattic/woocommerce-sniffs && phpcs --config-set installed_paths $(composer global config home)/vendor/automattic/woocommerce-sniffs",
+    requiresComposer: true,
+    displayName: "WooCommerce",
+  },
+};
+
+/**
+ * Platform-specific quality checks
+ */
+export const PLATFORM_CHECKS: PlatformCheckDefinition[] = [
+  {
+    platform: "shopify-theme",
+    name: "shopify-theme-check",
+    displayName: "Shopify Theme Check",
+    command: "shopify",
+    args: ["theme", "check"],
+    canAutoFix: false,
+  },
+  {
+    platform: "shopify-hydrogen",
+    name: "shopify-hydrogen-check",
+    displayName: "Shopify Hydrogen Check",
+    command: "shopify",
+    args: ["hydrogen", "check"],
+    canAutoFix: false,
+  },
+  {
+    platform: "wordpress",
+    name: "wordpress-phpcs",
+    displayName: "WordPress Coding Standards",
+    command: "phpcs",
+    args: ["--standard=WordPress", "."],
+    fixCommand: "phpcbf",
+    fixArgs: ["--standard=WordPress", "."],
+    canAutoFix: true,
+  },
+  {
+    platform: "magento",
+    name: "magento-phpcs",
+    displayName: "Magento Coding Standards",
+    command: "phpcs",
+    args: ["--standard=Magento2", "."],
+    fixCommand: "phpcbf",
+    fixArgs: ["--standard=Magento2", "."],
+    canAutoFix: true,
+  },
+  {
+    platform: "woocommerce",
+    name: "woocommerce-phpcs",
+    displayName: "WooCommerce Coding Standards",
+    command: "phpcs",
+    args: ["--standard=WooCommerce-Core", "."],
+    fixCommand: "phpcbf",
+    fixArgs: ["--standard=WooCommerce-Core", "."],
+    canAutoFix: true,
+  },
+];
+
 /**
  * Get available scripts from the target project's package.json
  */
 export function getAvailableScripts(cwd: string): Set<string> {
   const packageJsonPath = join(cwd, "package.json");
-  
+
   if (!existsSync(packageJsonPath)) {
     return new Set();
   }
-  
+
   try {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
     return new Set(Object.keys(packageJson.scripts || {}));
@@ -144,23 +279,25 @@ async function commandExists(cmd: string): Promise<boolean> {
  * Get applicable checks for the target project
  * Filters out checks for scripts that don't exist, uses fallbacks when available
  */
-export async function getApplicableChecks(cwd: string): Promise<CheckDefinition[]> {
+export async function getApplicableChecks(
+  cwd: string,
+): Promise<CheckDefinition[]> {
   const availableScripts = getAvailableScripts(cwd);
   const applicableChecks: CheckDefinition[] = [];
-  
+
   for (const check of QUALITY_CHECKS) {
     // If no required script, always include
     if (!check.requiredScript) {
       applicableChecks.push(check);
       continue;
     }
-    
+
     // If the script exists in package.json, use the pnpm command
     if (availableScripts.has(check.requiredScript)) {
       applicableChecks.push(check);
       continue;
     }
-    
+
     // If there's a fallback command and it exists, use that
     if (check.fallbackCommand && check.fallbackCommand.length > 0) {
       const fallbackCmd = check.fallbackCommand[0];
@@ -173,12 +310,188 @@ export async function getApplicableChecks(cwd: string): Promise<CheckDefinition[
         continue;
       }
     }
-    
+
     // Script doesn't exist and no valid fallback - skip this check
     // (will be logged as skipped in runAllChecks)
   }
-  
+
   return applicableChecks;
+}
+
+// ============================================================================
+// Platform Check Utilities
+// ============================================================================
+
+/**
+ * Check if Composer is installed (required for PHP-based platforms)
+ * If not installed, shows OS-specific installation instructions and exits
+ */
+export async function ensureComposer(): Promise<void> {
+  const hasComposer = await commandExists("composer");
+
+  if (!hasComposer) {
+    console.log(chalk.red("\n❌ Composer is required but not installed.\n"));
+    console.log(chalk.yellow("Please install Composer for your platform:\n"));
+
+    // Detect OS and show relevant instructions
+    const platform = process.platform;
+
+    if (platform === "darwin") {
+      console.log(chalk.cyan("  macOS (Homebrew):"));
+      console.log(chalk.dim("    brew install composer\n"));
+    } else if (platform === "linux") {
+      console.log(chalk.cyan("  Ubuntu/Debian:"));
+      console.log(chalk.dim("    sudo apt install composer\n"));
+      console.log(chalk.cyan("  Fedora/CentOS:"));
+      console.log(chalk.dim("    sudo dnf install composer\n"));
+      console.log(chalk.cyan("  Arch Linux:"));
+      console.log(chalk.dim("    sudo pacman -S composer\n"));
+    } else if (platform === "win32") {
+      console.log(chalk.cyan("  Windows (Scoop):"));
+      console.log(chalk.dim("    scoop install composer\n"));
+      console.log(chalk.cyan("  Windows (Chocolatey):"));
+      console.log(chalk.dim("    choco install composer\n"));
+    }
+
+    console.log(chalk.cyan("  Or download from:"));
+    console.log(chalk.dim("    https://getcomposer.org/download/\n"));
+
+    process.exit(1);
+  }
+}
+
+/**
+ * Prompt user to choose a platform when multiple are detected
+ */
+export async function promptPlatformChoice(
+  detected: FrameworkType[],
+): Promise<FrameworkType> {
+  // Filter to only platform types we have checks for
+  const platformTypes = detected.filter((d): d is PlatformType =>
+    Object.keys(PLATFORM_CLI_INSTALL).includes(d),
+  );
+
+  if (platformTypes.length === 0) {
+    return detected[0] || "unknown";
+  }
+
+  if (platformTypes.length === 1) {
+    return platformTypes[0];
+  }
+
+  // Multiple platforms detected - ask user
+  console.log(
+    chalk.yellow("\n🔍 Multiple platforms detected in this project:\n"),
+  );
+
+  const options = platformTypes.map((pt) => ({
+    value: pt,
+    label: PLATFORM_CLI_INSTALL[pt].displayName,
+  }));
+
+  const choice = await p.select({
+    message: "Which platform would you like to run checks for?",
+    options,
+  });
+
+  if (p.isCancel(choice)) {
+    console.log(chalk.yellow("\n⚠️  Platform check cancelled."));
+    process.exit(0);
+  }
+
+  return choice as FrameworkType;
+}
+
+/**
+ * Ensure the platform CLI is installed
+ * If not, automatically installs it after showing the command
+ */
+export async function ensurePlatformCLI(platform: PlatformType): Promise<void> {
+  const config = PLATFORM_CLI_INSTALL[platform];
+
+  // Check Composer requirement first
+  if (config.requiresComposer) {
+    await ensureComposer();
+  }
+
+  // Check if CLI exists
+  const hasCLI = await commandExists(config.cli);
+
+  if (!hasCLI) {
+    console.log(
+      chalk.yellow(
+        `\n📦 ${config.displayName} CLI (${config.cli}) not found. Installing...\n`,
+      ),
+    );
+    console.log(chalk.dim(`  Running: ${config.install}\n`));
+
+    try {
+      // Run the install command
+      await execa("sh", ["-c", config.install], {
+        stdio: "inherit",
+      });
+
+      // Verify installation
+      const nowHasCLI = await commandExists(config.cli);
+      if (!nowHasCLI) {
+        console.log(
+          chalk.red(
+            `\n❌ Failed to install ${config.cli}. Please install manually:\n`,
+          ),
+        );
+        console.log(chalk.dim(`  ${config.install}\n`));
+        process.exit(1);
+      }
+
+      console.log(
+        chalk.green(`\n✅ ${config.displayName} CLI installed successfully.\n`),
+      );
+    } catch (error) {
+      console.log(chalk.red(`\n❌ Failed to install ${config.cli}:\n`));
+      console.log(chalk.dim(`  ${(error as Error).message}\n`));
+      console.log(chalk.yellow("Please install manually:\n"));
+      console.log(chalk.dim(`  ${config.install}\n`));
+      process.exit(1);
+    }
+  }
+}
+
+/**
+ * Get platform-specific checks for the detected platform(s)
+ * Handles multi-platform detection, user prompts, and CLI installation
+ */
+export async function getPlatformChecks(
+  cwd: string,
+): Promise<PlatformCheckDefinition[]> {
+  // Detect all platforms
+  const detection: PlatformDetectionResult = await detectAllPlatforms(cwd);
+
+  // Filter to platforms we have checks for
+  const platformsWithChecks = detection.detected.filter(
+    (d): d is PlatformType => Object.keys(PLATFORM_CLI_INSTALL).includes(d),
+  );
+
+  if (platformsWithChecks.length === 0) {
+    return [];
+  }
+
+  // If multiple platforms, prompt user to choose
+  let selectedPlatform: PlatformType;
+  if (platformsWithChecks.length === 1) {
+    selectedPlatform = platformsWithChecks[0];
+  } else {
+    const choice = await promptPlatformChoice(detection.detected);
+    if (!Object.keys(PLATFORM_CLI_INSTALL).includes(choice)) {
+      return [];
+    }
+    selectedPlatform = choice as PlatformType;
+  }
+
+  // Ensure CLI is installed
+  await ensurePlatformCLI(selectedPlatform);
+
+  // Return checks for the selected platform
+  return PLATFORM_CHECKS.filter((check) => check.platform === selectedPlatform);
 }
 
 /**
@@ -269,6 +582,99 @@ function formatFixCommand(check: CheckDefinition): string {
 }
 
 /**
+ * Run platform-specific checks after standard checks pass
+ * Returns results for each platform check run
+ */
+async function runPlatformChecks(
+  cwd: string,
+  log: (message: string, type: ProgressType) => void,
+  autoFix: boolean,
+  dryRun: boolean,
+): Promise<CheckResult[]> {
+  const results: CheckResult[] = [];
+
+  try {
+    const platformChecks = await getPlatformChecks(cwd);
+
+    if (platformChecks.length === 0) {
+      return results;
+    }
+
+    log(`\n${"━".repeat(50)}`, "info");
+    log(`🔧 Platform-Specific Checks`, "info");
+    log(`${"━".repeat(50)}\n`, "info");
+
+    for (let i = 0; i < platformChecks.length; i++) {
+      const check = platformChecks[i];
+      const stepNum = i + 1;
+      const totalSteps = platformChecks.length;
+
+      log(
+        `📋 Platform ${stepNum}/${totalSteps}: ${check.displayName}...`,
+        "info",
+      );
+
+      const result = await runCheck(check, cwd);
+      results.push(result);
+
+      if (result.success) {
+        log(`✅ ${check.displayName} passed (${result.duration}ms)`, "success");
+      } else {
+        log(`❌ ${check.displayName} failed`, "error");
+
+        // Try to auto-fix if possible
+        if (autoFix && check.canAutoFix && check.fixCommand) {
+          if (dryRun) {
+            log(
+              `🔧 [DRY-RUN] Would run: ${formatFixCommand(check)}`,
+              "warning",
+            );
+            continue;
+          }
+
+          log(`🔧 Attempting auto-fix for ${check.displayName}...`, "warning");
+          const fixResult = await applyFix(check, cwd);
+
+          if (fixResult.success) {
+            log(`✨ Auto-fix applied for ${check.displayName}`, "success");
+            // Re-run the check after fix
+            const reResult = await runCheck(check, cwd);
+            results[results.length - 1] = reResult;
+
+            if (reResult.success) {
+              log(`✅ ${check.displayName} now passes`, "success");
+            } else {
+              log(`⚠️  ${check.displayName} still failing after fix`, "error");
+            }
+          } else {
+            log(`⚠️  Auto-fix failed for ${check.displayName}`, "error");
+          }
+        } else if (!check.canAutoFix) {
+          log(`⚠️  ${check.displayName} requires manual fix`, "error");
+        }
+
+        // Show error preview
+        if (result.error) {
+          const errorPreview = result.error.slice(0, 500);
+          log(`\n${chalk.dim(errorPreview)}`, "error");
+          if (result.error.length > 500) {
+            log(
+              chalk.dim(`... (${result.error.length - 500} more characters)`),
+              "error",
+            );
+          }
+        }
+      }
+    }
+  } catch (error) {
+    // Platform check errors should not crash the entire verification
+    log(`\n⚠️  Platform check error: ${(error as Error).message}`, "warning");
+  }
+
+  return results;
+}
+
+/**
  * Run all quality checks with fix-and-revalidate pattern
  *
  * When a check fails and can be auto-fixed:
@@ -288,6 +694,7 @@ export async function runAllChecks(
     autoFix = true,
     dryRun = false,
     onProgress,
+    includePlatformChecks = true,
   } = options;
 
   const log = (message: string, type: ProgressType = "info") => {
@@ -318,17 +725,23 @@ export async function runAllChecks(
 
   // Get applicable checks for this project (filters out missing scripts)
   const applicableChecks = await getApplicableChecks(cwd);
-  
+
   // Log skipped checks
   const skippedChecks = QUALITY_CHECKS.filter(
-    qc => !applicableChecks.some(ac => ac.name === qc.name)
+    (qc) => !applicableChecks.some((ac) => ac.name === qc.name),
   );
   if (skippedChecks.length > 0) {
-    log(`\n⏭️  Skipping checks (scripts not found): ${skippedChecks.map(c => c.displayName).join(", ")}`, "warning");
+    log(
+      `\n⏭️  Skipping checks (scripts not found): ${skippedChecks.map((c) => c.displayName).join(", ")}`,
+      "warning",
+    );
   }
-  
+
   if (applicableChecks.length === 0) {
-    log(`\n⚠️  No applicable checks found. Add scripts to package.json: typecheck, lint, format, test, build`, "warning");
+    log(
+      `\n⚠️  No applicable checks found. Add scripts to package.json: typecheck, lint, format, test, build`,
+      "warning",
+    );
     return {
       success: true,
       results: [],
@@ -486,6 +899,33 @@ export async function runAllChecks(
 
     // If all checks passed, we're done!
     if (allPassed) {
+      // Run platform-specific checks if enabled
+      if (includePlatformChecks) {
+        const platformCheckResults = await runPlatformChecks(
+          cwd,
+          log,
+          autoFix,
+          dryRun,
+        );
+
+        if (platformCheckResults.length > 0) {
+          const platformFailed = platformCheckResults.some((r) => !r.success);
+
+          if (platformFailed) {
+            return {
+              success: false,
+              results: [...results, ...platformCheckResults],
+              totalAttempts: attempt,
+              fixesApplied,
+              appliedFixes,
+            };
+          }
+
+          // Add platform results to overall results
+          results.push(...platformCheckResults);
+        }
+      }
+
       return {
         success: true,
         results,

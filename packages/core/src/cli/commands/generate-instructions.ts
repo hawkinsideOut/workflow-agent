@@ -53,7 +53,9 @@ export async function generateInstructionsCommand(options: {
       );
 
       if (result.preservedCustomContent) {
-        console.log(chalk.dim("  Custom content between markers was preserved."));
+        console.log(
+          chalk.dim("  Custom content between markers was preserved."),
+        );
       }
 
       console.log(chalk.dim(`\n  Output: ${result.filePath}`));
@@ -79,7 +81,11 @@ export async function generateInstructionsCommand(options: {
   p.outro(chalk.green("✓ AI agent instructions ready!"));
   console.log(chalk.dim("\nThe .github/copilot-instructions.md file:"));
   console.log(chalk.dim("  - Is read by GitHub Copilot and other AI agents"));
-  console.log(chalk.dim("  - Summarizes all guidelines with links to full docs"));
+  console.log(
+    chalk.dim("  - Summarizes all guidelines with links to full docs"),
+  );
   console.log(chalk.dim("  - Includes your project scopes and conventions"));
-  console.log(chalk.dim("  - Preserves custom instructions you add between markers\n"));
+  console.log(
+    chalk.dim("  - Preserves custom instructions you add between markers\n"),
+  );
 }

@@ -20,7 +20,9 @@ export interface DocsUpdateOptions {
   skip?: boolean;
 }
 
-export async function docsUpdateCommand(options: DocsUpdateOptions): Promise<void> {
+export async function docsUpdateCommand(
+  options: DocsUpdateOptions,
+): Promise<void> {
   const { force = false, skip = false } = options;
 
   p.intro(chalk.bgBlue(" workflow docs update "));
@@ -63,9 +65,7 @@ export async function docsUpdateCommand(options: DocsUpdateOptions): Promise<voi
     }
   }
 
-  const optionalFiles = allTemplates.filter(
-    (f) => !mandatoryFiles.includes(f),
-  );
+  const optionalFiles = allTemplates.filter((f) => !mandatoryFiles.includes(f));
   if (optionalFiles.length > 0) {
     console.log(chalk.bold("\n  Optional templates:"));
     for (const file of optionalFiles) {

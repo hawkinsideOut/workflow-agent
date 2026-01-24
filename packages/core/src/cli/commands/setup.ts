@@ -77,9 +77,7 @@ export async function setupCommand(): Promise<void> {
   const hasChanges = scriptAdded || scriptUpdated || removedScripts.length > 0;
 
   if (!hasChanges) {
-    p.outro(
-      chalk.green(`✓ Workflow script is already configured!`)
-    );
+    p.outro(chalk.green(`✓ Workflow script is already configured!`));
     return;
   }
 
@@ -87,11 +85,11 @@ export async function setupCommand(): Promise<void> {
   writeFileSync(
     packageJsonPath,
     JSON.stringify(packageJson, null, 2) + "\n",
-    "utf-8"
+    "utf-8",
   );
 
   console.log(
-    chalk.green(`\n✓ Workflow Agent v${WORKFLOW_SCRIPTS_VERSION} configured`)
+    chalk.green(`\n✓ Workflow Agent v${WORKFLOW_SCRIPTS_VERSION} configured`),
   );
 
   if (scriptAdded) {
@@ -103,12 +101,14 @@ export async function setupCommand(): Promise<void> {
   // Log removed deprecated scripts
   if (removedScripts.length > 0) {
     console.log(
-      chalk.yellow(`\n  ⚠️  Removed ${removedScripts.length} deprecated scripts`)
+      chalk.yellow(
+        `\n  ⚠️  Removed ${removedScripts.length} deprecated scripts`,
+      ),
     );
     console.log(
       chalk.dim(
-        `     (Old workflow:* scripts replaced by single "workflow" command)`
-      )
+        `     (Old workflow:* scripts replaced by single "workflow" command)`,
+      ),
     );
   }
 
@@ -136,8 +136,8 @@ export async function setupCommand(): Promise<void> {
       if (templateResult.installed.length > 0) {
         console.log(
           chalk.green(
-            `\n✓ Installed ${templateResult.installed.length} mandatory guideline templates`
-          )
+            `\n✓ Installed ${templateResult.installed.length} mandatory guideline templates`,
+          ),
         );
       }
     }
@@ -150,8 +150,8 @@ export async function setupCommand(): Promise<void> {
       const status = result.isNew ? "Generated" : "Updated";
       console.log(
         chalk.green(
-          `✓ ${status} .github/copilot-instructions.md from ${result.guidelinesCount} guidelines`
-        )
+          `✓ ${status} .github/copilot-instructions.md from ${result.guidelinesCount} guidelines`,
+        ),
       );
       if (result.preservedCustomContent) {
         console.log(chalk.dim("  (Custom content preserved)"));

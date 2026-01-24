@@ -118,9 +118,15 @@ ${chalk.bold("Examples:")}
     .option("--output <path>", "Output directory (default: docs/advisory)")
     .option("--interactive", "Enable interactive mode")
     .option("--dry-run", "Preview analysis without writing files")
-    .option("--format <type>", "Output format: markdown, json (default: markdown)")
+    .option(
+      "--format <type>",
+      "Output format: markdown, json (default: markdown)",
+    )
     .option("--timestamp", "Append timestamp to filenames")
-    .option("--include-health", "Include code health metrics from verify/doctor")
+    .option(
+      "--include-health",
+      "Include code health metrics from verify/doctor",
+    )
     .option("--ci", "CI mode with exit codes on high-risk findings")
     .option("--compare <path>", "Compare with previous report")
     .addHelpText(

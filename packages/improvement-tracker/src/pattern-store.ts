@@ -70,11 +70,11 @@ function slugify(text: string): string {
   const slug = text
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '') // Remove special chars
-    .replace(/[\s_]+/g, '-') // Replace spaces/underscores with hyphens
-    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
-  
+    .replace(/[^\w\s-]/g, "") // Remove special chars
+    .replace(/[\s_]+/g, "-") // Replace spaces/underscores with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+
   // Truncate to 50 characters
   return slug.substring(0, 50);
 }
@@ -202,7 +202,7 @@ export class PatternStore {
 
       const filePath = this.getFixFilePath(pattern.id, pattern.name);
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-      
+
       // Check if old UUID-only file exists and remove it
       const oldFilePath = this.getFixFilePath(pattern.id);
       if (oldFilePath !== filePath) {
@@ -212,7 +212,7 @@ export class PatternStore {
           // Old file doesn't exist, which is fine
         }
       }
-      
+
       await fs.promises.writeFile(filePath, JSON.stringify(pattern, null, 2));
 
       return { success: true, data: pattern };
@@ -382,7 +382,7 @@ export class PatternStore {
 
       const filePath = this.getBlueprintFilePath(blueprint.id, blueprint.name);
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-      
+
       // Check if old UUID-only file exists and remove it
       const oldFilePath = this.getBlueprintFilePath(blueprint.id);
       if (oldFilePath !== filePath) {
@@ -392,7 +392,7 @@ export class PatternStore {
           // Old file doesn't exist, which is fine
         }
       }
-      
+
       await fs.promises.writeFile(filePath, JSON.stringify(blueprint, null, 2));
 
       return { success: true, data: blueprint };
@@ -565,7 +565,7 @@ export class PatternStore {
 
       const filePath = this.getSolutionFilePath(pattern.id, pattern.name);
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-      
+
       // Check if old UUID-only file exists and remove it
       const oldFilePath = this.getSolutionFilePath(pattern.id);
       if (oldFilePath !== filePath) {
@@ -575,7 +575,7 @@ export class PatternStore {
           // Old file doesn't exist, which is fine
         }
       }
-      
+
       await fs.promises.writeFile(filePath, JSON.stringify(pattern, null, 2));
 
       return { success: true, data: pattern };

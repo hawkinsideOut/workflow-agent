@@ -266,27 +266,27 @@ Workflow Agent provides guideline templates that are installed to your project's
 
 These templates are automatically installed during `workflow init` and `workflow setup`:
 
-| Template | Purpose |
-|----------|---------|
+| Template                        | Purpose                                                          |
+| ------------------------------- | ---------------------------------------------------------------- |
 | `AGENT_EDITING_INSTRUCTIONS.md` | Core rules for AI agents: implementation plans, coding standards |
-| `BRANCHING_STRATEGY.md` | Git branch naming conventions, PR requirements |
-| `TESTING_STRATEGY.md` | Testing pyramid, patterns, when tests are required |
-| `SELF_IMPROVEMENT_MANDATE.md` | Continuous improvement tracking, changelog requirements |
-| `PATTERN_ANALYSIS_WORKFLOW.md` | AI workflow for analyzing and extracting patterns |
-| `SINGLE_SOURCE_OF_TRUTH.md` | Canonical code locations, avoiding duplication |
-| `LIBRARY_INVENTORY.md` | Dependency catalog, approved libraries, new library process |
+| `BRANCHING_STRATEGY.md`         | Git branch naming conventions, PR requirements                   |
+| `TESTING_STRATEGY.md`           | Testing pyramid, patterns, when tests are required               |
+| `SELF_IMPROVEMENT_MANDATE.md`   | Continuous improvement tracking, changelog requirements          |
+| `PATTERN_ANALYSIS_WORKFLOW.md`  | AI workflow for analyzing and extracting patterns                |
+| `SINGLE_SOURCE_OF_TRUTH.md`     | Canonical code locations, avoiding duplication                   |
+| `LIBRARY_INVENTORY.md`          | Dependency catalog, approved libraries, new library process      |
 
 ### Optional Templates
 
 Additional templates available via `workflow update-templates --force`:
 
-| Template | Purpose |
-|----------|---------|
-| `DEPLOYMENT_STRATEGY.md` | Deployment workflow, environments, migrations |
-| `COMPONENT_LIBRARY.md` | UI component patterns, design tokens |
-| `SCOPE_CREATION_WORKFLOW.md` | Workflow for creating custom scopes |
-| `CUSTOM_SCOPE_TEMPLATE.md` | Template for scope package definitions |
-| `PROJECT_TEMPLATE_README.md` | Meta-document describing project structure |
+| Template                     | Purpose                                       |
+| ---------------------------- | --------------------------------------------- |
+| `DEPLOYMENT_STRATEGY.md`     | Deployment workflow, environments, migrations |
+| `COMPONENT_LIBRARY.md`       | UI component patterns, design tokens          |
+| `SCOPE_CREATION_WORKFLOW.md` | Workflow for creating custom scopes           |
+| `CUSTOM_SCOPE_TEMPLATE.md`   | Template for scope package definitions        |
+| `PROJECT_TEMPLATE_README.md` | Meta-document describing project structure    |
 
 ### Updating Templates
 

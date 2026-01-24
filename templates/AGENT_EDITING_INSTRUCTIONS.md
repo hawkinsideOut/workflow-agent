@@ -119,15 +119,15 @@ function fetchData() {
 
 ### Naming Conventions
 
-| Type | Convention | Example |
-| ---- | ---------- | ------- |
-| Files (components) | kebab-case | `user-profile.ts` |
-| Files (utilities) | kebab-case | `format-date.ts` |
-| Functions | camelCase | `getUserById()` |
-| Classes | PascalCase | `UserService` |
-| Constants | UPPER_SNAKE | `MAX_RETRIES` |
-| Types/Interfaces | PascalCase | `UserProfile` |
-| Enums | PascalCase | `Status.Active` |
+| Type               | Convention  | Example           |
+| ------------------ | ----------- | ----------------- |
+| Files (components) | kebab-case  | `user-profile.ts` |
+| Files (utilities)  | kebab-case  | `format-date.ts`  |
+| Functions          | camelCase   | `getUserById()`   |
+| Classes            | PascalCase  | `UserService`     |
+| Constants          | UPPER_SNAKE | `MAX_RETRIES`     |
+| Types/Interfaces   | PascalCase  | `UserProfile`     |
+| Enums              | PascalCase  | `Status.Active`   |
 
 ### Import Order
 
@@ -187,13 +187,13 @@ const user = await db.users.findById(id);
 
 ### When Tests Are Required
 
-| Change Type | Unit Test | Integration Test |
-| ----------- | --------- | ---------------- |
-| New function/method | ✅ Required | If has side effects |
-| Bug fix | ✅ Required (prove fix) | If integration issue |
-| New component/module | ✅ Required | If has dependencies |
-| Refactor | Update existing | Update if affected |
-| Config change | Optional | If affects behavior |
+| Change Type          | Unit Test               | Integration Test     |
+| -------------------- | ----------------------- | -------------------- |
+| New function/method  | ✅ Required             | If has side effects  |
+| Bug fix              | ✅ Required (prove fix) | If integration issue |
+| New component/module | ✅ Required             | If has dependencies  |
+| Refactor             | Update existing         | Update if affected   |
+| Config change        | Optional                | If affects behavior  |
 
 ### Test File Location
 
@@ -242,14 +242,14 @@ Refs: #issue-number
 
 ### Types
 
-| Type | Description |
-| ---- | ----------- |
-| feat | New feature |
-| fix | Bug fix |
-| docs | Documentation only |
+| Type     | Description                  |
+| -------- | ---------------------------- |
+| feat     | New feature                  |
+| fix      | Bug fix                      |
+| docs     | Documentation only           |
 | refactor | Code change (no feature/fix) |
-| test | Adding/updating tests |
-| chore | Build, tooling, deps |
+| test     | Adding/updating tests        |
+| chore    | Build, tooling, deps         |
 
 ### Examples
 

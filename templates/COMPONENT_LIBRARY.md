@@ -60,11 +60,11 @@ All design constants are centralized. **Never hardcode values.**
 
 <!-- PROJECT-SPECIFIC: Define your design tokens location -->
 
-| Category | Location | Purpose |
-| -------- | -------- | ------- |
-| Colors | `lib/design-tokens/colors.ts` | Color palette |
-| Spacing | `lib/design-tokens/spacing.ts` | Margin, padding values |
-| Typography | `lib/design-tokens/typography.ts` | Font sizes, weights |
+| Category    | Location                           | Purpose                |
+| ----------- | ---------------------------------- | ---------------------- |
+| Colors      | `lib/design-tokens/colors.ts`      | Color palette          |
+| Spacing     | `lib/design-tokens/spacing.ts`     | Margin, padding values |
+| Typography  | `lib/design-tokens/typography.ts`  | Font sizes, weights    |
 | Breakpoints | `lib/design-tokens/breakpoints.ts` | Responsive breakpoints |
 
 **Usage Pattern:**
@@ -86,16 +86,16 @@ const buttonStyle = { padding: spacing.md, color: colors.primary };
 
 <!-- PROJECT-SPECIFIC: List your reusable components/modules -->
 
-| Need | Component/Module | Location |
-| ---- | ---------------- | -------- |
-| Button | `Button` | `components/ui/button` |
-| Input field | `Input` | `components/ui/input` |
-| Form wrapper | `Form` | `components/ui/form` |
-| Modal/Dialog | `Dialog` | `components/ui/dialog` |
-| Loading state | `Spinner` | `components/ui/spinner` |
-| Error display | `ErrorBoundary` | `components/ui/error-boundary` |
-| Date formatting | `formatDate` | `lib/utils/date` |
-| API requests | `apiClient` | `lib/api/client` |
+| Need            | Component/Module | Location                       |
+| --------------- | ---------------- | ------------------------------ |
+| Button          | `Button`         | `components/ui/button`         |
+| Input field     | `Input`          | `components/ui/input`          |
+| Form wrapper    | `Form`           | `components/ui/form`           |
+| Modal/Dialog    | `Dialog`         | `components/ui/dialog`         |
+| Loading state   | `Spinner`        | `components/ui/spinner`        |
+| Error display   | `ErrorBoundary`  | `components/ui/error-boundary` |
+| Date formatting | `formatDate`     | `lib/utils/date`               |
+| API requests    | `apiClient`      | `lib/api/client`               |
 
 ### Component Documentation Template
 
@@ -110,10 +110,10 @@ For each component/module, document:
 
 **Props/Parameters:**
 
-| Prop | Type | Default | Description |
-| ---- | ---- | ------- | ----------- |
-| prop1 | string | - | Description |
-| prop2 | boolean | false | Description |
+| Prop  | Type    | Default | Description |
+| ----- | ------- | ------- | ----------- |
+| prop1 | string  | -       | Description |
+| prop2 | boolean | false   | Description |
 
 **Usage:**
 
@@ -234,7 +234,7 @@ Every component/module must have:
 
 ### JSDoc Example
 
-```typescript
+````typescript
 /**
  * A reusable button component with multiple variants.
  *
@@ -248,7 +248,7 @@ Every component/module must have:
 export function Button({ variant, children, ...props }: ButtonProps) {
   // ...
 }
-```
+````
 
 ---
 

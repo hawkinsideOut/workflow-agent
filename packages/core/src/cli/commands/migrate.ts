@@ -1,19 +1,27 @@
-import * as p from "@clack/prompts";
 import chalk from "chalk";
-import { PatternStore } from "@hawkinside_out/workflow-improvement-tracker";
+import * as path from "node:path";
+import {
+  PatternStore,
+  PATTERNS_DIR,
+} from "@hawkinside_out/workflow-improvement-tracker";
 
 interface MigrateOptions {
   dryRun?: boolean;
   type?: "fix" | "blueprint" | "solution" | "all";
 }
 
-export async function migrateCommand(subcommand: string, options: MigrateOptions) {
+export async function migrateCommand(
+  subcommand: string,
+  options: MigrateOptions,
+) {
   if (subcommand === "filenames") {
     await migrateFilenames(options);
   } else {
     console.error(chalk.red(`Unknown migrate subcommand: ${subcommand}`));
     console.log(chalk.dim("\nAvailable subcommands:"));
-    console.log(chalk.dim("  filenames  Migrate pattern files to slugified names"));
+    console.log(
+      chalk.dim("  filenames  Migrate pattern files to slugified names"),
+    );
     process.exit(1);
   }
 }
@@ -31,8 +39,33 @@ async function migrateFilenames(options: MigrateOptions) {
     console.log(chalk.yellow("🔍 DRY RUN MODE - No files will be modified\n"));
   }
 
-  const store = new PatternStore();
   const cwd = process.cwd();
+  const store = new PatternStore(cwd);
+  await store.initialize();
+
+  // Helper to construct file paths (since the private methods are not accessible)
+  const fixesPath = path.join(cwd, PATTERNS_DIR, "fixes");
+  const blueprintsPath = path.join(cwd, PATTERNS_DIR, "blueprints");
+  const solutionsPath = path.join(cwd, PATTERNS_DIR, "solutions");
+
+  function slugify(text: string): string {
+    const slug = text
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return slug.substring(0, 50);
+  }
+
+  function getFilePath(basePath: string, id: string, name?: string): string {
+    if (name) {
+      const slug = slugify(name);
+      return path.join(basePath, `${slug}-${id}.json`);
+    }
+    return path.join(basePath, `${id}.json`);
+  }
 
   let totalProcessed = 0;
   let totalMigrated = 0;
@@ -51,13 +84,15 @@ async function migrateFilenames(options: MigrateOptions) {
   // Process fixes
   if (targetType === "fix" || targetType === "all") {
     console.log(chalk.bold("Fixes:"));
-    const fixesResult = await store.getAllFixes();
+    const fixesResult = await store.listFixPatterns({
+      includeDeprecated: true,
+    });
     if (fixesResult.success && fixesResult.data) {
       for (const fix of fixesResult.data) {
         totalProcessed++;
         try {
-          const oldPath = store.getFixFilePath(fix.id);
-          const newPath = store.getFixFilePath(fix.id, fix.name);
+          const oldPath = getFilePath(fixesPath, fix.id);
+          const newPath = getFilePath(fixesPath, fix.id, fix.name);
 
           if (oldPath === newPath) {
             console.log(chalk.dim(`  ⊘ ${fix.name} - already migrated`));
@@ -107,13 +142,19 @@ async function migrateFilenames(options: MigrateOptions) {
   // Process blueprints
   if (targetType === "blueprint" || targetType === "all") {
     console.log(chalk.bold("Blueprints:"));
-    const blueprintsResult = await store.getAllBlueprints();
+    const blueprintsResult = await store.listBlueprints({
+      includeDeprecated: true,
+    });
     if (blueprintsResult.success && blueprintsResult.data) {
       for (const blueprint of blueprintsResult.data) {
         totalProcessed++;
         try {
-          const oldPath = store.getBlueprintFilePath(blueprint.id);
-          const newPath = store.getBlueprintFilePath(blueprint.id, blueprint.name);
+          const oldPath = getFilePath(blueprintsPath, blueprint.id);
+          const newPath = getFilePath(
+            blueprintsPath,
+            blueprint.id,
+            blueprint.name,
+          );
 
           if (oldPath === newPath) {
             console.log(chalk.dim(`  ⊘ ${blueprint.name} - already migrated`));
@@ -163,13 +204,19 @@ async function migrateFilenames(options: MigrateOptions) {
   // Process solutions
   if (targetType === "solution" || targetType === "all") {
     console.log(chalk.bold("Solutions:"));
-    const solutionsResult = await store.getAllSolutions();
+    const solutionsResult = await store.listSolutions({
+      includeDeprecated: true,
+    });
     if (solutionsResult.success && solutionsResult.data) {
       for (const solution of solutionsResult.data) {
         totalProcessed++;
         try {
-          const oldPath = store.getSolutionFilePath(solution.id);
-          const newPath = store.getSolutionFilePath(solution.id, solution.name);
+          const oldPath = getFilePath(solutionsPath, solution.id);
+          const newPath = getFilePath(
+            solutionsPath,
+            solution.id,
+            solution.name,
+          );
 
           if (oldPath === newPath) {
             console.log(chalk.dim(`  ⊘ ${solution.name} - already migrated`));
@@ -230,7 +277,11 @@ async function migrateFilenames(options: MigrateOptions) {
   }
 
   if (isDryRun && totalMigrated > 0) {
-    console.log(chalk.yellow("\n⚠️  This was a dry run. Run without --dry-run to apply changes."));
+    console.log(
+      chalk.yellow(
+        "\n⚠️  This was a dry run. Run without --dry-run to apply changes.",
+      ),
+    );
   } else if (!isDryRun && totalMigrated > 0) {
     console.log(chalk.green("\n✓ Migration complete!"));
   } else if (totalSkipped === totalProcessed) {
@@ -238,7 +289,11 @@ async function migrateFilenames(options: MigrateOptions) {
   }
 
   if (totalFailed > 0) {
-    console.log(chalk.red("\n⚠️  Some patterns failed to migrate. Check the errors above."));
+    console.log(
+      chalk.red(
+        "\n⚠️  Some patterns failed to migrate. Check the errors above.",
+      ),
+    );
     process.exit(1);
   }
 }

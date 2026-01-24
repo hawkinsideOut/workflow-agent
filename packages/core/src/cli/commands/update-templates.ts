@@ -61,9 +61,7 @@ export async function updateTemplatesCommand(options: {
     }
   }
 
-  const optionalFiles = allTemplates.filter(
-    (f) => !mandatoryFiles.includes(f),
-  );
+  const optionalFiles = allTemplates.filter((f) => !mandatoryFiles.includes(f));
   if (optionalFiles.length > 0) {
     console.log(chalk.bold("\n  Optional templates:"));
     for (const file of optionalFiles) {

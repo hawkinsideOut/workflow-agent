@@ -21,7 +21,9 @@ Workflow Agent is a self-evolving, AI-friendly workflow management system extrac
 ## ✅ Completed Tasks
 
 ### 1. Repository Structure ✓
+
 `
+
 - Created standalone monorepo at `/home/hawkins/Development/projects/workflow-agent`
 - Initialized pnpm workspace with `packages/*` pattern
 - Configured TypeScript 5.3+ with strict mode, ES2022 target
@@ -528,16 +530,16 @@ workflow suggest "Add GitLab support" --category feature --author "username"
 
 ## 🎯 Updated Statistics
 
-| Metric             | Count               |
-| ------------------ | ------------------- |
-| Total packages     | 7                   |
-| Lines of code      | ~5,500+             |
-| Test files         | 26                  |
-| Test cases         | 472                 |
-| Test pass rate     | 100%                |
-| Git commits        | 50+                 |
-| Features completed | 18/20               |
-| Published version  | v2.21.1             |
+| Metric             | Count   |
+| ------------------ | ------- |
+| Total packages     | 7       |
+| Lines of code      | ~5,500+ |
+| Test files         | 26      |
+| Test cases         | 472     |
+| Test pass rate     | 100%    |
+| Git commits        | 50+     |
+| Features completed | 18/20   |
+| Published version  | v2.21.1 |
 
 ---
 
@@ -566,18 +568,21 @@ workflow suggest "Add GitLab support" --category feature --author "username"
 ## 📦 Recent Releases
 
 ### v2.21.1 (January 21, 2026)
+
 - Fixed PatternStore.initialize() calls in all CLI commands
 - Fixed category filter to use correct `solutionCategory` parameter
 - Fixed 63 test failures - all 472 tests now pass
 - Removed redundant integration tests
 
 ### v2.21.0 (January 20, 2026)
+
 - CLI command restructuring with 15 new subcommands
 - Hooks moved under `scope hooks`
 - New `setup` command group
 - New `pre-commit` standalone command
 
 ### v2.15.0 (January 20, 2026)
+
 - Pattern validation error tracking
 - New `getValidationErrors()` method
 

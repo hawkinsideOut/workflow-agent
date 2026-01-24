@@ -860,12 +860,19 @@ describe("workflow learn - E2E", () => {
       await store.saveBlueprint(blueprint);
 
       // Find the file (could be either UUID.json or slug-UUID.json)
-      const blueprintsDir = join(tempDir, ".workflow", "patterns", "blueprints");
+      const blueprintsDir = join(
+        tempDir,
+        ".workflow",
+        "patterns",
+        "blueprints",
+      );
       const files = await readdir(blueprintsDir);
       const matchingFile = files.find(
-        (file) => file.endsWith(`-${blueprint.id}.json`) || file === `${blueprint.id}.json`,
+        (file) =>
+          file.endsWith(`-${blueprint.id}.json`) ||
+          file === `${blueprint.id}.json`,
       );
-      
+
       expect(matchingFile).toBeDefined();
       const blueprintPath = join(blueprintsDir, matchingFile!);
 
@@ -899,7 +906,8 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn", "capture",
+          "learn",
+          "capture",
           "component.tsx",
           "--dry-run",
           "--name",
@@ -932,7 +940,8 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn", "capture",
+          "learn",
+          "capture",
           "util.ts",
           "helper.ts",
           "--dry-run",
@@ -969,13 +978,17 @@ export function MyComponent() {
       );
 
       const testFile = join(tempDir, "app.tsx");
-      await writeFile(testFile, "export default function App() { return <div/>; }");
+      await writeFile(
+        testFile,
+        "export default function App() { return <div/>; }",
+      );
 
       const { stdout, exitCode } = await execa(
         "node",
         [
           cliPath,
-          "learn", "capture",
+          "learn",
+          "capture",
           "app.tsx",
           "--dry-run",
           "--name",
@@ -1009,7 +1022,8 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn", "capture",
+          "learn",
+          "capture",
           "hooks/useCounter.ts",
           "--dry-run",
           "--name",
@@ -1033,7 +1047,8 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn", "capture",
+          "learn",
+          "capture",
           "nonexistent.ts",
           "--dry-run",
           "--name",
@@ -1054,14 +1069,21 @@ export function MyComponent() {
     it("captures directory recursively", async () => {
       // Create directory structure
       await mkdir(join(tempDir, "components"), { recursive: true });
-      await writeFile(join(tempDir, "components", "Button.tsx"), "export const Button = () => {};");
-      await writeFile(join(tempDir, "components", "Card.tsx"), "export const Card = () => {};");
+      await writeFile(
+        join(tempDir, "components", "Button.tsx"),
+        "export const Button = () => {};",
+      );
+      await writeFile(
+        join(tempDir, "components", "Card.tsx"),
+        "export const Card = () => {};",
+      );
 
       const { stdout, exitCode } = await execa(
         "node",
         [
           cliPath,
-          "learn", "capture",
+          "learn",
+          "capture",
           "components",
           "--dry-run",
           "--name",
@@ -1089,7 +1111,8 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn", "capture",
+          "learn",
+          "capture",
           "save-test.ts",
           "--name",
           "Save Test Pattern",
@@ -1127,7 +1150,8 @@ export function MyComponent() {
         "node",
         [
           cliPath,
-          "learn", "capture",
+          "learn",
+          "capture",
           "tagged.ts",
           "--dry-run",
           "--name",
@@ -1235,19 +1259,36 @@ export function MyComponent() {
 
       // Verify file was created
       const { readFile: fsReadFile } = await import("fs/promises");
-      const content = await fsReadFile(join(tempDir, "export-e2e.json"), "utf-8");
+      const content = await fsReadFile(
+        join(tempDir, "export-e2e.json"),
+        "utf-8",
+      );
       const data = JSON.parse(content);
-      expect(data.fixes.some((f: { name: string }) => f.name === "Export E2E Test Fix")).toBe(true);
+      expect(
+        data.fixes.some(
+          (f: { name: string }) => f.name === "Export E2E Test Fix",
+        ),
+      ).toBe(true);
     });
 
     it("exports with YAML format", async () => {
       const store = new PatternStore(tempDir);
       await store.initialize();
-      await store.saveFixPattern(createTestFixPattern({ name: "YAML Export E2E" }));
+      await store.saveFixPattern(
+        createTestFixPattern({ name: "YAML Export E2E" }),
+      );
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn", "export", "--format", "yaml", "--output", "export.yaml"],
+        [
+          cliPath,
+          "learn",
+          "export",
+          "--format",
+          "yaml",
+          "--output",
+          "export.yaml",
+        ],
         {
           cwd: tempDir,
           reject: false,
@@ -1262,12 +1303,24 @@ export function MyComponent() {
     it("filters by type when --type is specified", async () => {
       const store = new PatternStore(tempDir);
       await store.initialize();
-      await store.saveFixPattern(createTestFixPattern({ name: "Fix Only E2E" }));
-      await store.saveBlueprint(createTestBlueprint({ name: "Blueprint Only E2E" }));
+      await store.saveFixPattern(
+        createTestFixPattern({ name: "Fix Only E2E" }),
+      );
+      await store.saveBlueprint(
+        createTestBlueprint({ name: "Blueprint Only E2E" }),
+      );
 
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "learn", "export", "--type", "fix", "--output", "fixes-only-e2e.json"],
+        [
+          cliPath,
+          "learn",
+          "export",
+          "--type",
+          "fix",
+          "--output",
+          "fixes-only-e2e.json",
+        ],
         {
           cwd: tempDir,
           reject: false,
@@ -1277,7 +1330,10 @@ export function MyComponent() {
       expect(exitCode).toBe(0);
 
       const { readFile: fsReadFile } = await import("fs/promises");
-      const content = await fsReadFile(join(tempDir, "fixes-only-e2e.json"), "utf-8");
+      const content = await fsReadFile(
+        join(tempDir, "fixes-only-e2e.json"),
+        "utf-8",
+      );
       const data = JSON.parse(content);
       expect(data.fixes.length).toBeGreaterThanOrEqual(1);
       expect(data.blueprints).toHaveLength(0);
@@ -1323,7 +1379,9 @@ export function MyComponent() {
       const exportData = {
         version: "1.0",
         exportedAt: new Date().toISOString(),
-        fixes: [createTestFixPattern({ id: importId, name: "Imported E2E Fix" })],
+        fixes: [
+          createTestFixPattern({ id: importId, name: "Imported E2E Fix" }),
+        ],
         blueprints: [],
       };
       await writeFile(
@@ -1355,7 +1413,9 @@ export function MyComponent() {
     it("supports dry-run mode", async () => {
       const dryRunId = crypto.randomUUID();
       const exportData = {
-        fixes: [createTestFixPattern({ id: dryRunId, name: "Dry Run E2E Import" })],
+        fixes: [
+          createTestFixPattern({ id: dryRunId, name: "Dry Run E2E Import" }),
+        ],
         blueprints: [],
       };
       await writeFile(
@@ -1514,8 +1574,12 @@ export function MyComponent() {
     it("shows all patterns with --all --dry-run", async () => {
       const store = new PatternStore(tempDir);
       await store.initialize();
-      await store.saveFixPattern(createTestFixPattern({ name: "All Clean E2E 1" }));
-      await store.saveFixPattern(createTestFixPattern({ name: "All Clean E2E 2" }));
+      await store.saveFixPattern(
+        createTestFixPattern({ name: "All Clean E2E 1" }),
+      );
+      await store.saveFixPattern(
+        createTestFixPattern({ name: "All Clean E2E 2" }),
+      );
 
       const { stdout, exitCode } = await execa(
         "node",

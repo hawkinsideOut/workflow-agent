@@ -143,9 +143,7 @@ export async function writeFixedConfig(
 /**
  * Attempt to auto-fix a configuration file
  */
-export async function autoFixConfigFile(
-  cwd: string = process.cwd(),
-): Promise<{
+export async function autoFixConfigFile(cwd: string = process.cwd()): Promise<{
   success: boolean;
   configPath: string | null;
   changes: string[];
@@ -210,8 +208,7 @@ export async function autoFixConfigFile(
         success: false,
         configPath,
         changes: fixResult.changes,
-        error:
-          "Auto-fix applied but configuration still has validation errors",
+        error: "Auto-fix applied but configuration still has validation errors",
       };
     }
 

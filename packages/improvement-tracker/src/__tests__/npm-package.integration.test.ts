@@ -26,7 +26,7 @@ describe("NPM Package Integration", () => {
 
     // Extract the tarball filename (last line that ends with .tgz)
     const lines = packOutput.trim().split("\n");
-    const tgzFile = lines.find(line => line.endsWith(".tgz")) || lines.pop()!;
+    const tgzFile = lines.find((line) => line.endsWith(".tgz")) || lines.pop()!;
     tarballPath = path.join(packageRoot, tgzFile.trim());
 
     // Extract tarball

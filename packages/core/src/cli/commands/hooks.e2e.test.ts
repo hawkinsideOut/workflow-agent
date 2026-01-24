@@ -181,14 +181,10 @@ describe("workflow hooks - E2E", () => {
 
   describe("hooks test", () => {
     it("reports hooks not installed when missing", async () => {
-      const { exitCode } = await execa(
-        "node",
-        [cliPath, "hooks", "test"],
-        {
-          cwd: tempDir,
-          reject: false,
-        },
-      );
+      const { exitCode } = await execa("node", [cliPath, "hooks", "test"], {
+        cwd: tempDir,
+        reject: false,
+      });
 
       // Should exit with error since hooks not installed
       expect(exitCode).toBe(1);
@@ -239,14 +235,10 @@ describe("workflow hooks - E2E", () => {
 
   describe("shows help", () => {
     it("displays help when --help flag provided", async () => {
-      const { stdout } = await execa(
-        "node",
-        [cliPath, "hooks", "--help"],
-        {
-          cwd: tempDir,
-          reject: false,
-        },
-      );
+      const { stdout } = await execa("node", [cliPath, "hooks", "--help"], {
+        cwd: tempDir,
+        reject: false,
+      });
 
       expect(stdout).toContain("hooks install");
       expect(stdout).toContain("hooks uninstall");

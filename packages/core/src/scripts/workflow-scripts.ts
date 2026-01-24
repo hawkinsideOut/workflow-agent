@@ -53,7 +53,7 @@ export function validateAllScripts(scripts: Record<string, string>): string[] {
   return Object.keys(scripts).filter(
     (name) =>
       (name.startsWith("workflow:") || name.startsWith("workflow-")) &&
-      name !== "workflow"
+      name !== "workflow",
   );
 }
 
@@ -213,4 +213,3 @@ export const SCRIPT_CATEGORIES = {
 } as const;
 
 export const TOTAL_SCRIPTS = Object.keys(WORKFLOW_SCRIPTS).length;
-

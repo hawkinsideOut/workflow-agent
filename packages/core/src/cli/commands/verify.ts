@@ -19,6 +19,7 @@ interface VerifyOptions {
   commit?: boolean;
   dryRun?: boolean;
   learn?: boolean;
+  platformChecks?: boolean;
 }
 
 /**
@@ -34,6 +35,7 @@ export async function verifyCommand(options: VerifyOptions) {
   const shouldCommit = options.commit ?? false;
   const dryRun = options.dryRun ?? false;
   const learnFromFixes = options.learn ?? false;
+  const includePlatformChecks = options.platformChecks ?? true;
 
   console.log(chalk.bold.cyan("\n🔍 Workflow Agent Quality Verification\n"));
 
@@ -48,6 +50,11 @@ export async function verifyCommand(options: VerifyOptions) {
   console.log(
     chalk.dim(`  Learn from fixes: ${learnFromFixes ? "yes" : "no"}`),
   );
+  console.log(
+    chalk.dim(
+      `  Platform checks: ${includePlatformChecks ? "enabled" : "disabled"}`,
+    ),
+  );
 
   const startTime = Date.now();
 
@@ -55,6 +62,7 @@ export async function verifyCommand(options: VerifyOptions) {
     maxRetries,
     autoFix,
     dryRun,
+    includePlatformChecks,
   });
 
   const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -285,7 +293,11 @@ async function recordSuccessfulFixes(
               frameworkVersion,
             );
             console.log(chalk.dim(`  ✓ Recorded: ${patternName}`));
-            console.log(chalk.dim(`    Path: .workflow/patterns/fixes/${newPattern.id}.json`));
+            console.log(
+              chalk.dim(
+                `    Path: .workflow/patterns/fixes/${newPattern.id}.json`,
+              ),
+            );
           }
         }
       }

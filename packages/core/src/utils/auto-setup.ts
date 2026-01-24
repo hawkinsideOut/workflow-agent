@@ -102,8 +102,20 @@ export type FrameworkType =
   | "node"
   | "express"
   | "hono"
-  | "shopify"
+  | "shopify-theme"
+  | "shopify-hydrogen"
+  | "wordpress"
+  | "magento"
+  | "woocommerce"
   | "unknown";
+
+/**
+ * Result of platform detection - may detect multiple platforms
+ */
+export interface PlatformDetectionResult {
+  primary: FrameworkType;
+  detected: FrameworkType[];
+}
 
 // Package.json structure for type safety
 interface PackageJson {
@@ -222,39 +234,153 @@ async function hasSimpleGitHooksConfig(projectPath: string): Promise<boolean> {
 
 /**
  * Detect the framework used in the project
+ * Returns the primary detected framework for backward compatibility
  */
 async function detectFramework(projectPath: string): Promise<FrameworkType> {
+  const result = await detectAllPlatforms(projectPath);
+  return result.primary;
+}
+
+/**
+ * Detect all platforms/frameworks in a project
+ * Returns both primary and all detected platforms for multi-platform projects
+ */
+export async function detectAllPlatforms(
+  projectPath: string,
+): Promise<PlatformDetectionResult> {
+  const detected: FrameworkType[] = [];
+
   try {
     const pkgPath = join(projectPath, "package.json");
-    if (!existsSync(pkgPath)) return "unknown";
+    const hasPkgJson = existsSync(pkgPath);
 
-    const pkg = JSON.parse(await readFile(pkgPath, "utf-8"));
-    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    let deps: Record<string, string> = {};
+    let composerDeps: Record<string, string> = {};
 
-    // Shopify theme detection
+    if (hasPkgJson) {
+      const pkg = JSON.parse(await readFile(pkgPath, "utf-8"));
+      deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    }
+
+    // Check for composer.json (PHP projects)
+    const composerPath = join(projectPath, "composer.json");
+    if (existsSync(composerPath)) {
+      try {
+        const composer = JSON.parse(await readFile(composerPath, "utf-8"));
+        composerDeps = { ...composer.require, ...composer["require-dev"] };
+      } catch {
+        // Ignore composer parse errors
+      }
+    }
+
+    // ========================================================================
+    // Platform Detection (order matters - more specific first)
+    // ========================================================================
+
+    // Shopify Hydrogen detection (more specific, check first)
+    if (
+      deps["@shopify/hydrogen"] ||
+      deps["@shopify/remix-oxygen"] ||
+      existsSync(join(projectPath, "hydrogen.config.ts")) ||
+      existsSync(join(projectPath, "hydrogen.config.js"))
+    ) {
+      detected.push("shopify-hydrogen");
+    }
+
+    // Shopify Theme detection
     if (
       existsSync(join(projectPath, "shopify.theme.toml")) ||
       existsSync(join(projectPath, "config/settings_schema.json")) ||
-      deps["@shopify/cli"] ||
-      deps["@shopify/theme"]
+      deps["@shopify/theme"] ||
+      (await hasLiquidFiles(projectPath))
     ) {
-      return "shopify";
+      detected.push("shopify-theme");
     }
 
-    // Framework detection by dependencies
-    if (deps.next) return "nextjs";
-    if (deps["@remix-run/react"]) return "remix";
-    if (deps.nuxt) return "nuxt";
-    if (deps.vue) return "vue";
-    if (deps.svelte || deps["@sveltejs/kit"]) return "svelte";
-    if (deps.react && !deps.next) return "react";
-    if (deps.hono) return "hono";
-    if (deps.express) return "express";
-    if (deps["@types/node"] || pkg.type === "module") return "node";
+    // WooCommerce detection (more specific WordPress, check first)
+    const hasWooCommerce =
+      Object.keys(composerDeps).some((dep) =>
+        dep.toLowerCase().includes("woocommerce"),
+      ) || existsSync(join(projectPath, "wp-content/plugins/woocommerce"));
 
-    return "unknown";
+    // WordPress detection
+    const isWordPress =
+      existsSync(join(projectPath, "wp-content")) ||
+      existsSync(join(projectPath, "functions.php")) ||
+      (await hasWordPressThemeHeader(projectPath)) ||
+      Object.keys(composerDeps).some(
+        (dep) =>
+          dep.includes("wordpress") || dep.includes("johnpbloch/wordpress"),
+      );
+
+    if (hasWooCommerce && isWordPress) {
+      detected.push("woocommerce");
+    } else if (isWordPress) {
+      detected.push("wordpress");
+    }
+
+    // Magento detection
+    if (
+      existsSync(join(projectPath, "app/etc/env.php")) ||
+      existsSync(join(projectPath, "bin/magento")) ||
+      Object.keys(composerDeps).some((dep) => dep.startsWith("magento/"))
+    ) {
+      detected.push("magento");
+    }
+
+    // Standard JS/TS framework detection
+    if (deps.next) detected.push("nextjs");
+    if (deps["@remix-run/react"] && !detected.includes("shopify-hydrogen")) {
+      detected.push("remix");
+    }
+    if (deps.nuxt) detected.push("nuxt");
+    if (deps.vue && !deps.nuxt) detected.push("vue");
+    if (deps.svelte || deps["@sveltejs/kit"]) detected.push("svelte");
+    if (deps.react && !deps.next && !detected.includes("shopify-hydrogen")) {
+      detected.push("react");
+    }
+    if (deps.hono) detected.push("hono");
+    if (deps.express) detected.push("express");
+    if (
+      (deps["@types/node"] || (hasPkgJson && existsSync(pkgPath))) &&
+      detected.length === 0
+    ) {
+      detected.push("node");
+    }
+
+    // Determine primary (first detected or unknown)
+    const primary = detected.length > 0 ? detected[0] : "unknown";
+
+    return { primary, detected };
   } catch {
-    return "unknown";
+    return { primary: "unknown", detected: [] };
+  }
+}
+
+/**
+ * Check if project has .liquid files (Shopify theme indicator)
+ */
+async function hasLiquidFiles(projectPath: string): Promise<boolean> {
+  try {
+    const { readdir } = await import("fs/promises");
+    const entries = await readdir(projectPath);
+    return entries.some((entry) => entry.endsWith(".liquid"));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Check if style.css has WordPress theme header
+ */
+async function hasWordPressThemeHeader(projectPath: string): Promise<boolean> {
+  try {
+    const stylePath = join(projectPath, "style.css");
+    if (!existsSync(stylePath)) return false;
+    const content = await readFile(stylePath, "utf-8");
+    return content.includes("Theme Name:");
+  } catch {
+    return false;
   }
 }
 

@@ -276,11 +276,7 @@ describe("template-installer", () => {
       updateTemplates(projectDir, templatesDir, { silent: true });
 
       // Modify a file
-      const filePath = join(
-        projectDir,
-        "guidelines",
-        "LIBRARY_INVENTORY.md",
-      );
+      const filePath = join(projectDir, "guidelines", "LIBRARY_INVENTORY.md");
       await writeFile(filePath, "# Custom library content", "utf-8");
 
       // Update with force
@@ -302,11 +298,7 @@ describe("template-installer", () => {
       updateTemplates(projectDir, templatesDir, { silent: true });
 
       // Modify a file
-      const filePath = join(
-        projectDir,
-        "guidelines",
-        "TESTING_STRATEGY.md",
-      );
+      const filePath = join(projectDir, "guidelines", "TESTING_STRATEGY.md");
       const customContent = "# My custom testing strategy";
       await writeFile(filePath, customContent, "utf-8");
 

@@ -56,7 +56,7 @@ describe("hooks command - Unit Tests", () => {
       const cmd = createHooksCommand();
       const testCmd = cmd.commands.find((c) => c.name() === "test");
       expect(testCmd).toBeDefined();
-      
+
       const options = testCmd!.options.map((o) => o.long);
       expect(options).toContain("--dry-run");
     });

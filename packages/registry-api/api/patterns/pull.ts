@@ -12,7 +12,7 @@ import type { PullResponse } from "../../src/types";
 
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ): Promise<void> {
   // Only allow GET
   if (req.method !== "GET") {
@@ -63,7 +63,10 @@ export default async function handler(
     };
 
     // Set cache headers for GET requests
-    res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+    res.setHeader(
+      "Cache-Control",
+      "public, s-maxage=60, stale-while-revalidate=300",
+    );
 
     res.status(200).json(response);
   } catch (error) {

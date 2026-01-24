@@ -226,7 +226,7 @@ describe("postinstall", () => {
 
       await writeFile(
         join(tempDir, "package.json"),
-        JSON.stringify(packageJson, null, 2)
+        JSON.stringify(packageJson, null, 2),
       );
 
       // Simulate the postinstall logic
@@ -250,7 +250,7 @@ describe("postinstall", () => {
 
       await writeFile(
         join(tempDir, "package.json"),
-        JSON.stringify(packageJson, null, 2)
+        JSON.stringify(packageJson, null, 2),
       );
 
       const scripts: Record<string, string> = {};

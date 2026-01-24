@@ -98,7 +98,11 @@ describe("scope commands - Unit Tests", () => {
     it("validates config file exists", () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
 
-      const configFiles = ["workflow.config.json", "workflow.config.js", ".workflowrc.json"];
+      const configFiles = [
+        "workflow.config.json",
+        "workflow.config.js",
+        ".workflowrc.json",
+      ];
       let configPath: string | null = null;
 
       for (const file of configFiles) {
@@ -196,7 +200,9 @@ describe("scope commands - Unit Tests", () => {
       const definedScopes = ["feat", "fix"];
       const usedScopes = ["feat", "api", "auth"];
 
-      const invalidScopes = usedScopes.filter((s) => !definedScopes.includes(s));
+      const invalidScopes = usedScopes.filter(
+        (s) => !definedScopes.includes(s),
+      );
       expect(invalidScopes).toEqual(["api", "auth"]);
     });
 
@@ -246,7 +252,8 @@ describe("scope commands - Unit Tests", () => {
     });
 
     it("validates hook is workflow hook", () => {
-      const hookContent = "#!/bin/sh\n# workflow-agent hook\nworkflow pre-commit";
+      const hookContent =
+        "#!/bin/sh\n# workflow-agent hook\nworkflow pre-commit";
 
       const isWorkflowHook = hookContent.includes("workflow-agent");
       expect(isWorkflowHook).toBe(true);

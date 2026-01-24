@@ -193,7 +193,9 @@ export function createTestSolutionPattern(
 /**
  * Create a temporary directory for testing
  */
-export async function setupTempDir(prefix: string = "workflow-test-"): Promise<string> {
+export async function setupTempDir(
+  prefix: string = "workflow-test-",
+): Promise<string> {
   return mkdtemp(join(tmpdir(), prefix));
 }
 
@@ -280,7 +282,10 @@ export async function createTestProject(dir: string): Promise<void> {
   await createPackageJson(dir);
   await createWorkflowConfig(dir);
   await mkdir(join(dir, "src"), { recursive: true });
-  await writeFile(join(dir, "src", "index.ts"), 'export const main = () => "hello";');
+  await writeFile(
+    join(dir, "src", "index.ts"),
+    'export const main = () => "hello";',
+  );
 }
 
 /**
@@ -513,16 +518,23 @@ export function createMockFs() {
  */
 export function assertSuccess(result: { exitCode: number; stderr: string }) {
   if (result.exitCode !== 0) {
-    throw new Error(`Expected exit code 0, got ${result.exitCode}. stderr: ${result.stderr}`);
+    throw new Error(
+      `Expected exit code 0, got ${result.exitCode}. stderr: ${result.stderr}`,
+    );
   }
 }
 
 /**
  * Assert that a CLI command failed
  */
-export function assertFailure(result: { exitCode: number }, expectedCode: number = 1) {
+export function assertFailure(
+  result: { exitCode: number },
+  expectedCode: number = 1,
+) {
   if (result.exitCode !== expectedCode) {
-    throw new Error(`Expected exit code ${expectedCode}, got ${result.exitCode}`);
+    throw new Error(
+      `Expected exit code ${expectedCode}, got ${result.exitCode}`,
+    );
   }
 }
 

@@ -139,7 +139,9 @@ describe("Solution Pattern E2E Tests", () => {
   beforeEach(async () => {
     testDir = await mkdtemp(join(tmpdir(), "solution-e2e-"));
     // Create required directories
-    await mkdir(join(testDir, ".workflow", "patterns", "solutions"), { recursive: true });
+    await mkdir(join(testDir, ".workflow", "patterns", "solutions"), {
+      recursive: true,
+    });
     store = new PatternStore(testDir);
     await store.initialize();
   });
@@ -698,15 +700,24 @@ describe("solution CLI commands - E2E", () => {
       expect(exitCode).toBe(0);
 
       const { readFile: fsReadFile } = await import("fs/promises");
-      const content = await fsReadFile(join(tempDir, "auth-only.json"), "utf-8");
+      const content = await fsReadFile(
+        join(tempDir, "auth-only.json"),
+        "utf-8",
+      );
       const data = JSON.parse(content);
       expect(data.solutions.length).toBeGreaterThan(0);
-      expect(data.solutions.every((s: { category: string }) => s.category === "auth")).toBe(true);
+      expect(
+        data.solutions.every(
+          (s: { category: string }) => s.category === "auth",
+        ),
+      ).toBe(true);
     });
 
     it("reports no solutions when store is empty", async () => {
       // Create empty temp dir
-      const emptyDir = await mkdtemp(join(tmpdir(), "workflow-solution-empty-"));
+      const emptyDir = await mkdtemp(
+        join(tmpdir(), "workflow-solution-empty-"),
+      );
       await writeFile(
         join(emptyDir, "workflow.config.json"),
         JSON.stringify({
@@ -919,7 +930,9 @@ describe("solution CLI commands - E2E", () => {
 
     it("reports no opportunities when none found", async () => {
       // Empty directory should find no opportunities
-      const emptyDir = await mkdtemp(join(tmpdir(), "workflow-solution-analyze-"));
+      const emptyDir = await mkdtemp(
+        join(tmpdir(), "workflow-solution-analyze-"),
+      );
       await writeFile(
         join(emptyDir, "workflow.config.json"),
         JSON.stringify({

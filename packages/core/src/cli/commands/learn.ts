@@ -10,10 +10,12 @@ import {
   FixPatternSchema,
   BlueprintSchema,
   SolutionPatternSchema,
+  createDefaultMetrics,
   type FixPattern,
   type Blueprint,
   type SolutionPattern,
   type PatternTag,
+  type Language,
 } from "@hawkinside_out/workflow-improvement-tracker";
 import {
   RegistryClient,
@@ -356,7 +358,9 @@ export async function learnRecordCommand(options: LearnRecordOptions) {
       console.log(chalk.dim(`  ID: ${blueprint.id}`));
       console.log(chalk.dim(`  Name: ${name}`));
       console.log(chalk.dim(`  Framework: ${framework} ${version}`));
-      console.log(chalk.dim(`  Path: .workflow/patterns/blueprints/${blueprint.id}.json`));
+      console.log(
+        chalk.dim(`  Path: .workflow/patterns/blueprints/${blueprint.id}.json`),
+      );
     } else {
       console.log(chalk.red("\n❌ Failed to record blueprint"));
       console.log(chalk.dim(`  Error: ${result.error}`));
@@ -479,15 +483,11 @@ export async function learnListCommand(options: LearnListOptions) {
         `\n⚠️  ${totalInvalid} pattern(s) failed schema validation and were skipped:`,
       ),
     );
-    console.log(
-      chalk.dim(`     Fix patterns: ${stats.invalidFixes} invalid`),
-    );
+    console.log(chalk.dim(`     Fix patterns: ${stats.invalidFixes} invalid`));
     console.log(
       chalk.dim(`     Blueprints: ${stats.invalidBlueprints} invalid`),
     );
-    console.log(
-      chalk.dim(`     Solutions: ${stats.invalidSolutions} invalid`),
-    );
+    console.log(chalk.dim(`     Solutions: ${stats.invalidSolutions} invalid`));
 
     // Show detailed validation errors
     const validationErrors = store.getValidationErrors();
@@ -508,9 +508,7 @@ export async function learnListCommand(options: LearnListOptions) {
       }
       if (validationErrors.length > 5) {
         console.log(
-          chalk.dim(
-            `     ... and ${validationErrors.length - 5} more errors`,
-          ),
+          chalk.dim(`     ... and ${validationErrors.length - 5} more errors`),
         );
       }
     }
@@ -548,14 +546,19 @@ export async function learnApplyCommand(
   console.log(chalk.cyan("\n🔧 Apply Learning Pattern\n"));
 
   // Try to find the pattern
-  let pattern = await store.getFixPattern(patternId);
+  let fixPattern: FixPattern | undefined;
+  let blueprintPattern: Blueprint | undefined;
   let patternType: "fix" | "blueprint" = "fix";
 
-  if (!pattern.success || !pattern.data) {
+  const fixResult = await store.getFixPattern(patternId);
+  if (fixResult.success && fixResult.data) {
+    fixPattern = fixResult.data;
+    patternType = "fix";
+  } else {
     // Try as blueprint
     const bpResult = await store.getBlueprint(patternId);
     if (bpResult.success && bpResult.data) {
-      pattern = bpResult as typeof pattern;
+      blueprintPattern = bpResult.data;
       patternType = "blueprint";
     } else {
       console.log(chalk.red(`\n❌ Pattern not found: ${patternId}`));
@@ -566,7 +569,7 @@ export async function learnApplyCommand(
     }
   }
 
-  const patternData = pattern.data!;
+  const patternData = (fixPattern ?? blueprintPattern)!;
   console.log(chalk.white(`  Pattern: ${patternData.name}`));
   console.log(chalk.dim(`  Type: ${patternType}`));
   console.log(chalk.dim(`  Description: ${patternData.description}`));
@@ -579,20 +582,15 @@ export async function learnApplyCommand(
 
   // Record telemetry for application attempt
   const framework =
-    options.framework ??
-    patternData.compatibility?.frameworks?.[0]?.name ??
-    "unknown";
+    options.framework ?? patternData.compatibility?.framework ?? "unknown";
   const version =
-    options.version ??
-    patternData.compatibility?.frameworks?.[0]?.version ??
-    "0.0.0";
+    options.version ?? patternData.compatibility?.frameworkVersion ?? "0.0.0";
 
   await telemetry.recordApplication(patternId, patternType, framework, version);
 
   // For now, just show the pattern details
   // In future, this could apply automated changes
-  if (patternType === "fix") {
-    const fixPattern = patternData as FixPattern;
+  if (patternType === "fix" && fixPattern) {
     console.log(chalk.cyan("\n📋 Solution Steps:\n"));
 
     if (fixPattern.solution.steps) {
@@ -601,18 +599,17 @@ export async function learnApplyCommand(
         console.log(
           chalk.white(`  ${i + 1}. [${step.action}] ${step.description}`),
         );
-        if (step.file) {
-          console.log(chalk.dim(`     File: ${step.file}`));
+        if (step.target) {
+          console.log(chalk.dim(`     Target: ${step.target}`));
         }
       }
     }
-  } else {
-    const blueprint = patternData as Blueprint;
+  } else if (blueprintPattern) {
     console.log(chalk.cyan("\n📋 Setup Steps:\n"));
 
-    if (blueprint.setup.steps) {
-      for (let i = 0; i < blueprint.setup.steps.length; i++) {
-        const step = blueprint.setup.steps[i];
+    if (blueprintPattern.setup.steps) {
+      for (let i = 0; i < blueprintPattern.setup.steps.length; i++) {
+        const step = blueprintPattern.setup.steps[i];
         console.log(chalk.white(`  ${i + 1}. ${step.description}`));
         if (step.command) {
           console.log(chalk.dim(`     Command: ${step.command}`));
@@ -749,8 +746,12 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
     }
 
     const fixCount = anonymizedPatterns.filter((p) => p.type === "fix").length;
-    const bpCount = anonymizedPatterns.filter((p) => p.type === "blueprint").length;
-    const solutionCount = anonymizedPatterns.filter((p) => p.type === "solution").length;
+    const bpCount = anonymizedPatterns.filter(
+      (p) => p.type === "blueprint",
+    ).length;
+    const solutionCount = anonymizedPatterns.filter(
+      (p) => p.type === "solution",
+    ).length;
 
     if (anonymizedPatterns.length === 0) {
       console.log(chalk.yellow("\n⚠️ No patterns to push"));
@@ -764,7 +765,11 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
     );
 
     if (options.dryRun) {
-      console.log(chalk.yellow("\n📋 DRY-RUN: Patterns would be pushed (no actual changes)"));
+      console.log(
+        chalk.yellow(
+          "\n📋 DRY-RUN: Patterns would be pushed (no actual changes)",
+        ),
+      );
       return;
     }
 
@@ -813,7 +818,9 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
       }
 
       console.log(
-        chalk.green(`\n✅ Successfully pushed ${pushResult.pushed} patterns to registry`),
+        chalk.green(
+          `\n✅ Successfully pushed ${pushResult.pushed} patterns to registry`,
+        ),
       );
 
       if (pushResult.skipped > 0) {
@@ -837,11 +844,7 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
     } catch (error) {
       if (error instanceof RateLimitedException) {
         console.log(chalk.red("\n❌ Rate limit exceeded"));
-        console.log(
-          chalk.dim(
-            `   Try again in ${error.getTimeUntilReset()}`,
-          ),
-        );
+        console.log(chalk.dim(`   Try again in ${error.getTimeUntilReset()}`));
       } else if (error instanceof RegistryError) {
         console.log(chalk.red(`\n❌ Registry error: ${error.message}`));
       } else {
@@ -859,20 +862,32 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
     console.log(chalk.cyan("\n📥 Pulling patterns from registry...\n"));
 
     if (options.dryRun) {
-      console.log(chalk.yellow("📋 DRY-RUN: Would pull patterns (no actual changes)\n"));
+      console.log(
+        chalk.yellow("📋 DRY-RUN: Would pull patterns (no actual changes)\n"),
+      );
 
       // Show what would be pulled
       const registryClient = new RegistryClient();
       try {
         const result = await registryClient.pull({ limit: 10 });
-        console.log(chalk.dim(`  Registry has ${result.pagination.total} patterns available`));
+        console.log(
+          chalk.dim(
+            `  Registry has ${result.pagination.total} patterns available`,
+          ),
+        );
         if (result.patterns.length > 0) {
           console.log(chalk.dim("\n  First 10 patterns:"));
           for (const p of result.patterns) {
-            console.log(chalk.dim(`    - [${p.type}] ${(p.data as { name?: string }).name || p.id}`));
+            console.log(
+              chalk.dim(
+                `    - [${p.type}] ${(p.data as { name?: string }).name || p.id}`,
+              ),
+            );
           }
           if (result.pagination.hasMore) {
-            console.log(chalk.dim(`    ... and ${result.pagination.total - 10} more`));
+            console.log(
+              chalk.dim(`    ... and ${result.pagination.total - 10} more`),
+            );
           }
         }
       } catch (error) {
@@ -938,7 +953,7 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
             await store.saveBlueprint({
               ...bpData,
               id: pattern.id,
-              source: "community",
+              // Note: Blueprint doesn't have 'source' property
               isPrivate: true,
             });
             totalPulled++;
@@ -967,7 +982,9 @@ export async function learnSyncCommand(options: LearnSyncOptions) {
       );
 
       if (totalSkipped > 0) {
-        console.log(chalk.dim(`   (${totalSkipped} patterns already existed locally)`));
+        console.log(
+          chalk.dim(`   (${totalSkipped} patterns already existed locally)`),
+        );
       }
     } catch (error) {
       if (error instanceof RegistryError) {
@@ -1135,8 +1152,12 @@ export async function learnPublishCommand(
     const fixesResult = await store.listFixPatterns({});
     const blueprintsResult = await store.listBlueprints({});
 
-    const allFixes = fixesResult.success && fixesResult.data ? fixesResult.data : [];
-    const allBlueprints = blueprintsResult.success && blueprintsResult.data ? blueprintsResult.data : [];
+    const allFixes =
+      fixesResult.success && fixesResult.data ? fixesResult.data : [];
+    const allBlueprints =
+      blueprintsResult.success && blueprintsResult.data
+        ? blueprintsResult.data
+        : [];
 
     const fixesToUpdate = allFixes.filter((p) => p.isPrivate !== makePrivate);
     const blueprintsToUpdate = allBlueprints.filter(
@@ -1147,7 +1168,9 @@ export async function learnPublishCommand(
 
     if (totalToUpdate === 0) {
       console.log(
-        chalk.yellow(`  All patterns are already ${actionWord}. Nothing to do.`),
+        chalk.yellow(
+          `  All patterns are already ${actionWord}. Nothing to do.`,
+        ),
       );
       return;
     }
@@ -1217,20 +1240,24 @@ export async function learnPublishCommand(
     console.log(
       chalk.dim("  Usage: workflow learn:publish <patternId> [--private]"),
     );
-    console.log(
-      chalk.dim("         workflow learn:publish --all [--private]"),
-    );
+    console.log(chalk.dim("         workflow learn:publish --all [--private]"));
     process.exit(1);
   }
 
   // Try to find the pattern
   let patternType: "fix" | "blueprint" = "fix";
-  let pattern = await store.getFixPattern(patternId);
+  let fixPatternData: FixPattern | undefined;
+  let blueprintData: Blueprint | undefined;
 
-  if (!pattern.success || !pattern.data) {
+  const fixResult = await store.getFixPattern(patternId);
+
+  if (fixResult.success && fixResult.data) {
+    fixPatternData = fixResult.data;
+    patternType = "fix";
+  } else {
     const bpResult = await store.getBlueprint(patternId);
     if (bpResult.success && bpResult.data) {
-      pattern = bpResult as typeof pattern;
+      blueprintData = bpResult.data;
       patternType = "blueprint";
     } else {
       console.log(chalk.red(`\n❌ Pattern not found: ${patternId}`));
@@ -1241,17 +1268,18 @@ export async function learnPublishCommand(
     }
   }
 
-  const currentStatus = pattern.data!.isPrivate ? "private" : "public";
+  const patternInfo = (fixPatternData ?? blueprintData)!;
+  const currentStatus = patternInfo.isPrivate ? "private" : "public";
 
-  if (pattern.data!.isPrivate === makePrivate) {
+  if (patternInfo.isPrivate === makePrivate) {
     console.log(
       chalk.yellow(`  Pattern is already ${actionWord}. Nothing to do.`),
     );
-    console.log(chalk.dim(`  Name: ${pattern.data!.name}`));
+    console.log(chalk.dim(`  Name: ${patternInfo.name}`));
     return;
   }
 
-  console.log(chalk.white(`  Pattern: ${pattern.data!.name}`));
+  console.log(chalk.white(`  Pattern: ${patternInfo.name}`));
   console.log(chalk.dim(`  Type: ${patternType}`));
   console.log(chalk.dim(`  Current: ${currentStatus} → ${actionWord}`));
 
@@ -1268,17 +1296,24 @@ export async function learnPublishCommand(
     }
   }
 
-  const updatedPattern = {
-    ...pattern.data!,
-    isPrivate: makePrivate,
-    updatedAt: new Date().toISOString(),
-  };
-
   let result;
-  if (patternType === "fix") {
-    result = await store.saveFixPattern(updatedPattern as FixPattern);
+  if (patternType === "fix" && fixPatternData) {
+    const updatedFix: FixPattern = {
+      ...fixPatternData,
+      isPrivate: makePrivate,
+      updatedAt: new Date().toISOString(),
+    };
+    result = await store.saveFixPattern(updatedFix);
+  } else if (blueprintData) {
+    const updatedBlueprint: Blueprint = {
+      ...blueprintData,
+      isPrivate: makePrivate,
+      updatedAt: new Date().toISOString(),
+    };
+    result = await store.saveBlueprint(updatedBlueprint);
   } else {
-    result = await store.saveBlueprint(updatedPattern as Blueprint);
+    console.log(chalk.red("\n❌ Unexpected error: pattern data not found"));
+    process.exit(1);
   }
 
   if (result.success) {
@@ -1310,20 +1345,25 @@ export async function learnDeprecateCommand(patternId: string, reason: string) {
 
   // Try to find the pattern
   let patternType: "fix" | "blueprint" = "fix";
-  let pattern = await store.getFixPattern(patternId);
+  let patternName: string;
 
-  if (!pattern.success || !pattern.data) {
+  const fixResult = await store.getFixPattern(patternId);
+
+  if (fixResult.success && fixResult.data) {
+    patternType = "fix";
+    patternName = fixResult.data.name;
+  } else {
     const bpResult = await store.getBlueprint(patternId);
     if (bpResult.success && bpResult.data) {
-      pattern = bpResult as typeof pattern;
       patternType = "blueprint";
+      patternName = bpResult.data.name;
     } else {
       console.log(chalk.red(`\n❌ Pattern not found: ${patternId}`));
       process.exit(1);
     }
   }
 
-  console.log(chalk.white(`  Pattern: ${pattern.data!.name}`));
+  console.log(chalk.white(`  Pattern: ${patternName}`));
   console.log(chalk.dim(`  Reason: ${reason}`));
 
   const confirmed = await p.confirm({
@@ -1552,7 +1592,10 @@ export async function learnValidateCommand(options: LearnValidateOptions) {
 async function validatePatternDirectory(
   dirPath: string,
   type: "fix" | "blueprint" | "solution",
-  schema: typeof FixPatternSchema | typeof BlueprintSchema | typeof SolutionPatternSchema,
+  schema:
+    | typeof FixPatternSchema
+    | typeof BlueprintSchema
+    | typeof SolutionPatternSchema,
   verbose: boolean,
 ): Promise<ValidationResult[]> {
   const results: ValidationResult[] = [];
@@ -1564,7 +1607,13 @@ async function validatePatternDirectory(
       if (!file.endsWith(".json")) continue;
 
       const filePath = path.join(dirPath, file);
-      const result = await validatePatternFile(filePath, file, type, schema, verbose);
+      const result = await validatePatternFile(
+        filePath,
+        file,
+        type,
+        schema,
+        verbose,
+      );
       results.push(result);
 
       if (verbose) {
@@ -1597,15 +1646,24 @@ async function validateSingleFile(
 
   // Detect type from path
   let type: "fix" | "blueprint" | "solution";
-  let schema: typeof FixPatternSchema | typeof BlueprintSchema | typeof SolutionPatternSchema;
+  let schema:
+    | typeof FixPatternSchema
+    | typeof BlueprintSchema
+    | typeof SolutionPatternSchema;
 
   if (filePath.includes("/fixes/") || filePath.includes("\\fixes\\")) {
     type = "fix";
     schema = FixPatternSchema;
-  } else if (filePath.includes("/blueprints/") || filePath.includes("\\blueprints\\")) {
+  } else if (
+    filePath.includes("/blueprints/") ||
+    filePath.includes("\\blueprints\\")
+  ) {
     type = "blueprint";
     schema = BlueprintSchema;
-  } else if (filePath.includes("/solutions/") || filePath.includes("\\solutions\\")) {
+  } else if (
+    filePath.includes("/solutions/") ||
+    filePath.includes("\\solutions\\")
+  ) {
     type = "solution";
     schema = SolutionPatternSchema;
   } else {
@@ -1646,8 +1704,11 @@ async function validatePatternFile(
   filePath: string,
   fileName: string,
   type: "fix" | "blueprint" | "solution",
-  schema: typeof FixPatternSchema | typeof BlueprintSchema | typeof SolutionPatternSchema,
-  verbose: boolean,
+  schema:
+    | typeof FixPatternSchema
+    | typeof BlueprintSchema
+    | typeof SolutionPatternSchema,
+  _verbose: boolean,
 ): Promise<ValidationResult> {
   try {
     const content = await fs.promises.readFile(filePath, "utf-8");
@@ -1671,7 +1732,11 @@ async function validatePatternFile(
     );
 
     // Try to auto-fix common issues
-    const { fixable, fixedData } = tryAutoFix(data, type, validation.error.issues);
+    const { fixable, fixedData } = tryAutoFix(
+      data,
+      type,
+      validation.error.issues,
+    );
 
     return {
       file: fileName,
@@ -1686,9 +1751,7 @@ async function validatePatternFile(
       file: fileName,
       type,
       valid: false,
-      errors: [
-        error instanceof Error ? error.message : "Failed to parse JSON",
-      ],
+      errors: [error instanceof Error ? error.message : "Failed to parse JSON"],
       fixable: false,
     };
   }
@@ -1715,7 +1778,11 @@ function tryAutoFix(
     }
 
     // Auto-fix missing setup (for blueprints)
-    if (pathStr === "setup" && issue.code === "invalid_type" && type === "blueprint") {
+    if (
+      pathStr === "setup" &&
+      issue.code === "invalid_type" &&
+      type === "blueprint"
+    ) {
       fixedData.setup = {
         commands: [],
         envVars: [],
@@ -1737,25 +1804,41 @@ function tryAutoFix(
     }
 
     // Auto-fix missing errorSignatures (for fix patterns)
-    if (pathStr === "errorSignatures" && issue.code === "invalid_type" && type === "fix") {
+    if (
+      pathStr === "errorSignatures" &&
+      issue.code === "invalid_type" &&
+      type === "fix"
+    ) {
       fixedData.errorSignatures = [];
       continue;
     }
 
     // Auto-fix missing codeChanges (for fix patterns)
-    if (pathStr === "codeChanges" && issue.code === "invalid_type" && type === "fix") {
+    if (
+      pathStr === "codeChanges" &&
+      issue.code === "invalid_type" &&
+      type === "fix"
+    ) {
       fixedData.codeChanges = [];
       continue;
     }
 
     // Auto-fix missing problemKeywords (for solutions)
-    if (pathStr === "problemKeywords" && issue.code === "invalid_type" && type === "solution") {
+    if (
+      pathStr === "problemKeywords" &&
+      issue.code === "invalid_type" &&
+      type === "solution"
+    ) {
       fixedData.problemKeywords = [];
       continue;
     }
 
     // Auto-fix missing implementations (for solutions)
-    if (pathStr === "implementations" && issue.code === "invalid_type" && type === "solution") {
+    if (
+      pathStr === "implementations" &&
+      issue.code === "invalid_type" &&
+      type === "solution"
+    ) {
       fixedData.implementations = [];
       continue;
     }
@@ -1794,60 +1877,135 @@ function tryAutoFix(
 /**
  * Library to tag mapping for dependency-based tag inference
  */
-const LIBRARY_TAG_MAP: Record<string, { category: PatternTag["category"]; name: string }[]> = {
+const LIBRARY_TAG_MAP: Record<
+  string,
+  { category: PatternTag["category"]; name: string }[]
+> = {
   // Frontend Frameworks
-  "react": [{ category: "framework", name: "react" }],
+  react: [{ category: "framework", name: "react" }],
   "react-dom": [{ category: "framework", name: "react" }],
-  "next": [{ category: "framework", name: "next" }],
-  "vue": [{ category: "framework", name: "vue" }],
-  "nuxt": [{ category: "framework", name: "nuxt" }],
-  "svelte": [{ category: "framework", name: "svelte" }],
+  next: [{ category: "framework", name: "next" }],
+  vue: [{ category: "framework", name: "vue" }],
+  nuxt: [{ category: "framework", name: "nuxt" }],
+  svelte: [{ category: "framework", name: "svelte" }],
   "@sveltejs/kit": [{ category: "framework", name: "sveltekit" }],
   "solid-js": [{ category: "framework", name: "solid" }],
   "@angular/core": [{ category: "framework", name: "angular" }],
-  "astro": [{ category: "framework", name: "astro" }],
-  "remix": [{ category: "framework", name: "remix" }],
+  astro: [{ category: "framework", name: "astro" }],
+  remix: [{ category: "framework", name: "remix" }],
 
   // Backend Frameworks
-  "express": [{ category: "framework", name: "express" }],
-  "fastify": [{ category: "framework", name: "fastify" }],
-  "hono": [{ category: "framework", name: "hono" }],
-  "koa": [{ category: "framework", name: "koa" }],
+  express: [{ category: "framework", name: "express" }],
+  fastify: [{ category: "framework", name: "fastify" }],
+  hono: [{ category: "framework", name: "hono" }],
+  koa: [{ category: "framework", name: "koa" }],
   "@nestjs/core": [{ category: "framework", name: "nestjs" }],
-  "hapi": [{ category: "framework", name: "hapi" }],
+  hapi: [{ category: "framework", name: "hapi" }],
 
   // Testing
-  "vitest": [{ category: "tool", name: "vitest" }, { category: "testing", name: "testing" }],
-  "jest": [{ category: "tool", name: "jest" }, { category: "testing", name: "testing" }],
+  vitest: [
+    { category: "tool", name: "vitest" },
+    { category: "testing", name: "testing" },
+  ],
+  jest: [
+    { category: "tool", name: "jest" },
+    { category: "testing", name: "testing" },
+  ],
   "@testing-library/react": [{ category: "tool", name: "testing-library" }],
-  "playwright": [{ category: "tool", name: "playwright" }, { category: "testing", name: "e2e" }],
-  "cypress": [{ category: "tool", name: "cypress" }, { category: "testing", name: "e2e" }],
+  playwright: [
+    { category: "tool", name: "playwright" },
+    { category: "testing", name: "e2e" },
+  ],
+  cypress: [
+    { category: "tool", name: "cypress" },
+    { category: "testing", name: "e2e" },
+  ],
 
   // State Management
-  "zustand": [{ category: "tool", name: "zustand" }, { category: "state", name: "state" }],
-  "redux": [{ category: "tool", name: "redux" }, { category: "state", name: "state" }],
-  "@reduxjs/toolkit": [{ category: "tool", name: "redux-toolkit" }, { category: "state", name: "state" }],
-  "jotai": [{ category: "tool", name: "jotai" }, { category: "state", name: "state" }],
-  "recoil": [{ category: "tool", name: "recoil" }, { category: "state", name: "state" }],
-  "mobx": [{ category: "tool", name: "mobx" }, { category: "state", name: "state" }],
-  "pinia": [{ category: "tool", name: "pinia" }, { category: "state", name: "state" }],
-  "xstate": [{ category: "tool", name: "xstate" }, { category: "state", name: "state-machine" }],
+  zustand: [
+    { category: "tool", name: "zustand" },
+    { category: "state", name: "state" },
+  ],
+  redux: [
+    { category: "tool", name: "redux" },
+    { category: "state", name: "state" },
+  ],
+  "@reduxjs/toolkit": [
+    { category: "tool", name: "redux-toolkit" },
+    { category: "state", name: "state" },
+  ],
+  jotai: [
+    { category: "tool", name: "jotai" },
+    { category: "state", name: "state" },
+  ],
+  recoil: [
+    { category: "tool", name: "recoil" },
+    { category: "state", name: "state" },
+  ],
+  mobx: [
+    { category: "tool", name: "mobx" },
+    { category: "state", name: "state" },
+  ],
+  pinia: [
+    { category: "tool", name: "pinia" },
+    { category: "state", name: "state" },
+  ],
+  xstate: [
+    { category: "tool", name: "xstate" },
+    { category: "state", name: "state-machine" },
+  ],
 
   // Database & ORM
-  "prisma": [{ category: "tool", name: "prisma" }, { category: "database", name: "database" }],
-  "@prisma/client": [{ category: "tool", name: "prisma" }, { category: "database", name: "database" }],
-  "drizzle-orm": [{ category: "tool", name: "drizzle" }, { category: "database", name: "database" }],
-  "typeorm": [{ category: "tool", name: "typeorm" }, { category: "database", name: "database" }],
-  "mongoose": [{ category: "tool", name: "mongoose" }, { category: "database", name: "mongodb" }],
-  "knex": [{ category: "tool", name: "knex" }, { category: "database", name: "database" }],
-  "sequelize": [{ category: "tool", name: "sequelize" }, { category: "database", name: "database" }],
+  prisma: [
+    { category: "tool", name: "prisma" },
+    { category: "database", name: "database" },
+  ],
+  "@prisma/client": [
+    { category: "tool", name: "prisma" },
+    { category: "database", name: "database" },
+  ],
+  "drizzle-orm": [
+    { category: "tool", name: "drizzle" },
+    { category: "database", name: "database" },
+  ],
+  typeorm: [
+    { category: "tool", name: "typeorm" },
+    { category: "database", name: "database" },
+  ],
+  mongoose: [
+    { category: "tool", name: "mongoose" },
+    { category: "database", name: "mongodb" },
+  ],
+  knex: [
+    { category: "tool", name: "knex" },
+    { category: "database", name: "database" },
+  ],
+  sequelize: [
+    { category: "tool", name: "sequelize" },
+    { category: "database", name: "database" },
+  ],
 
   // Authentication
-  "next-auth": [{ category: "tool", name: "next-auth" }, { category: "auth", name: "auth" }],
-  "@auth/core": [{ category: "tool", name: "authjs" }, { category: "auth", name: "auth" }],
-  "passport": [{ category: "tool", name: "passport" }, { category: "auth", name: "auth" }],
-  "lucia": [{ category: "tool", name: "lucia" }, { category: "auth", name: "auth" }],
-  "@clerk/nextjs": [{ category: "tool", name: "clerk" }, { category: "auth", name: "auth" }],
+  "next-auth": [
+    { category: "tool", name: "next-auth" },
+    { category: "auth", name: "auth" },
+  ],
+  "@auth/core": [
+    { category: "tool", name: "authjs" },
+    { category: "auth", name: "auth" },
+  ],
+  passport: [
+    { category: "tool", name: "passport" },
+    { category: "auth", name: "auth" },
+  ],
+  lucia: [
+    { category: "tool", name: "lucia" },
+    { category: "auth", name: "auth" },
+  ],
+  "@clerk/nextjs": [
+    { category: "tool", name: "clerk" },
+    { category: "auth", name: "auth" },
+  ],
 
   // UI Libraries
   "@radix-ui/react-dialog": [{ category: "tool", name: "radix-ui" }],
@@ -1856,57 +2014,105 @@ const LIBRARY_TAG_MAP: Record<string, { category: PatternTag["category"]; name: 
   "@chakra-ui/react": [{ category: "tool", name: "chakra-ui" }],
   "@mantine/core": [{ category: "tool", name: "mantine" }],
   "@headlessui/react": [{ category: "tool", name: "headlessui" }],
-  "antd": [{ category: "tool", name: "antd" }],
+  antd: [{ category: "tool", name: "antd" }],
   "@mui/material": [{ category: "tool", name: "material-ui" }],
 
   // Styling
-  "tailwindcss": [{ category: "tool", name: "tailwind" }],
+  tailwindcss: [{ category: "tool", name: "tailwind" }],
   "styled-components": [{ category: "tool", name: "styled-components" }],
   "@emotion/react": [{ category: "tool", name: "emotion" }],
-  "sass": [{ category: "tool", name: "sass" }],
+  sass: [{ category: "tool", name: "sass" }],
 
   // API & Data Fetching
-  "@tanstack/react-query": [{ category: "tool", name: "tanstack-query" }, { category: "api", name: "data-fetching" }],
-  "swr": [{ category: "tool", name: "swr" }, { category: "api", name: "data-fetching" }],
-  "@trpc/server": [{ category: "tool", name: "trpc" }, { category: "api", name: "api" }],
-  "@trpc/client": [{ category: "tool", name: "trpc" }, { category: "api", name: "api" }],
-  "graphql": [{ category: "tool", name: "graphql" }, { category: "api", name: "api" }],
-  "@apollo/client": [{ category: "tool", name: "apollo" }, { category: "api", name: "graphql" }],
-  "axios": [{ category: "tool", name: "axios" }],
+  "@tanstack/react-query": [
+    { category: "tool", name: "tanstack-query" },
+    { category: "api", name: "data-fetching" },
+  ],
+  swr: [
+    { category: "tool", name: "swr" },
+    { category: "api", name: "data-fetching" },
+  ],
+  "@trpc/server": [
+    { category: "tool", name: "trpc" },
+    { category: "api", name: "api" },
+  ],
+  "@trpc/client": [
+    { category: "tool", name: "trpc" },
+    { category: "api", name: "api" },
+  ],
+  graphql: [
+    { category: "tool", name: "graphql" },
+    { category: "api", name: "api" },
+  ],
+  "@apollo/client": [
+    { category: "tool", name: "apollo" },
+    { category: "api", name: "graphql" },
+  ],
+  axios: [{ category: "tool", name: "axios" }],
 
   // Form Libraries
-  "react-hook-form": [{ category: "tool", name: "react-hook-form" }, { category: "feature", name: "forms" }],
-  "formik": [{ category: "tool", name: "formik" }, { category: "feature", name: "forms" }],
-  "@tanstack/react-form": [{ category: "tool", name: "tanstack-form" }, { category: "feature", name: "forms" }],
+  "react-hook-form": [
+    { category: "tool", name: "react-hook-form" },
+    { category: "feature", name: "forms" },
+  ],
+  formik: [
+    { category: "tool", name: "formik" },
+    { category: "feature", name: "forms" },
+  ],
+  "@tanstack/react-form": [
+    { category: "tool", name: "tanstack-form" },
+    { category: "feature", name: "forms" },
+  ],
 
   // Validation
-  "zod": [{ category: "tool", name: "zod" }, { category: "feature", name: "validation" }],
-  "yup": [{ category: "tool", name: "yup" }, { category: "feature", name: "validation" }],
-  "valibot": [{ category: "tool", name: "valibot" }, { category: "feature", name: "validation" }],
+  zod: [
+    { category: "tool", name: "zod" },
+    { category: "feature", name: "validation" },
+  ],
+  yup: [
+    { category: "tool", name: "yup" },
+    { category: "feature", name: "validation" },
+  ],
+  valibot: [
+    { category: "tool", name: "valibot" },
+    { category: "feature", name: "validation" },
+  ],
 
   // Build Tools
-  "vite": [{ category: "tool", name: "vite" }],
-  "esbuild": [{ category: "tool", name: "esbuild" }],
-  "tsup": [{ category: "tool", name: "tsup" }],
-  "webpack": [{ category: "tool", name: "webpack" }],
-  "turbo": [{ category: "tool", name: "turborepo" }],
+  vite: [{ category: "tool", name: "vite" }],
+  esbuild: [{ category: "tool", name: "esbuild" }],
+  tsup: [{ category: "tool", name: "tsup" }],
+  webpack: [{ category: "tool", name: "webpack" }],
+  turbo: [{ category: "tool", name: "turborepo" }],
 
   // Utilities
-  "lodash": [{ category: "tool", name: "lodash" }],
+  lodash: [{ category: "tool", name: "lodash" }],
   "date-fns": [{ category: "tool", name: "date-fns" }],
-  "dayjs": [{ category: "tool", name: "dayjs" }],
-  "uuid": [{ category: "tool", name: "uuid" }],
-  "nanoid": [{ category: "tool", name: "nanoid" }],
+  dayjs: [{ category: "tool", name: "dayjs" }],
+  uuid: [{ category: "tool", name: "uuid" }],
+  nanoid: [{ category: "tool", name: "nanoid" }],
 
   // CLI & Developer Tools
-  "commander": [{ category: "tool", name: "commander" }, { category: "feature", name: "cli" }],
-  "yargs": [{ category: "tool", name: "yargs" }, { category: "feature", name: "cli" }],
-  "@clack/prompts": [{ category: "tool", name: "clack" }, { category: "feature", name: "cli" }],
-  "inquirer": [{ category: "tool", name: "inquirer" }, { category: "feature", name: "cli" }],
-  "chalk": [{ category: "tool", name: "chalk" }],
+  commander: [
+    { category: "tool", name: "commander" },
+    { category: "feature", name: "cli" },
+  ],
+  yargs: [
+    { category: "tool", name: "yargs" },
+    { category: "feature", name: "cli" },
+  ],
+  "@clack/prompts": [
+    { category: "tool", name: "clack" },
+    { category: "feature", name: "cli" },
+  ],
+  inquirer: [
+    { category: "tool", name: "inquirer" },
+    { category: "feature", name: "cli" },
+  ],
+  chalk: [{ category: "tool", name: "chalk" }],
 
   // Runtime & Languages
-  "typescript": [{ category: "language", name: "typescript" }],
+  typescript: [{ category: "language", name: "typescript" }],
 };
 
 interface LearnCaptureOptions {
@@ -1942,17 +2148,21 @@ function inferPatternName(filePaths: string[]): string {
   if (uniqueDirs.length === 1 && uniqueDirs[0] !== ".") {
     // All in same directory
     const dirName = path.basename(uniqueDirs[0]);
-    return dirName
-      .replace(/[-_]/g, " ")
-      .replace(/([A-Z])/g, " $1")
-      .trim()
-      .split(/\s+/)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(" ") + " Pattern";
+    return (
+      dirName
+        .replace(/[-_]/g, " ")
+        .replace(/([A-Z])/g, " $1")
+        .trim()
+        .split(/\s+/)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ") + " Pattern"
+    );
   }
 
   // Find common prefix among filenames
-  const fileNames = filePaths.map((p) => path.basename(p).replace(/\.[^.]+$/, ""));
+  const fileNames = filePaths.map((p) =>
+    path.basename(p).replace(/\.[^.]+$/, ""),
+  );
   if (fileNames.length > 0) {
     let commonPrefix = fileNames[0];
     for (const name of fileNames.slice(1)) {
@@ -1961,13 +2171,15 @@ function inferPatternName(filePaths: string[]): string {
       }
     }
     if (commonPrefix.length > 2) {
-      return commonPrefix
-        .replace(/[-_]/g, " ")
-        .replace(/([A-Z])/g, " $1")
-        .trim()
-        .split(/\s+/)
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(" ") + " Pattern";
+      return (
+        commonPrefix
+          .replace(/[-_]/g, " ")
+          .replace(/([A-Z])/g, " $1")
+          .trim()
+          .split(/\s+/)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+          .join(" ") + " Pattern"
+      );
     }
   }
 
@@ -2035,7 +2247,12 @@ function inferTagsFromContent(filePaths: string[]): PatternTag[] {
     // Language detection
     if (ext === ".ts" || ext === ".tsx") {
       addTag("language", "typescript");
-    } else if (ext === ".js" || ext === ".jsx" || ext === ".mjs" || ext === ".cjs") {
+    } else if (
+      ext === ".js" ||
+      ext === ".jsx" ||
+      ext === ".mjs" ||
+      ext === ".cjs"
+    ) {
       addTag("language", "javascript");
     } else if (ext === ".py") {
       addTag("language", "python");
@@ -2053,7 +2270,11 @@ function inferTagsFromContent(filePaths: string[]): PatternTag[] {
     }
 
     // Test file detection
-    if (fileName.includes(".test.") || fileName.includes(".spec.") || fileName.startsWith("test_")) {
+    if (
+      fileName.includes(".test.") ||
+      fileName.includes(".spec.") ||
+      fileName.startsWith("test_")
+    ) {
       addTag("testing", "testing");
     }
 
@@ -2063,22 +2284,37 @@ function inferTagsFromContent(filePaths: string[]): PatternTag[] {
     }
 
     // Component detection
-    if (filePath.includes("/components/") || filePath.includes("\\components\\")) {
+    if (
+      filePath.includes("/components/") ||
+      filePath.includes("\\components\\")
+    ) {
       addTag("ui", "component");
     }
 
     // Hook detection
-    if (filePath.includes("/hooks/") || filePath.includes("\\hooks\\") || fileName.startsWith("use")) {
+    if (
+      filePath.includes("/hooks/") ||
+      filePath.includes("\\hooks\\") ||
+      fileName.startsWith("use")
+    ) {
       addTag("pattern", "hooks");
     }
 
     // API/route detection
-    if (filePath.includes("/api/") || filePath.includes("\\api\\") || filePath.includes("/routes/")) {
+    if (
+      filePath.includes("/api/") ||
+      filePath.includes("\\api\\") ||
+      filePath.includes("/routes/")
+    ) {
       addTag("api", "api");
     }
 
     // Utils detection
-    if (filePath.includes("/utils/") || filePath.includes("\\utils\\") || filePath.includes("/lib/")) {
+    if (
+      filePath.includes("/utils/") ||
+      filePath.includes("\\utils\\") ||
+      filePath.includes("/lib/")
+    ) {
       addTag("library", "utilities");
     }
   }
@@ -2089,7 +2325,10 @@ function inferTagsFromContent(filePaths: string[]): PatternTag[] {
 /**
  * Capture files as a blueprint pattern with auto-inferred metadata
  */
-export async function learnCaptureCommand(paths: string[], options: LearnCaptureOptions) {
+export async function learnCaptureCommand(
+  paths: string[],
+  options: LearnCaptureOptions,
+) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
   await store.initialize();
@@ -2101,8 +2340,10 @@ export async function learnCaptureCommand(paths: string[], options: LearnCapture
   const relativePaths: string[] = [];
 
   for (const inputPath of paths) {
-    const absolutePath = path.isAbsolute(inputPath) ? inputPath : path.resolve(cwd, inputPath);
-    
+    const absolutePath = path.isAbsolute(inputPath)
+      ? inputPath
+      : path.resolve(cwd, inputPath);
+
     if (!fs.existsSync(absolutePath)) {
       console.log(chalk.red(`✗ File not found: ${inputPath}`));
       process.exit(1);
@@ -2175,13 +2416,14 @@ export async function learnCaptureCommand(paths: string[], options: LearnCapture
   if (!name) {
     const inferredName = inferPatternName(relativePaths);
     console.log(chalk.dim(`Inferred name: "${inferredName}"`));
-    
+
     const nameInput = await p.text({
       message: "Pattern name:",
       placeholder: inferredName,
       initialValue: inferredName,
       validate: (value) => {
-        if (!value || value.length < 3) return "Name must be at least 3 characters";
+        if (!value || value.length < 3)
+          return "Name must be at least 3 characters";
         if (value.length > 100) return "Name must be less than 100 characters";
         return undefined;
       },
@@ -2201,8 +2443,10 @@ export async function learnCaptureCommand(paths: string[], options: LearnCapture
       message: "Description:",
       placeholder: "What does this pattern provide?",
       validate: (value) => {
-        if (!value || value.length < 10) return "Description must be at least 10 characters";
-        if (value.length > 500) return "Description must be less than 500 characters";
+        if (!value || value.length < 10)
+          return "Description must be at least 10 characters";
+        if (value.length > 500)
+          return "Description must be less than 500 characters";
         return undefined;
       },
     });
@@ -2235,7 +2479,7 @@ export async function learnCaptureCommand(paths: string[], options: LearnCapture
     const relativePath = relativePaths[i];
     const content = fs.readFileSync(absolutePath, "utf-8");
     const ext = path.extname(relativePath).slice(1);
-    
+
     // Map extension to language
     const languageMap: Record<string, string> = {
       ts: "typescript",
@@ -2273,22 +2517,48 @@ export async function learnCaptureCommand(paths: string[], options: LearnCapture
   for (const file of files) {
     languageCounts[file.language] = (languageCounts[file.language] || 0) + 1;
   }
-  const primaryLanguage = Object.entries(languageCounts)
-    .sort((a, b) => b[1] - a[1])[0]?.[0] || "typescript";
+  const detectedLanguage =
+    Object.entries(languageCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ||
+    "typescript";
+
+  // Map detected language to valid Language enum value
+  const validLanguages: Language[] = [
+    "typescript",
+    "javascript",
+    "python",
+    "go",
+    "rust",
+    "other",
+  ];
+  const primaryLanguage: Language = validLanguages.includes(
+    detectedLanguage as Language,
+  )
+    ? (detectedLanguage as Language)
+    : "other";
 
   // Create blueprint with proper schema structure
   const now = new Date().toISOString();
   const contributorManager = new ContributorManager(cwd);
   const contributorResult = await contributorManager.getOrCreateId();
-  const contributorId = contributorResult.success && contributorResult.data 
-    ? contributorResult.data 
-    : undefined;
+  const contributorId =
+    contributorResult.success && contributorResult.data
+      ? contributorResult.data
+      : undefined;
 
   // Store file contents in structure.keyFiles
   const keyFiles = files.map((f) => ({
     path: f.path,
     purpose: `${f.language} file`,
     content: f.content,
+  }));
+
+  // Create directories with proper structure (path and purpose)
+  const uniqueDirs = [
+    ...new Set(files.map((f) => path.dirname(f.path)).filter((d) => d !== ".")),
+  ];
+  const directories = uniqueDirs.map((dir) => ({
+    path: dir,
+    purpose: `Directory for ${path.basename(dir)} files`,
   }));
 
   const blueprint: Blueprint = {
@@ -2305,7 +2575,7 @@ export async function learnCaptureCommand(paths: string[], options: LearnCapture
       devDependencies: [],
     },
     structure: {
-      directories: [...new Set(files.map((f) => path.dirname(f.path)).filter((d) => d !== "."))],
+      directories,
       keyFiles,
     },
     setup: {
@@ -2359,7 +2629,9 @@ export async function learnCaptureCommand(paths: string[], options: LearnCapture
   console.log(chalk.dim(`Name: ${name}`));
   console.log(chalk.dim(`Files: ${files.length}`));
   console.log(chalk.dim(`Tags: ${formatTags(uniqueTags)}`));
-  console.log(chalk.dim(`Path: .workflow/patterns/blueprints/${blueprint.id}.json`));
+  console.log(
+    chalk.dim(`Path: .workflow/patterns/blueprints/${blueprint.id}.json`),
+  );
   console.log(chalk.dim(`\nTo apply this pattern:`));
   console.log(chalk.cyan(`  pnpm workflow:learn:apply ${blueprint.id}`));
   console.log(chalk.dim(`\nTo publish to registry:`));
@@ -2375,13 +2647,15 @@ function getAllFilesInDir(dirPath: string): string[] {
 
   for (const entry of entries) {
     const fullPath = path.join(dirPath, entry.name);
-    
+
     // Skip hidden files and common ignore patterns
-    if (entry.name.startsWith(".") || 
-        entry.name === "node_modules" || 
-        entry.name === "dist" ||
-        entry.name === "build" ||
-        entry.name === ".git") {
+    if (
+      entry.name.startsWith(".") ||
+      entry.name === "node_modules" ||
+      entry.name === "dist" ||
+      entry.name === "build" ||
+      entry.name === ".git"
+    ) {
       continue;
     }
 
@@ -2406,13 +2680,17 @@ interface LearnAnalyzeOptions {
 /**
  * Analyze patterns in the codebase and suggest learnings
  */
-export async function learnAnalyzeCommand(options: LearnAnalyzeOptions): Promise<void> {
+export async function learnAnalyzeCommand(
+  options: LearnAnalyzeOptions,
+): Promise<void> {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
   await store.initialize();
   const verbose = options.verbose ?? false;
 
-  console.log(chalk.cyan("\n🔍 Analyzing Codebase for Learning Opportunities\n"));
+  console.log(
+    chalk.cyan("\n🔍 Analyzing Codebase for Learning Opportunities\n"),
+  );
 
   // Get existing patterns
   const fixResult = await store.listFixPatterns({});
@@ -2424,7 +2702,12 @@ export async function learnAnalyzeCommand(options: LearnAnalyzeOptions): Promise
   ];
 
   // Scan for common patterns
-  const opportunities: Array<{ type: string; name: string; description: string; path?: string }> = [];
+  const opportunities: Array<{
+    type: string;
+    name: string;
+    description: string;
+    path?: string;
+  }> = [];
 
   // Check for auth patterns
   const authPaths = ["src/auth", "src/lib/auth", "lib/auth", "app/api/auth"];
@@ -2434,7 +2717,8 @@ export async function learnAnalyzeCommand(options: LearnAnalyzeOptions): Promise
         opportunities.push({
           type: "blueprint",
           name: "Authentication Module",
-          description: "Capture your authentication implementation as a reusable pattern",
+          description:
+            "Capture your authentication implementation as a reusable pattern",
           path: authPath,
         });
       }
@@ -2493,7 +2777,11 @@ export async function learnAnalyzeCommand(options: LearnAnalyzeOptions): Promise
     return;
   }
 
-  console.log(chalk.bold(`  Found ${opportunities.length} potential learning opportunities:\n`));
+  console.log(
+    chalk.bold(
+      `  Found ${opportunities.length} potential learning opportunities:\n`,
+    ),
+  );
 
   for (const opp of opportunities) {
     const icon = opp.type === "blueprint" ? "📐" : "🔧";
@@ -2522,7 +2810,9 @@ interface LearnExportOptions {
 /**
  * Export learning patterns to a file
  */
-export async function learnExportCommand(options: LearnExportOptions): Promise<void> {
+export async function learnExportCommand(
+  options: LearnExportOptions,
+): Promise<void> {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
   await store.initialize();
@@ -2643,7 +2933,9 @@ export async function learnImportCommand(
   try {
     // Detect format
     if (file.endsWith(".yaml") || file.endsWith(".yml")) {
-      console.log(chalk.yellow("  YAML import not fully supported, treating as JSON"));
+      console.log(
+        chalk.yellow("  YAML import not fully supported, treating as JSON"),
+      );
     }
     importData = JSON.parse(content);
   } catch {
@@ -2670,7 +2962,9 @@ export async function learnImportCommand(
       console.log(chalk.dim(`    Would import fix: ${fix.name} (${fix.id})`));
     }
     for (const bp of blueprints) {
-      console.log(chalk.dim(`    Would import blueprint: ${bp.name} (${bp.id})`));
+      console.log(
+        chalk.dim(`    Would import blueprint: ${bp.name} (${bp.id})`),
+      );
     }
     return;
   }
@@ -2734,7 +3028,9 @@ interface LearnCleanOptions {
 /**
  * Clean old or stale learning patterns
  */
-export async function learnCleanCommand(options: LearnCleanOptions): Promise<void> {
+export async function learnCleanCommand(
+  options: LearnCleanOptions,
+): Promise<void> {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
   await store.initialize();
@@ -2748,12 +3044,21 @@ export async function learnCleanCommand(options: LearnCleanOptions): Promise<voi
   if (!cleanDeprecated && !cleanStale && !cleanAll) {
     console.log(chalk.yellow("  Specify what to clean:"));
     console.log(chalk.dim("    --deprecated  Remove deprecated patterns"));
-    console.log(chalk.dim("    --stale       Remove patterns not used in 90+ days"));
-    console.log(chalk.dim("    --all         Remove all patterns (use with caution!)"));
+    console.log(
+      chalk.dim("    --stale       Remove patterns not used in 90+ days"),
+    );
+    console.log(
+      chalk.dim("    --all         Remove all patterns (use with caution!)"),
+    );
     return;
   }
 
-  const toRemove: Array<{ id: string; name: string; type: "fix" | "blueprint"; reason: string }> = [];
+  const toRemove: Array<{
+    id: string;
+    name: string;
+    type: "fix" | "blueprint";
+    reason: string;
+  }> = [];
 
   // Get all patterns
   const fixResult = await store.listFixPatterns({ includeDeprecated: true });
@@ -2771,24 +3076,49 @@ export async function learnCleanCommand(options: LearnCleanOptions): Promise<voi
     if (cleanAll) {
       toRemove.push({ id: fix.id, name: fix.name, type: "fix", reason: "all" });
     } else if (cleanDeprecated && fix.deprecatedAt) {
-      toRemove.push({ id: fix.id, name: fix.name, type: "fix", reason: "deprecated" });
+      toRemove.push({
+        id: fix.id,
+        name: fix.name,
+        type: "fix",
+        reason: "deprecated",
+      });
     } else if (cleanStale) {
       const lastUsed = new Date(fix.updatedAt).getTime();
       if (lastUsed < staleThreshold) {
-        toRemove.push({ id: fix.id, name: fix.name, type: "fix", reason: "stale" });
+        toRemove.push({
+          id: fix.id,
+          name: fix.name,
+          type: "fix",
+          reason: "stale",
+        });
       }
     }
   }
 
   for (const bp of blueprints) {
     if (cleanAll) {
-      toRemove.push({ id: bp.id, name: bp.name, type: "blueprint", reason: "all" });
+      toRemove.push({
+        id: bp.id,
+        name: bp.name,
+        type: "blueprint",
+        reason: "all",
+      });
     } else if (cleanDeprecated && bp.deprecatedAt) {
-      toRemove.push({ id: bp.id, name: bp.name, type: "blueprint", reason: "deprecated" });
+      toRemove.push({
+        id: bp.id,
+        name: bp.name,
+        type: "blueprint",
+        reason: "deprecated",
+      });
     } else if (cleanStale) {
       const lastUsed = new Date(bp.updatedAt).getTime();
       if (lastUsed < staleThreshold) {
-        toRemove.push({ id: bp.id, name: bp.name, type: "blueprint", reason: "stale" });
+        toRemove.push({
+          id: bp.id,
+          name: bp.name,
+          type: "blueprint",
+          reason: "stale",
+        });
       }
     }
   }

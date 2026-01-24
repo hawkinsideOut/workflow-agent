@@ -591,7 +591,13 @@ export function createPattern(
   return insertAndReturn<CommunityPattern>(
     `INSERT INTO community_patterns (pattern_id, pattern_type, pattern_data, contributor_id, pattern_hash)
      VALUES (?, ?, ?, ?, ?)`,
-    [patternId, patternType, patternData, contributorId ?? null, patternHash ?? null],
+    [
+      patternId,
+      patternType,
+      patternData,
+      contributorId ?? null,
+      patternHash ?? null,
+    ],
   );
 }
 
@@ -702,4 +708,3 @@ export function getPatternsNewerThan(
     [since, limit],
   );
 }
-

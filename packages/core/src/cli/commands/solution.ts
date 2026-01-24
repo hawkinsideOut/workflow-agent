@@ -9,7 +9,7 @@ import {
   type SolutionCategory,
   type SolutionFile,
   type DependencyVersion,
-  type PatternTagCategory,
+  type PatternTag,
 } from "@hawkinside_out/workflow-improvement-tracker";
 
 // ============================================
@@ -274,10 +274,16 @@ export async function solutionCaptureCommand(options: SolutionCaptureOptions) {
     // Save the pattern
     const saveResult = await store.saveSolution(pattern);
     if (!saveResult.success) {
-      console.error(chalk.red(`\n✗ Failed to save solution: ${saveResult.error}\n`));
+      console.error(
+        chalk.red(`\n✗ Failed to save solution: ${saveResult.error}\n`),
+      );
       process.exit(1);
     }
-    console.log(chalk.green(`\n✓ Solution saved: .workflow/patterns/solutions/${pattern.id}.json\n`));
+    console.log(
+      chalk.green(
+        `\n✓ Solution saved: .workflow/patterns/solutions/${pattern.id}.json\n`,
+      ),
+    );
   } catch (error) {
     spinner.stop("Analysis failed");
     console.error(chalk.red(`\n✗ Error: ${(error as Error).message}\n`));
@@ -762,12 +768,13 @@ export async function solutionCreateCommand(options: SolutionCreateOptions) {
     name,
     description,
     category,
-    tags: keywords.map((k) => ({ name: k, category: category as PatternTagCategory })),
+    tags: keywords.map((k) => ({
+      name: k,
+      category: "custom" as PatternTag["category"],
+    })),
     problem: {
       description: description,
       keywords: keywords,
-      symptoms: [],
-      impact: "To be documented",
       errorPatterns: [],
     },
     implementation: {
@@ -814,15 +821,21 @@ export async function solutionCreateCommand(options: SolutionCreateOptions) {
   // Save the pattern
   const saveResult = await store.saveSolution(solution);
   if (!saveResult.success) {
-    console.error(chalk.red(`\n✗ Failed to save solution: ${saveResult.error}\n`));
+    console.error(
+      chalk.red(`\n✗ Failed to save solution: ${saveResult.error}\n`),
+    );
     process.exit(1);
   }
 
   console.log(chalk.green("\n✓ Solution pattern created!\n"));
-  console.log(chalk.dim(`  Path: .workflow/patterns/solutions/${solution.id}.json`));
+  console.log(
+    chalk.dim(`  Path: .workflow/patterns/solutions/${solution.id}.json`),
+  );
   console.log(chalk.dim(`  Name: ${name}`));
   console.log(chalk.dim(`  Category: ${category}`));
-  console.log(chalk.dim(`\nAdd files using 'workflow solution capture --path <dir>'`));
+  console.log(
+    chalk.dim(`\nAdd files using 'workflow solution capture --path <dir>'`),
+  );
 }
 
 // ============================================
@@ -858,7 +871,9 @@ export async function solutionShowCommand(solutionId: string) {
   console.log(chalk.bold("\nCompatibility:"));
   console.log(`  Framework: ${solution.compatibility.framework || "generic"}`);
   console.log(`  Version: ${solution.compatibility.frameworkVersion}`);
-  console.log(`  Runtime: ${solution.compatibility.runtime} ${solution.compatibility.runtimeVersion}`);
+  console.log(
+    `  Runtime: ${solution.compatibility.runtime} ${solution.compatibility.runtimeVersion}`,
+  );
 
   // Implementation
   console.log(chalk.bold("\nImplementation:"));
@@ -868,14 +883,18 @@ export async function solutionShowCommand(solutionId: string) {
   }
 
   if (solution.implementation.dependencies.length > 0) {
-    console.log(`  Dependencies: ${solution.implementation.dependencies.length}`);
+    console.log(
+      `  Dependencies: ${solution.implementation.dependencies.length}`,
+    );
     for (const dep of solution.implementation.dependencies) {
       console.log(chalk.dim(`    • ${dep.name}@${dep.version}`));
     }
   }
 
   if (solution.implementation.envVars.length > 0) {
-    console.log(`  Environment Variables: ${solution.implementation.envVars.length}`);
+    console.log(
+      `  Environment Variables: ${solution.implementation.envVars.length}`,
+    );
     for (const env of solution.implementation.envVars) {
       const required = env.required ? chalk.red("*") : "";
       console.log(chalk.dim(`    • ${env.name}${required}`));
@@ -885,7 +904,9 @@ export async function solutionShowCommand(solutionId: string) {
   // Metrics
   console.log(chalk.bold("\nMetrics:"));
   console.log(`  Applications: ${solution.metrics.applications}`);
-  console.log(`  Success Rate: ${(solution.metrics.successRate * 100).toFixed(1)}%`);
+  console.log(
+    `  Success Rate: ${(solution.metrics.successRate * 100).toFixed(1)}%`,
+  );
 
   // Metadata
   console.log(chalk.bold("\nMetadata:"));
@@ -893,8 +914,14 @@ export async function solutionShowCommand(solutionId: string) {
   console.log(`  Updated: ${formatDate(solution.updatedAt)}`);
   console.log(`  Private: ${solution.isPrivate ? "Yes" : "No"}`);
   if (solution.deprecatedAt) {
-    console.log(chalk.red(`  Deprecated: ${formatDate(solution.deprecatedAt)}`));
-    console.log(chalk.dim(`    Reason: ${solution.deprecationReason || "No reason provided"}`));
+    console.log(
+      chalk.red(`  Deprecated: ${formatDate(solution.deprecatedAt)}`),
+    );
+    console.log(
+      chalk.dim(
+        `    Reason: ${solution.deprecationReason || "No reason provided"}`,
+      ),
+    );
   }
 
   console.log();
@@ -1004,7 +1031,9 @@ export async function solutionImportCommand(
   const fs = await import("node:fs");
   const pathModule = await import("node:path");
 
-  const filePath = pathModule.default.isAbsolute(file) ? file : pathModule.default.join(cwd, file);
+  const filePath = pathModule.default.isAbsolute(file)
+    ? file
+    : pathModule.default.join(cwd, file);
 
   if (!fs.existsSync(filePath)) {
     console.log(chalk.red(`  ✗ File not found: ${filePath}`));
@@ -1017,7 +1046,9 @@ export async function solutionImportCommand(
 
   try {
     if (file.endsWith(".yaml") || file.endsWith(".yml")) {
-      console.log(chalk.yellow("  YAML import not fully supported, treating as JSON"));
+      console.log(
+        chalk.yellow("  YAML import not fully supported, treating as JSON"),
+      );
     }
     importData = JSON.parse(content);
   } catch {
@@ -1038,7 +1069,9 @@ export async function solutionImportCommand(
     console.log(chalk.yellow("  🔍 Dry run - no changes will be made\n"));
 
     for (const solution of solutions) {
-      console.log(chalk.dim(`    Would import: ${solution.name} (${solution.id})`));
+      console.log(
+        chalk.dim(`    Would import: ${solution.name} (${solution.id})`),
+      );
     }
     return;
   }
@@ -1057,7 +1090,11 @@ export async function solutionImportCommand(
 
     const saveResult = await store.saveSolution(solution);
     if (!saveResult.success) {
-      console.log(chalk.red(`    ✗ Failed to import: ${solution.name} - ${saveResult.error}`));
+      console.log(
+        chalk.red(
+          `    ✗ Failed to import: ${solution.name} - ${saveResult.error}`,
+        ),
+      );
       continue;
     }
     console.log(chalk.green(`    ✓ Imported: ${solution.name}`));
@@ -1087,7 +1124,9 @@ export async function solutionAnalyzeCommand() {
 
   // Get existing solutions
   const existingResult = await store.listSolutions({ limit: 1000 });
-  const existingNames = (existingResult.data || []).map((s) => s.name.toLowerCase());
+  const existingNames = (existingResult.data || []).map((s) =>
+    s.name.toLowerCase(),
+  );
 
   const opportunities: Array<{
     name: string;
@@ -1098,23 +1137,86 @@ export async function solutionAnalyzeCommand() {
 
   // Check for common solution patterns
   const patterns = [
-    { path: "src/auth", name: "Authentication Module", category: "auth" as SolutionCategory, desc: "Authentication implementation" },
-    { path: "src/lib/auth", name: "Auth Library", category: "auth" as SolutionCategory, desc: "Authentication utilities" },
-    { path: "src/api", name: "API Layer", category: "api" as SolutionCategory, desc: "API routing structure" },
-    { path: "app/api", name: "Next.js API Routes", category: "api" as SolutionCategory, desc: "Next.js API implementation" },
-    { path: "src/db", name: "Database Layer", category: "database" as SolutionCategory, desc: "Database connection and queries" },
-    { path: "src/lib/db", name: "Database Utilities", category: "database" as SolutionCategory, desc: "Database helper functions" },
-    { path: "src/components/ui", name: "UI Components", category: "ui" as SolutionCategory, desc: "Reusable UI components" },
-    { path: "src/hooks", name: "Custom Hooks", category: "ui" as SolutionCategory, desc: "React custom hooks" },
-    { path: "__tests__", name: "Testing Setup", category: "testing" as SolutionCategory, desc: "Test configuration and utilities" },
-    { path: ".github/workflows", name: "CI/CD Pipeline", category: "deployment" as SolutionCategory, desc: "GitHub Actions workflows" },
-    { path: "src/integrations", name: "Integrations", category: "integrations" as SolutionCategory, desc: "Third-party integrations" },
-    { path: "src/middleware", name: "Middleware", category: "security" as SolutionCategory, desc: "Request middleware and guards" },
+    {
+      path: "src/auth",
+      name: "Authentication Module",
+      category: "auth" as SolutionCategory,
+      desc: "Authentication implementation",
+    },
+    {
+      path: "src/lib/auth",
+      name: "Auth Library",
+      category: "auth" as SolutionCategory,
+      desc: "Authentication utilities",
+    },
+    {
+      path: "src/api",
+      name: "API Layer",
+      category: "api" as SolutionCategory,
+      desc: "API routing structure",
+    },
+    {
+      path: "app/api",
+      name: "Next.js API Routes",
+      category: "api" as SolutionCategory,
+      desc: "Next.js API implementation",
+    },
+    {
+      path: "src/db",
+      name: "Database Layer",
+      category: "database" as SolutionCategory,
+      desc: "Database connection and queries",
+    },
+    {
+      path: "src/lib/db",
+      name: "Database Utilities",
+      category: "database" as SolutionCategory,
+      desc: "Database helper functions",
+    },
+    {
+      path: "src/components/ui",
+      name: "UI Components",
+      category: "ui" as SolutionCategory,
+      desc: "Reusable UI components",
+    },
+    {
+      path: "src/hooks",
+      name: "Custom Hooks",
+      category: "ui" as SolutionCategory,
+      desc: "React custom hooks",
+    },
+    {
+      path: "__tests__",
+      name: "Testing Setup",
+      category: "testing" as SolutionCategory,
+      desc: "Test configuration and utilities",
+    },
+    {
+      path: ".github/workflows",
+      name: "CI/CD Pipeline",
+      category: "deployment" as SolutionCategory,
+      desc: "GitHub Actions workflows",
+    },
+    {
+      path: "src/integrations",
+      name: "Integrations",
+      category: "integrations" as SolutionCategory,
+      desc: "Third-party integrations",
+    },
+    {
+      path: "src/middleware",
+      name: "Middleware",
+      category: "security" as SolutionCategory,
+      desc: "Request middleware and guards",
+    },
   ];
 
   for (const pattern of patterns) {
     const fullPath = pathModule.default.join(cwd, pattern.path);
-    if (fs.existsSync(fullPath) && !existingNames.includes(pattern.name.toLowerCase())) {
+    if (
+      fs.existsSync(fullPath) &&
+      !existingNames.includes(pattern.name.toLowerCase())
+    ) {
       opportunities.push({
         name: pattern.name,
         category: pattern.category,
@@ -1130,7 +1232,9 @@ export async function solutionAnalyzeCommand() {
     return;
   }
 
-  console.log(chalk.bold(`  Found ${opportunities.length} potential solutions:\n`));
+  console.log(
+    chalk.bold(`  Found ${opportunities.length} potential solutions:\n`),
+  );
 
   for (const opp of opportunities) {
     console.log(`  ${formatCategory(opp.category)}`);
@@ -1140,7 +1244,9 @@ export async function solutionAnalyzeCommand() {
   }
 
   console.log(chalk.dim("  To capture a solution:"));
-  console.log(chalk.cyan("    workflow solution capture --path <path> --name <name>"));
+  console.log(
+    chalk.cyan("    workflow solution capture --path <path> --name <name>"),
+  );
 }
 // ============================================
 // solution:migrate Command
@@ -1165,8 +1271,16 @@ export async function solutionMigrateCommand(options: SolutionMigrateOptions) {
   if (!options.public && !options.private) {
     console.log(chalk.yellow("  Please specify --public or --private"));
     console.log(chalk.dim("\n  Examples:"));
-    console.log(chalk.dim("    workflow solution migrate --public     # Make all solutions public"));
-    console.log(chalk.dim("    workflow solution migrate --private    # Make all solutions private"));
+    console.log(
+      chalk.dim(
+        "    workflow solution migrate --public     # Make all solutions public",
+      ),
+    );
+    console.log(
+      chalk.dim(
+        "    workflow solution migrate --private    # Make all solutions private",
+      ),
+    );
     return;
   }
 
@@ -1183,18 +1297,32 @@ export async function solutionMigrateCommand(options: SolutionMigrateOptions) {
   const toMigrate = solutions.filter((s) => s.isPrivate !== targetPrivate);
 
   if (toMigrate.length === 0) {
-    console.log(chalk.green(`  ✓ All ${solutions.length} solutions are already ${targetLabel}`));
+    console.log(
+      chalk.green(
+        `  ✓ All ${solutions.length} solutions are already ${targetLabel}`,
+      ),
+    );
     return;
   }
 
-  console.log(chalk.dim(`  Found ${toMigrate.length} solutions to make ${targetLabel}:\n`));
+  console.log(
+    chalk.dim(
+      `  Found ${toMigrate.length} solutions to make ${targetLabel}:\n`,
+    ),
+  );
 
   for (const solution of toMigrate) {
-    console.log(chalk.dim(`    • ${solution.name} (${solution.id.slice(0, 8)})`));
+    console.log(
+      chalk.dim(`    • ${solution.name} (${solution.id.slice(0, 8)})`),
+    );
   }
 
   if (options.dryRun) {
-    console.log(chalk.yellow(`\n  [DRY-RUN] Would migrate ${toMigrate.length} solutions to ${targetLabel}`));
+    console.log(
+      chalk.yellow(
+        `\n  [DRY-RUN] Would migrate ${toMigrate.length} solutions to ${targetLabel}`,
+      ),
+    );
     return;
   }
 
@@ -1223,10 +1351,16 @@ export async function solutionMigrateCommand(options: SolutionMigrateOptions) {
     }
   }
 
-  console.log(chalk.green(`\n  ✓ Migrated ${migrated} solutions to ${targetLabel}`));
-  
+  console.log(
+    chalk.green(`\n  ✓ Migrated ${migrated} solutions to ${targetLabel}`),
+  );
+
   if (!targetPrivate) {
-    console.log(chalk.dim("    These solutions can now be synced with 'workflow sync --solutions --push'"));
+    console.log(
+      chalk.dim(
+        "    These solutions can now be synced with 'workflow sync --solutions --push'",
+      ),
+    );
   }
 }
 
@@ -1244,7 +1378,10 @@ interface SolutionEditOptions {
 /**
  * Edit a solution pattern's properties
  */
-export async function solutionEditCommand(solutionId: string, options: SolutionEditOptions) {
+export async function solutionEditCommand(
+  solutionId: string,
+  options: SolutionEditOptions,
+) {
   const cwd = getWorkspacePath();
   const store = new PatternStore(cwd);
   await store.initialize();
@@ -1253,7 +1390,7 @@ export async function solutionEditCommand(solutionId: string, options: SolutionE
 
   // Find the solution
   const result = await store.getSolution(solutionId);
-  
+
   if (!result.success || !result.data) {
     // Try partial ID match
     const allResult = await store.listSolutions({ limit: 1000 });
@@ -1301,7 +1438,9 @@ export async function solutionEditCommand(solutionId: string, options: SolutionE
   }
 
   // Show current and changes
-  console.log(chalk.dim(`  Solution: ${solution.name} (${solution.id.slice(0, 8)})`));
+  console.log(
+    chalk.dim(`  Solution: ${solution.name} (${solution.id.slice(0, 8)})`),
+  );
   console.log(chalk.dim("  Changes:"));
   for (const change of changes) {
     console.log(chalk.dim(`    • ${change}`));
@@ -1313,9 +1452,13 @@ export async function solutionEditCommand(solutionId: string, options: SolutionE
 
   if (saveResult.success) {
     console.log(chalk.green("\n  ✓ Solution updated"));
-    
+
     if (options.public) {
-      console.log(chalk.dim("    This solution can now be synced with 'workflow sync --solutions --push'"));
+      console.log(
+        chalk.dim(
+          "    This solution can now be synced with 'workflow sync --solutions --push'",
+        ),
+      );
     }
   } else {
     console.log(chalk.red(`\n  ✗ Failed to save: ${saveResult.error}`));

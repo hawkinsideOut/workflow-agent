@@ -5,4 +5,7 @@
  * This allows the command to be used as: workflow docs advisory
  */
 
-export { advisoryCommand as docsAdvisoryCommand, type AdvisoryOptions as DocsAdvisoryOptions } from "../advisory.js";
+export {
+  advisoryCommand as docsAdvisoryCommand,
+  type AdvisoryOptions as DocsAdvisoryOptions,
+} from "../advisory.js";

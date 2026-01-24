@@ -74,7 +74,11 @@ export async function docsValidateCommand(options: {
       console.log(chalk.dim(`    ${broken.rawLink}`));
       console.log(chalk.dim(`    Target: ${broken.targetPath}`));
       if (broken.suggestions.length > 0) {
-        console.log(chalk.dim(`    Suggestions: ${broken.suggestions.slice(0, 3).join(", ")}`));
+        console.log(
+          chalk.dim(
+            `    Suggestions: ${broken.suggestions.slice(0, 3).join(", ")}`,
+          ),
+        );
       }
       console.log("");
     }
@@ -82,7 +86,9 @@ export async function docsValidateCommand(options: {
     // If not in fix mode, exit with error
     if (!fix) {
       console.log(
-        chalk.yellow("💡 Run with --fix flag to interactively fix broken references"),
+        chalk.yellow(
+          "💡 Run with --fix flag to interactively fix broken references",
+        ),
       );
       p.outro(chalk.red("Validation failed"));
       process.exit(1);
@@ -175,7 +181,9 @@ export async function docsValidateCommand(options: {
       // Apply the fix
       try {
         await applyReferenceFix(broken.file, broken.rawLink, newPath);
-        console.log(chalk.green(`  ✅ Fixed: ${broken.targetPath} → ${newPath}`));
+        console.log(
+          chalk.green(`  ✅ Fixed: ${broken.targetPath} → ${newPath}`),
+        );
         fixedCount++;
       } catch (error) {
         console.log(

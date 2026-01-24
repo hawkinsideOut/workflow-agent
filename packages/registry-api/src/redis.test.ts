@@ -37,14 +37,14 @@ function createMockRedis() {
     zadd: vi.fn(
       async (
         key: string,
-        item: { score: number; member: string }
+        item: { score: number; member: string },
       ): Promise<number> => {
         if (!sortedSets.has(key)) {
           sortedSets.set(key, new Map());
         }
         sortedSets.get(key)!.set(item.member, item.score);
         return 1;
-      }
+      },
     ),
 
     zrange: vi.fn(
@@ -52,7 +52,7 @@ function createMockRedis() {
         key: string,
         _min: string,
         _max: string,
-        options?: { byScore?: boolean; offset?: number; count?: number }
+        options?: { byScore?: boolean; offset?: number; count?: number },
       ): Promise<string[]> => {
         const set = sortedSets.get(key);
         if (!set) return [];
@@ -65,7 +65,7 @@ function createMockRedis() {
         const count = options?.count ?? entries.length;
 
         return entries.slice(offset, offset + count);
-      }
+      },
     ),
 
     zcard: vi.fn(async (key: string): Promise<number> => {
@@ -73,7 +73,11 @@ function createMockRedis() {
     }),
 
     hincrby: vi.fn(
-      async (key: string, field: string, increment: number): Promise<number> => {
+      async (
+        key: string,
+        field: string,
+        increment: number,
+      ): Promise<number> => {
         if (!hashes.has(key)) {
           hashes.set(key, new Map());
         }
@@ -82,15 +86,17 @@ function createMockRedis() {
         const newValue = current + increment;
         hash.set(field, newValue);
         return newValue;
-      }
+      },
     ),
 
     hgetall: vi.fn(
-      async <T extends Record<string, unknown>>(key: string): Promise<T | null> => {
+      async <T extends Record<string, unknown>>(
+        key: string,
+      ): Promise<T | null> => {
         const hash = hashes.get(key);
         if (!hash) return null;
         return Object.fromEntries(hash) as T;
-      }
+      },
     ),
 
     incrby: vi.fn(async (key: string, increment: number): Promise<number> => {
@@ -141,7 +147,7 @@ describe("PatternStore", () => {
       expect(result.isNew).toBe(true);
       expect(mockRedis.set).toHaveBeenCalledWith(
         KEYS.pattern(testPattern.id),
-        testPattern
+        testPattern,
       );
     });
 
@@ -150,7 +156,7 @@ describe("PatternStore", () => {
 
       expect(mockRedis.zadd).toHaveBeenCalledWith(
         KEYS.patternIndex("fix"),
-        expect.objectContaining({ member: testPattern.id })
+        expect.objectContaining({ member: testPattern.id }),
       );
     });
 
@@ -159,7 +165,7 @@ describe("PatternStore", () => {
 
       expect(mockRedis.zadd).toHaveBeenCalledWith(
         KEYS.allPatterns(),
-        expect.objectContaining({ member: testPattern.id })
+        expect.objectContaining({ member: testPattern.id }),
       );
     });
 
@@ -169,12 +175,12 @@ describe("PatternStore", () => {
       expect(mockRedis.hincrby).toHaveBeenCalledWith(
         KEYS.stats(),
         "total_fix",
-        1
+        1,
       );
       expect(mockRedis.hincrby).toHaveBeenCalledWith(
         KEYS.stats(),
         "total_all",
-        1
+        1,
       );
     });
 
@@ -242,7 +248,7 @@ describe("PatternStore", () => {
         mockRedis.storage.set(KEYS.pattern(pattern.id), pattern);
         mockRedis.sortedSets.set(
           KEYS.allPatterns(),
-          mockRedis.sortedSets.get(KEYS.allPatterns()) || new Map()
+          mockRedis.sortedSets.get(KEYS.allPatterns()) || new Map(),
         );
         mockRedis.sortedSets
           .get(KEYS.allPatterns())!
@@ -270,7 +276,7 @@ describe("PatternStore", () => {
         expect.any(String),
         expect.any(String),
         expect.any(String),
-        expect.objectContaining({ offset: 2, count: 2 })
+        expect.objectContaining({ offset: 2, count: 2 }),
       );
     });
 
@@ -292,7 +298,7 @@ describe("PatternStore", () => {
           ["total_fix", 10],
           ["total_blueprint", 5],
           ["total_all", 15],
-        ])
+        ]),
       );
 
       const result = await store.getStats();
@@ -380,7 +386,7 @@ describe("RateLimiter", () => {
 
       expect(mockRedis.incrby).toHaveBeenCalledWith(
         KEYS.rateLimit(testContributorId),
-        5
+        5,
       );
       expect(result.remaining).toBe(95);
     });
@@ -390,7 +396,7 @@ describe("RateLimiter", () => {
 
       expect(mockRedis.pexpire).toHaveBeenCalledWith(
         KEYS.rateLimit(testContributorId),
-        3600000
+        3600000,
       );
     });
 

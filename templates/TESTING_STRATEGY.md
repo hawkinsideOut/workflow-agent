@@ -42,11 +42,11 @@
  /--------------------\
 ```
 
-| Layer       | Tool               | Quantity | Speed  | Purpose                               |
-| ----------- | ------------------ | -------- | ------ | ------------------------------------- |
-| Unit        | [TEST_FRAMEWORK]   | Many     | Fast   | Test functions/modules in isolation   |
-| Integration | [TEST_FRAMEWORK]   | Some     | Medium | Test module interactions              |
-| E2E         | [E2E_FRAMEWORK]    | Few      | Slow   | Test critical user/system journeys    |
+| Layer       | Tool             | Quantity | Speed  | Purpose                             |
+| ----------- | ---------------- | -------- | ------ | ----------------------------------- |
+| Unit        | [TEST_FRAMEWORK] | Many     | Fast   | Test functions/modules in isolation |
+| Integration | [TEST_FRAMEWORK] | Some     | Medium | Test module interactions            |
+| E2E         | [E2E_FRAMEWORK]  | Few      | Slow   | Test critical user/system journeys  |
 
 ---
 
@@ -76,10 +76,10 @@ Test configuration file: `[vitest.config.ts / jest.config.js / etc.]`
 
 ### Test File Naming & Location
 
-| Source File | Test File Location |
-| ----------- | ------------------ |
-| `src/utils/helper.ts` | `src/utils/helper.test.ts` |
-| `src/services/user.ts` | `src/services/user.test.ts` |
+| Source File               | Test File Location             |
+| ------------------------- | ------------------------------ |
+| `src/utils/helper.ts`     | `src/utils/helper.test.ts`     |
+| `src/services/user.ts`    | `src/services/user.test.ts`    |
 | `lib/auth/permissions.ts` | `lib/auth/permissions.test.ts` |
 
 ### Test Structure Pattern
@@ -166,7 +166,7 @@ describe("UserService Integration", () => {
     expect(result.data.email).toBe(input.email);
     // Verify side effects
     expect(mockEmailService.send).toHaveBeenCalledWith(
-      expect.objectContaining({ to: input.email })
+      expect.objectContaining({ to: input.email }),
     );
   });
 });
@@ -212,14 +212,14 @@ describe("Authentication", () => {
 
 ## When Tests Are Required
 
-| Change Type          | Unit Test     | Integration Test | E2E Test       |
-| -------------------- | ------------- | ---------------- | -------------- |
-| New utility function | ✅ Required   | ❌ Not needed    | ❌ Not needed  |
-| New service function | ✅ Required   | ⚠️ Recommended   | ❌ Not needed  |
-| New API endpoint     | ✅ Required   | ✅ Required      | ⚠️ If critical |
-| New feature          | ✅ Required   | ✅ Required      | ✅ Critical paths |
-| Bug fix              | ✅ Regression | ⚠️ If applicable | ⚠️ If E2E exists |
-| Refactoring          | ✅ Verify existing pass | ❌ Not needed | ❌ Not needed |
+| Change Type          | Unit Test               | Integration Test | E2E Test          |
+| -------------------- | ----------------------- | ---------------- | ----------------- |
+| New utility function | ✅ Required             | ❌ Not needed    | ❌ Not needed     |
+| New service function | ✅ Required             | ⚠️ Recommended   | ❌ Not needed     |
+| New API endpoint     | ✅ Required             | ✅ Required      | ⚠️ If critical    |
+| New feature          | ✅ Required             | ✅ Required      | ✅ Critical paths |
+| Bug fix              | ✅ Regression           | ⚠️ If applicable | ⚠️ If E2E exists  |
+| Refactoring          | ✅ Verify existing pass | ❌ Not needed    | ❌ Not needed     |
 
 ### Minimum Coverage Requirements
 
@@ -271,8 +271,8 @@ vi.restoreAllMocks();
 
 ### Database Mocking vs Test Database
 
-| Approach | Use When |
-| -------- | -------- |
+| Approach      | Use When                           |
+| ------------- | ---------------------------------- |
 | Mock database | Unit tests, testing error handling |
 | Test database | Integration tests, testing queries |
 

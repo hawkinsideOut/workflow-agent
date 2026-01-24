@@ -5,7 +5,11 @@
  * the community pattern registry.
  */
 
-import type { FixPattern, Blueprint, SolutionPattern } from "@hawkinside_out/workflow-improvement-tracker";
+import type {
+  FixPattern,
+  Blueprint,
+  SolutionPattern,
+} from "@hawkinside_out/workflow-improvement-tracker";
 
 // Default registry URL
 const DEFAULT_REGISTRY_URL = "https://registry-api-rust.vercel.app";
@@ -130,17 +134,14 @@ export class RegistryClient {
       })),
     };
 
-    const response = await this.request<PushResponse>(
-      "/api/patterns/push",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-contributor-id": contributorId,
-        },
-        body: JSON.stringify(payload),
+    const response = await this.request<PushResponse>("/api/patterns/push", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-contributor-id": contributorId,
       },
-    );
+      body: JSON.stringify(payload),
+    });
 
     return response;
   }
@@ -151,12 +152,14 @@ export class RegistryClient {
    * @param options - Pull options
    * @returns Array of patterns from the registry
    */
-  async pull(options: {
-    type?: "fix" | "blueprint" | "solution";
-    limit?: number;
-    offset?: number;
-    since?: string;
-  } = {}): Promise<PullResponse> {
+  async pull(
+    options: {
+      type?: "fix" | "blueprint" | "solution";
+      limit?: number;
+      offset?: number;
+      since?: string;
+    } = {},
+  ): Promise<PullResponse> {
     const params = new URLSearchParams();
 
     if (options.type) {
@@ -216,10 +219,7 @@ export class RegistryClient {
   /**
    * Make an HTTP request to the registry
    */
-  private async request<T>(
-    path: string,
-    options: RequestInit,
-  ): Promise<T> {
+  private async request<T>(path: string, options: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     let lastError: Error | null = null;
 
@@ -237,7 +237,11 @@ export class RegistryClient {
 
         if (response.status === 429) {
           // Rate limited
-          const body = await response.json() as { message?: string; resetAt?: string | null; remaining?: number };
+          const body = (await response.json()) as {
+            message?: string;
+            resetAt?: string | null;
+            remaining?: number;
+          };
           throw new RateLimitedException(
             body.message || "Rate limit exceeded",
             body.resetAt ?? null,
@@ -246,7 +250,9 @@ export class RegistryClient {
         }
 
         if (!response.ok) {
-          const body = await response.json().catch(() => ({})) as { error?: string };
+          const body = (await response.json().catch(() => ({}))) as {
+            error?: string;
+          };
           throw new RegistryError(
             body.error || `Request failed with status ${response.status}`,
             response.status,
@@ -254,7 +260,7 @@ export class RegistryClient {
           );
         }
 
-        return await response.json() as T;
+        return (await response.json()) as T;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
@@ -275,7 +281,7 @@ export class RegistryClient {
         // Wait before retrying (exponential backoff)
         if (attempt < this.retries) {
           await new Promise((resolve) =>
-            setTimeout(resolve, Math.pow(2, attempt) * 1000)
+            setTimeout(resolve, Math.pow(2, attempt) * 1000),
           );
         }
       }

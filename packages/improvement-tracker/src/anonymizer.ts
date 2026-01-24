@@ -406,7 +406,9 @@ export class PatternAnonymizer {
   /**
    * Anonymize a solution pattern for sharing
    */
-  anonymizeSolution(solution: SolutionPattern): AnonymizationResult<SolutionPattern> {
+  anonymizeSolution(
+    solution: SolutionPattern,
+  ): AnonymizationResult<SolutionPattern> {
     try {
       const anonymizedFields: string[] = [];
       let anonymized = { ...solution };
@@ -432,9 +434,13 @@ export class PatternAnonymizer {
 
       // Anonymize architecture notes
       if (this.options.anonymizeContent && solution.architecture) {
-        const anonDataFlow = this.anonymizeString(solution.architecture.dataFlow);
-        const anonDecisions = solution.architecture.keyDecisions.map(d => this.anonymizeString(d));
-        const anonDiagram = solution.architecture.diagram 
+        const anonDataFlow = this.anonymizeString(
+          solution.architecture.dataFlow,
+        );
+        const anonDecisions = solution.architecture.keyDecisions.map((d) =>
+          this.anonymizeString(d),
+        );
+        const anonDiagram = solution.architecture.diagram
           ? this.anonymizeString(solution.architecture.diagram)
           : undefined;
 

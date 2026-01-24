@@ -16,15 +16,19 @@ const blueprint = {
   name: "Your Blueprint Name",
   description: "What this blueprint creates",
   tags: [{ category: "framework", name: "next" }],
-  stack: { /* see full example below */ },
+  stack: {
+    /* see full example below */
+  },
   structure: { directories: [], keyFiles: [] },
   setup: { prerequisites: [], steps: [], configs: [] },
-  compatibility: { /* see full example below */ },
+  compatibility: {
+    /* see full example below */
+  },
   metrics: { successRate: 100, applications: 0, successes: 0, failures: 0 },
   relatedPatterns: [],
   isPrivate: true,
   createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
+  updatedAt: new Date().toISOString(),
 };
 
 const result = await store.saveBlueprint(blueprint);
@@ -33,17 +37,18 @@ console.log(result.success ? `✅ ${result.data.id}` : `❌ ${result.error}`);
 
 ## Why PatternStore?
 
-| Manual JSON | PatternStore API |
-|-------------|------------------|
+| Manual JSON                         | PatternStore API                                 |
+| ----------------------------------- | ------------------------------------------------ |
 | ❌ Must create directories manually | ✅ Auto-creates `.workflow/patterns/blueprints/` |
-| ❌ Must generate UUID filenames | ✅ Auto-generates `<uuid>.json` |
-| ❌ No schema validation | ✅ Validates against Zod schema |
-| ❌ No conflict detection | ✅ Detects duplicate names/content |
-| ❌ No error messages | ✅ Clear validation errors |
+| ❌ Must generate UUID filenames     | ✅ Auto-generates `<uuid>.json`                  |
+| ❌ No schema validation             | ✅ Validates against Zod schema                  |
+| ❌ No conflict detection            | ✅ Detects duplicate names/content               |
+| ❌ No error messages                | ✅ Clear validation errors                       |
 
 ## Common Mistakes
 
 ### ❌ Wrong Directory
+
 ```bash
 # DON'T create here:
 mkdir -p .workflow/patterns/blueprints
@@ -51,6 +56,7 @@ echo '{}' > .workflow/patterns/blueprints/my-blueprint.json
 ```
 
 ### ❌ Descriptive Filename
+
 ```bash
 # DON'T name files like this:
 next-app-router-starter.json
@@ -58,6 +64,7 @@ nextjs-15-typescript-tailwind.json
 ```
 
 ### ❌ Missing Required Fields
+
 ```json
 {
   "name": "My Blueprint"
@@ -80,17 +87,18 @@ const blueprint = {
   // ============================================
   id: crypto.randomUUID(),
   name: "Next.js 15 App Router Starter",
-  description: "Complete Next.js 15 setup with TypeScript, Tailwind CSS, and ESLint",
-  
+  description:
+    "Complete Next.js 15 setup with TypeScript, Tailwind CSS, and ESLint",
+
   // ============================================
   // REQUIRED: Tags (minimum 1)
   // ============================================
   tags: [
     { category: "framework", name: "next" },
     { category: "tool", name: "tailwind" },
-    { category: "tool", name: "typescript" }
+    { category: "tool", name: "typescript" },
   ],
-  
+
   // ============================================
   // REQUIRED: Technology Stack
   // ============================================
@@ -99,22 +107,22 @@ const blueprint = {
     language: "typescript", // typescript | javascript | python | go | rust | other
     runtime: "node",
     packageManager: "pnpm", // npm | pnpm | yarn | bun
-    
+
     dependencies: [
       { name: "next", version: "15.0.0", compatibleRange: "^15.0.0" },
       { name: "react", version: "19.0.0", compatibleRange: "^19.0.0" },
-      { name: "react-dom", version: "19.0.0", compatibleRange: "^19.0.0" }
+      { name: "react-dom", version: "19.0.0", compatibleRange: "^19.0.0" },
     ],
-    
+
     devDependencies: [
       { name: "typescript", version: "5.3.3", compatibleRange: "^5.0.0" },
       { name: "@types/react", version: "18.2.45", compatibleRange: "^18.0.0" },
       { name: "@types/node", version: "20.10.5", compatibleRange: "^20.0.0" },
       { name: "tailwindcss", version: "3.4.0", compatibleRange: "^3.4.0" },
-      { name: "eslint", version: "8.56.0", compatibleRange: "^8.0.0" }
-    ]
+      { name: "eslint", version: "8.56.0", compatibleRange: "^8.0.0" },
+    ],
   },
-  
+
   // ============================================
   // REQUIRED: Project Structure
   // ============================================
@@ -125,9 +133,9 @@ const blueprint = {
       { path: "components", purpose: "Reusable React components" },
       { path: "lib", purpose: "Utility functions and helpers" },
       { path: "public", purpose: "Static assets (images, fonts)" },
-      { path: "styles", purpose: "Global styles and Tailwind config" }
+      { path: "styles", purpose: "Global styles and Tailwind config" },
     ],
-    
+
     keyFiles: [
       {
         path: "app/layout.tsx",
@@ -153,7 +161,7 @@ export default function RootLayout({
       <body className={inter.className}>{children}</body>
     </html>
   )
-}`
+}`,
       },
       {
         path: "app/page.tsx",
@@ -167,69 +175,75 @@ export default function RootLayout({
       </div>
     </main>
   )
-}`
+}`,
       },
       {
         path: "app/globals.css",
         purpose: "Global CSS with Tailwind directives",
         template: `@tailwind base;
 @tailwind components;
-@tailwind utilities;`
-      }
-    ]
+@tailwind utilities;`,
+      },
+    ],
   },
-  
+
   // ============================================
   // REQUIRED: Setup Instructions
   // ============================================
   setup: {
-    prerequisites: [
-      "Node.js 20.x or later",
-      "pnpm 8.x or later"
-    ],
-    
+    prerequisites: ["Node.js 20.x or later", "pnpm 8.x or later"],
+
     steps: [
       {
         order: 1,
         command: "pnpm install",
         description: "Install all dependencies",
-        optional: false
+        optional: false,
       },
       {
         order: 2,
         command: "pnpm run dev",
         description: "Start the development server",
-        optional: false
-      }
+        optional: false,
+      },
     ],
-    
+
     configs: [
       {
         file: "tsconfig.json",
         description: "TypeScript compiler configuration",
-        content: JSON.stringify({
-          compilerOptions: {
-            target: "ES2020",
-            lib: ["ES2020", "DOM", "DOM.Iterable"],
-            jsx: "preserve",
-            module: "esnext",
-            moduleResolution: "bundler",
-            resolveJsonModule: true,
-            allowJs: true,
-            strict: true,
-            noEmit: true,
-            esModuleInterop: true,
-            skipLibCheck: true,
-            forceConsistentCasingInFileNames: true,
-            incremental: true,
-            plugins: [{ name: "next" }],
-            paths: {
-              "@/*": ["./*"]
-            }
+        content: JSON.stringify(
+          {
+            compilerOptions: {
+              target: "ES2020",
+              lib: ["ES2020", "DOM", "DOM.Iterable"],
+              jsx: "preserve",
+              module: "esnext",
+              moduleResolution: "bundler",
+              resolveJsonModule: true,
+              allowJs: true,
+              strict: true,
+              noEmit: true,
+              esModuleInterop: true,
+              skipLibCheck: true,
+              forceConsistentCasingInFileNames: true,
+              incremental: true,
+              plugins: [{ name: "next" }],
+              paths: {
+                "@/*": ["./*"],
+              },
+            },
+            include: [
+              "next-env.d.ts",
+              "**/*.ts",
+              "**/*.tsx",
+              ".next/types/**/*.ts",
+            ],
+            exclude: ["node_modules"],
           },
-          include: ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-          exclude: ["node_modules"]
-        }, null, 2)
+          null,
+          2,
+        ),
       },
       {
         file: "tailwind.config.ts",
@@ -248,20 +262,24 @@ const config: Config = {
   plugins: [],
 };
 
-export default config;`
+export default config;`,
       },
       {
         file: ".eslintrc.json",
         description: "ESLint configuration for Next.js",
-        content: JSON.stringify({
-          extends: ["next/core-web-vitals", "next/typescript"]
-        }, null, 2)
-      }
+        content: JSON.stringify(
+          {
+            extends: ["next/core-web-vitals", "next/typescript"],
+          },
+          null,
+          2,
+        ),
+      },
     ],
-    
-    postSetup: ["pnpm run build"]
+
+    postSetup: ["pnpm run build"],
   },
-  
+
   // ============================================
   // REQUIRED: Compatibility
   // ============================================
@@ -272,10 +290,10 @@ export default config;`
     runtimeVersion: "^20.0.0",
     dependencies: [
       { name: "react", version: "19.0.0", compatibleRange: "^19.0.0" },
-      { name: "typescript", version: "5.3.3", compatibleRange: "^5.0.0" }
-    ]
+      { name: "typescript", version: "5.3.3", compatibleRange: "^5.0.0" },
+    ],
   },
-  
+
   // ============================================
   // REQUIRED: Metrics (start at 0)
   // ============================================
@@ -283,24 +301,24 @@ export default config;`
     successRate: 100,
     applications: 0,
     successes: 0,
-    failures: 0
+    failures: 0,
   },
-  
+
   // ============================================
   // REQUIRED: Related Patterns (can be empty)
   // ============================================
   relatedPatterns: [],
-  
+
   // ============================================
   // REQUIRED: Privacy (defaults to private)
   // ============================================
   isPrivate: true,
-  
+
   // ============================================
   // REQUIRED: Timestamps
   // ============================================
   createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
+  updatedAt: new Date().toISOString(),
 };
 
 // Save the blueprint

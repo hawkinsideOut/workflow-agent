@@ -8,11 +8,11 @@ import { z } from "zod";
 function slugify(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-    .replace(/\s+/g, '-')         // Replace spaces with hyphens
-    .replace(/-+/g, '-')           // Replace multiple hyphens with single hyphen
-    .replace(/^-|-$/g, '')         // Remove leading/trailing hyphens
-    .slice(0, 50);                 // Limit to 50 characters
+    .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+    .replace(/^-|-$/g, "") // Remove leading/trailing hyphens
+    .slice(0, 50); // Limit to 50 characters
 }
 
 // ============================================
@@ -219,10 +219,14 @@ export const FixPatternSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.string().uuid(),
   /** Human-readable name */
-  name: z.string().min(3).max(100).refine(
-    (name) => slugify(name).length > 0,
-    { message: 'Pattern name must contain at least one alphanumeric character (cannot be only special characters)' }
-  ),
+  name: z
+    .string()
+    .min(3)
+    .max(100)
+    .refine((name) => slugify(name).length > 0, {
+      message:
+        "Pattern name must contain at least one alphanumeric character (cannot be only special characters)",
+    }),
   /** Description of what the pattern fixes */
   description: z.string().max(500),
 
@@ -388,10 +392,14 @@ export const BlueprintSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.string().uuid(),
   /** Human-readable name */
-  name: z.string().min(3).max(100).refine(
-    (name) => slugify(name).length > 0,
-    { message: 'Blueprint name must contain at least one alphanumeric character (cannot be only special characters)' }
-  ),
+  name: z
+    .string()
+    .min(3)
+    .max(100)
+    .refine((name) => slugify(name).length > 0, {
+      message:
+        "Blueprint name must contain at least one alphanumeric character (cannot be only special characters)",
+    }),
   /** Description of what this blueprint creates */
   description: z.string().max(1000),
 
@@ -583,10 +591,14 @@ export const SolutionPatternSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.string().uuid(),
   /** Human-readable name */
-  name: z.string().min(3).max(100).refine(
-    (name) => slugify(name).length > 0,
-    { message: 'Solution name must contain at least one alphanumeric character (cannot be only special characters)' }
-  ),
+  name: z
+    .string()
+    .min(3)
+    .max(100)
+    .refine((name) => slugify(name).length > 0, {
+      message:
+        "Solution name must contain at least one alphanumeric character (cannot be only special characters)",
+    }),
   /** Description of what this solution does */
   description: z.string().min(10).max(1000),
 

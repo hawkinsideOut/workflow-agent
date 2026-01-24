@@ -45,10 +45,14 @@ async function scopeListCommand(): Promise<void> {
   }
 
   for (const [category, categoryScopes] of Object.entries(byCategory)) {
-    console.log(chalk.bold(`  ${category.charAt(0).toUpperCase() + category.slice(1)}:`));
+    console.log(
+      chalk.bold(`  ${category.charAt(0).toUpperCase() + category.slice(1)}:`),
+    );
     for (const scope of categoryScopes) {
       const emoji = scope.emoji || "📦";
-      console.log(`    ${emoji} ${chalk.green(scope.name)} - ${scope.description || "No description"}`);
+      console.log(
+        `    ${emoji} ${chalk.green(scope.name)} - ${scope.description || "No description"}`,
+      );
     }
     console.log("");
   }
@@ -59,7 +63,10 @@ async function scopeListCommand(): Promise<void> {
 /**
  * Add a scope to the project configuration
  */
-async function scopeAddCommand(name: string, options: { description?: string; emoji?: string; category?: string }): Promise<void> {
+async function scopeAddCommand(
+  name: string,
+  options: { description?: string; emoji?: string; category?: string },
+): Promise<void> {
   console.log(chalk.bold.cyan(`\n➕ Adding Scope: ${name}\n`));
 
   const fs = await import("fs");
@@ -67,7 +74,11 @@ async function scopeAddCommand(name: string, options: { description?: string; em
   const cwd = process.cwd();
 
   // Find config file
-  const configFiles = ["workflow.config.json", "workflow.config.js", ".workflowrc.json"];
+  const configFiles = [
+    "workflow.config.json",
+    "workflow.config.js",
+    ".workflowrc.json",
+  ];
   let configPath: string | null = null;
 
   for (const file of configFiles) {
@@ -128,7 +139,11 @@ async function scopeRemoveCommand(name: string): Promise<void> {
   const cwd = process.cwd();
 
   // Find config file
-  const configFiles = ["workflow.config.json", "workflow.config.js", ".workflowrc.json"];
+  const configFiles = [
+    "workflow.config.json",
+    "workflow.config.js",
+    ".workflowrc.json",
+  ];
   let configPath: string | null = null;
 
   for (const file of configFiles) {
@@ -153,7 +168,9 @@ async function scopeRemoveCommand(name: string): Promise<void> {
     process.exit(1);
   }
 
-  const index = config.scopes.findIndex((s: { name: string }) => s.name === name);
+  const index = config.scopes.findIndex(
+    (s: { name: string }) => s.name === name,
+  );
   if (index === -1) {
     console.log(chalk.yellow(`  Scope "${name}" not found`));
     process.exit(1);
@@ -170,7 +187,11 @@ async function scopeRemoveCommand(name: string): Promise<void> {
 /**
  * Sync scopes with the community registry
  */
-async function scopeSyncCommand(options: { push?: boolean; pull?: boolean; dryRun?: boolean }): Promise<void> {
+async function scopeSyncCommand(options: {
+  push?: boolean;
+  pull?: boolean;
+  dryRun?: boolean;
+}): Promise<void> {
   console.log(chalk.bold.cyan("\n🔄 Syncing Scopes\n"));
 
   // Import and delegate to unified sync command
@@ -194,7 +215,11 @@ async function scopeAnalyzeCommand(): Promise<void> {
 
   try {
     // Get recent commits and analyze scope usage
-    const { stdout } = await execa("git", ["log", "--oneline", "-50", "--format=%s"], { cwd });
+    const { stdout } = await execa(
+      "git",
+      ["log", "--oneline", "-50", "--format=%s"],
+      { cwd },
+    );
     const commits = stdout.split("\n").filter(Boolean);
 
     const config = await loadConfig();
@@ -228,14 +253,20 @@ async function scopeAnalyzeCommand(): Promise<void> {
 
     const sortedUsage = Object.entries(usage).sort((a, b) => b[1] - a[1]);
     for (const [scope, count] of sortedUsage) {
-      const scopeConfig = scopes.find((s: { name: string }) => s.name === scope);
+      const scopeConfig = scopes.find(
+        (s: { name: string }) => s.name === scope,
+      );
       const emoji = scopeConfig?.emoji || "📦";
       const bar = "█".repeat(Math.min(count, 20));
-      console.log(`    ${emoji} ${chalk.green(scope.padEnd(15))} ${bar} ${count}`);
+      console.log(
+        `    ${emoji} ${chalk.green(scope.padEnd(15))} ${bar} ${count}`,
+      );
     }
 
     if (unscoped > 0) {
-      console.log(`    ${chalk.yellow("(unscoped)".padEnd(17))} ${"░".repeat(Math.min(unscoped, 20))} ${unscoped}`);
+      console.log(
+        `    ${chalk.yellow("(unscoped)".padEnd(17))} ${"░".repeat(Math.min(unscoped, 20))} ${unscoped}`,
+      );
     }
 
     // Suggest unused scopes
@@ -258,7 +289,9 @@ async function scopeAnalyzeCommand(): Promise<void> {
     console.log("");
   } catch {
     console.log(chalk.yellow("  Unable to analyze git history"));
-    console.log(chalk.dim("  Make sure you're in a git repository with commit history"));
+    console.log(
+      chalk.dim("  Make sure you're in a git repository with commit history"),
+    );
   }
 }
 

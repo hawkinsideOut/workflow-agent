@@ -216,7 +216,10 @@ describe("learn commands - Unit Tests", () => {
         data: [blueprint],
       });
 
-      await learnExportCommand({ type: "blueprint", output: "blueprints.json" });
+      await learnExportCommand({
+        type: "blueprint",
+        output: "blueprints.json",
+      });
 
       const writeCall = vi.mocked(fs.promises.writeFile).mock.calls[0];
       const content = JSON.parse(String(writeCall[1]));
@@ -314,13 +317,13 @@ describe("learn commands - Unit Tests", () => {
     it("exits with error when file not found", async () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
 
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => {
-          throw new Error("process.exit called");
-        });
+      const mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("process.exit called");
+      });
 
-      await expect(learnImportCommand("nonexistent.json", {})).rejects.toThrow("process.exit called");
+      await expect(learnImportCommand("nonexistent.json", {})).rejects.toThrow(
+        "process.exit called",
+      );
 
       expect(mockExit).toHaveBeenCalledWith(1);
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -334,13 +337,13 @@ describe("learn commands - Unit Tests", () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.promises.readFile).mockResolvedValue("invalid json{");
 
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => {
-          throw new Error("process.exit called");
-        });
+      const mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("process.exit called");
+      });
 
-      await expect(learnImportCommand("bad.json", {})).rejects.toThrow("process.exit called");
+      await expect(learnImportCommand("bad.json", {})).rejects.toThrow(
+        "process.exit called",
+      );
 
       expect(mockExit).toHaveBeenCalledWith(1);
       expect(consoleSpy).toHaveBeenCalledWith(

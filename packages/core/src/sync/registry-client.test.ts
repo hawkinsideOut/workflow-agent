@@ -8,7 +8,10 @@ import {
   RegistryError,
   RateLimitedException,
 } from "./registry-client.js";
-import type { FixPattern, Blueprint } from "@hawkinside_out/workflow-improvement-tracker";
+import type {
+  FixPattern,
+  Blueprint,
+} from "@hawkinside_out/workflow-improvement-tracker";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -220,8 +223,14 @@ describe("RegistryClient", () => {
       const result = await client.push(
         [
           { pattern: mockPattern as FixPattern, type: "fix" },
-          { pattern: { ...mockPattern, id: "uuid-2" } as FixPattern, type: "fix" },
-          { pattern: { ...mockPattern, id: "uuid-3" } as Blueprint, type: "blueprint" },
+          {
+            pattern: { ...mockPattern, id: "uuid-2" } as FixPattern,
+            type: "fix",
+          },
+          {
+            pattern: { ...mockPattern, id: "uuid-3" } as Blueprint,
+            type: "blueprint",
+          },
         ],
         "wf-contributor-123",
       );
@@ -411,7 +420,11 @@ describe("RegistryClient", () => {
   describe("RateLimitedException", () => {
     it("should calculate time until reset", () => {
       const futureTime = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 minutes
-      const error = new RateLimitedException("Rate limit exceeded", futureTime, 0);
+      const error = new RateLimitedException(
+        "Rate limit exceeded",
+        futureTime,
+        0,
+      );
 
       const timeUntil = error.getTimeUntilReset();
       expect(timeUntil).toMatch(/\d+ minute/);
@@ -419,7 +432,11 @@ describe("RegistryClient", () => {
 
     it("should return 'now' if reset time has passed", () => {
       const pastTime = new Date(Date.now() - 1000).toISOString();
-      const error = new RateLimitedException("Rate limit exceeded", pastTime, 0);
+      const error = new RateLimitedException(
+        "Rate limit exceeded",
+        pastTime,
+        0,
+      );
 
       expect(error.getTimeUntilReset()).toBe("now");
     });
@@ -431,8 +448,14 @@ describe("RegistryClient", () => {
     });
 
     it("should format hours correctly", () => {
-      const futureTime = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(); // 2 hours
-      const error = new RateLimitedException("Rate limit exceeded", futureTime, 0);
+      const futureTime = new Date(
+        Date.now() + 2 * 60 * 60 * 1000,
+      ).toISOString(); // 2 hours
+      const error = new RateLimitedException(
+        "Rate limit exceeded",
+        futureTime,
+        0,
+      );
 
       const timeUntil = error.getTimeUntilReset();
       expect(timeUntil).toMatch(/\d+ hour/);
@@ -469,7 +492,7 @@ describe("RegistryClient", () => {
                 }),
               5000,
             );
-            
+
             // Listen for abort signal
             if (options.signal) {
               options.signal.addEventListener("abort", () => {

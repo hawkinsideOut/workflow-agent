@@ -6,18 +6,18 @@
 
 ## Branch Types
 
-| Branch Pattern | Purpose | Base Branch | Merge Target |
-| -------------- | ------- | ----------- | ------------ |
-| `main` | Production-ready code | - | - |
-| `develop` | Integration branch (optional) | `main` | `main` |
-| `feat/<name>` | New features | `main` / `develop` | `main` / `develop` |
-| `fix/<name>` | Bug fixes | `main` | `main` |
-| `hotfix/<name>` | Urgent production fixes | `main` | `main` |
-| `docs/<name>` | Documentation only | `main` | `main` |
-| `refactor/<name>` | Code improvements | `main` | `main` |
-| `test/<name>` | Test additions/fixes | `main` | `main` |
-| `chore/<name>` | Tooling, deps, config | `main` | `main` |
-| `release/<version>` | Release preparation | `develop` | `main` |
+| Branch Pattern      | Purpose                       | Base Branch        | Merge Target       |
+| ------------------- | ----------------------------- | ------------------ | ------------------ |
+| `main`              | Production-ready code         | -                  | -                  |
+| `develop`           | Integration branch (optional) | `main`             | `main`             |
+| `feat/<name>`       | New features                  | `main` / `develop` | `main` / `develop` |
+| `fix/<name>`        | Bug fixes                     | `main`             | `main`             |
+| `hotfix/<name>`     | Urgent production fixes       | `main`             | `main`             |
+| `docs/<name>`       | Documentation only            | `main`             | `main`             |
+| `refactor/<name>`   | Code improvements             | `main`             | `main`             |
+| `test/<name>`       | Test additions/fixes          | `main`             | `main`             |
+| `chore/<name>`      | Tooling, deps, config         | `main`             | `main`             |
+| `release/<version>` | Release preparation           | `develop`          | `main`             |
 
 ---
 
@@ -166,22 +166,22 @@ Closes #123
 
 ### 4. Review Requirements
 
-| Change Type | Required Approvals | Additional |
-| ----------- | ------------------ | ---------- |
-| Feature | 1+ | - |
-| Bug fix | 1+ | - |
-| Hotfix | 1+ | Expedited review |
-| Breaking change | 2+ | Team notification |
-| Security | 2+ | Security team |
-| Docs only | 1 | Can self-merge |
+| Change Type     | Required Approvals | Additional        |
+| --------------- | ------------------ | ----------------- |
+| Feature         | 1+                 | -                 |
+| Bug fix         | 1+                 | -                 |
+| Hotfix          | 1+                 | Expedited review  |
+| Breaking change | 2+                 | Team notification |
+| Security        | 2+                 | Security team     |
+| Docs only       | 1                  | Can self-merge    |
 
 ### 5. Merge Strategy
 
-| Scenario | Strategy | Result |
-| -------- | -------- | ------ |
-| Feature branch | Squash & Merge | Clean history |
-| Release branch | Merge commit | Preserve history |
-| Hotfix | Merge commit | Traceable |
+| Scenario       | Strategy       | Result           |
+| -------------- | -------------- | ---------------- |
+| Feature branch | Squash & Merge | Clean history    |
+| Release branch | Merge commit   | Preserve history |
+| Hotfix         | Merge commit   | Traceable        |
 
 ---
 
@@ -199,16 +199,16 @@ Closes #123
 
 ### Types
 
-| Type | Description |
-| ---- | ----------- |
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `docs` | Documentation |
+| Type       | Description                  |
+| ---------- | ---------------------------- |
+| `feat`     | New feature                  |
+| `fix`      | Bug fix                      |
+| `docs`     | Documentation                |
 | `refactor` | Code change (no feature/fix) |
-| `test` | Test changes |
-| `chore` | Build, deps, tooling |
-| `style` | Formatting (no code change) |
-| `perf` | Performance improvement |
+| `test`     | Test changes                 |
+| `chore`    | Build, deps, tooling         |
+| `style`    | Formatting (no code change)  |
+| `perf`     | Performance improvement      |
 
 ### Good Commit Messages
 

@@ -63,12 +63,18 @@ async function testAction(options: { dryRun?: boolean }): Promise<void> {
     const exists = fs.existsSync(hookPath);
     const isExecutable = exists && (fs.statSync(hookPath).mode & 0o111) !== 0;
     // Check for "workflow" in hook content (covers "Workflow Agent" and "workflow hooks")
-    const isWorkflowHook = exists && fs.readFileSync(hookPath, "utf-8").toLowerCase().includes("workflow");
+    const isWorkflowHook =
+      exists &&
+      fs.readFileSync(hookPath, "utf-8").toLowerCase().includes("workflow");
 
     if (exists && isExecutable && isWorkflowHook) {
       console.log(chalk.green(`  ✓ ${hookType} - installed and executable`));
     } else if (exists && !isWorkflowHook) {
-      console.log(chalk.yellow(`  ⚠ ${hookType} - exists but not managed by workflow-agent`));
+      console.log(
+        chalk.yellow(
+          `  ⚠ ${hookType} - exists but not managed by workflow-agent`,
+        ),
+      );
       allInstalled = false;
     } else if (exists && !isExecutable) {
       console.log(chalk.red(`  ✗ ${hookType} - exists but not executable`));

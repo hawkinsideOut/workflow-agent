@@ -196,7 +196,12 @@ export async function findSimilarFiles(
     try {
       const matches = await fg(pattern, {
         cwd: projectRoot,
-        ignore: ["**/node_modules/**", "**/.git/**", "**/dist/**", "**/build/**"],
+        ignore: [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/dist/**",
+          "**/build/**",
+        ],
         absolute: false,
         onlyFiles: true,
       });
@@ -279,7 +284,10 @@ export async function validateDocumentReferences(
         // Check if the file exists
         if (!existsSync(resolvedPath)) {
           // Find similar files for suggestions
-          const suggestions = await findSimilarFiles(ref.targetPath, projectPath);
+          const suggestions = await findSimilarFiles(
+            ref.targetPath,
+            projectPath,
+          );
 
           brokenReferences.push({
             ...ref,
@@ -305,7 +313,9 @@ export async function validateDocumentReferences(
     };
   } catch (error) {
     errors.push(
-      error instanceof Error ? error.message : "Unknown error during validation",
+      error instanceof Error
+        ? error.message
+        : "Unknown error during validation",
     );
 
     return {

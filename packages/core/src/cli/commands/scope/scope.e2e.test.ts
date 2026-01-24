@@ -3,13 +3,26 @@
  * Tests CLI invocation with real file system and git operations
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+} from "vitest";
 import { writeFile, mkdir, rm, readFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { mkdtemp } from "fs/promises";
 import { execa } from "execa";
-import { setupTempDir, cleanupTempDir, createWorkflowConfig, initGitRepo } from "../test-utils.js";
+import {
+  setupTempDir,
+  cleanupTempDir,
+  createWorkflowConfig,
+  initGitRepo,
+} from "../test-utils.js";
 
 describe("scope CLI commands - E2E", () => {
   let tempDir: string;
@@ -27,15 +40,21 @@ describe("scope CLI commands - E2E", () => {
     // Create some commits for analyze testing
     await writeFile(join(tempDir, "file1.txt"), "content1");
     await execa("git", ["add", "."], { cwd: tempDir });
-    await execa("git", ["commit", "-m", "feat(auth): add authentication"], { cwd: tempDir });
+    await execa("git", ["commit", "-m", "feat(auth): add authentication"], {
+      cwd: tempDir,
+    });
 
     await writeFile(join(tempDir, "file2.txt"), "content2");
     await execa("git", ["add", "."], { cwd: tempDir });
-    await execa("git", ["commit", "-m", "fix(auth): fix login bug"], { cwd: tempDir });
+    await execa("git", ["commit", "-m", "fix(auth): fix login bug"], {
+      cwd: tempDir,
+    });
 
     await writeFile(join(tempDir, "file3.txt"), "content3");
     await execa("git", ["add", "."], { cwd: tempDir });
-    await execa("git", ["commit", "-m", "feat(api): add new endpoint"], { cwd: tempDir });
+    await execa("git", ["commit", "-m", "feat(api): add new endpoint"], {
+      cwd: tempDir,
+    });
   });
 
   afterEach(async () => {
@@ -62,14 +81,27 @@ describe("scope CLI commands - E2E", () => {
       expect(stdout).toContain("test-scope");
 
       // Verify config was updated
-      const config = JSON.parse(await readFile(join(tempDir, "workflow.config.json"), "utf-8"));
-      expect(config.scopes.some((s: { name: string }) => s.name === "test-scope")).toBe(true);
+      const config = JSON.parse(
+        await readFile(join(tempDir, "workflow.config.json"), "utf-8"),
+      );
+      expect(
+        config.scopes.some((s: { name: string }) => s.name === "test-scope"),
+      ).toBe(true);
     });
 
     it("adds scope with emoji", async () => {
       const { stdout, exitCode } = await execa(
         "node",
-        [cliPath, "scope", "add", "ui", "--description", "UI changes", "--emoji", "🎨"],
+        [
+          cliPath,
+          "scope",
+          "add",
+          "ui",
+          "--description",
+          "UI changes",
+          "--emoji",
+          "🎨",
+        ],
         {
           cwd: tempDir,
           reject: false,
@@ -93,8 +125,12 @@ describe("scope CLI commands - E2E", () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain("backend");
 
-      const config = JSON.parse(await readFile(join(tempDir, "workflow.config.json"), "utf-8"));
-      const scope = config.scopes.find((s: { name: string }) => s.name === "backend");
+      const config = JSON.parse(
+        await readFile(join(tempDir, "workflow.config.json"), "utf-8"),
+      );
+      const scope = config.scopes.find(
+        (s: { name: string }) => s.name === "backend",
+      );
       expect(scope.category).toBe("backend");
     });
 
@@ -164,8 +200,12 @@ describe("scope CLI commands - E2E", () => {
       expect(stdout).toContain("Removed scope");
 
       // Verify config was updated
-      const config = JSON.parse(await readFile(join(tempDir, "workflow.config.json"), "utf-8"));
-      expect(config.scopes.some((s: { name: string }) => s.name === "to-remove")).toBe(false);
+      const config = JSON.parse(
+        await readFile(join(tempDir, "workflow.config.json"), "utf-8"),
+      );
+      expect(
+        config.scopes.some((s: { name: string }) => s.name === "to-remove"),
+      ).toBe(false);
     });
 
     it("fails when scope does not exist", async () => {

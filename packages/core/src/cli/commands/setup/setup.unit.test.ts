@@ -50,13 +50,18 @@ const createMockReport = (overrides = {}) => ({
 });
 
 vi.mock("../../../utils/auto-setup.js", () => ({
-  generateAuditReport: vi.fn().mockImplementation(() => Promise.resolve(createMockReport())),
+  generateAuditReport: vi
+    .fn()
+    .mockImplementation(() => Promise.resolve(createMockReport())),
   runAllSetups: vi.fn().mockImplementation(() => Promise.resolve([])),
 }));
 
 import { autoSetupCommand } from "../auto-setup-command.js";
 import * as p from "@clack/prompts";
-import { generateAuditReport, runAllSetups } from "../../../utils/auto-setup.js";
+import {
+  generateAuditReport,
+  runAllSetups,
+} from "../../../utils/auto-setup.js";
 
 describe("autoSetupCommand - Unit Tests", () => {
   let consoleLogs: string[] = [];
@@ -105,7 +110,9 @@ describe("autoSetupCommand - Unit Tests", () => {
       await autoSetupCommand({});
 
       expect(console.log).toHaveBeenCalled();
-      expect(consoleLogs.some((log) => log.includes("Audit Report"))).toBe(true);
+      expect(consoleLogs.some((log) => log.includes("Audit Report"))).toBe(
+        true,
+      );
     });
 
     it("shows completion message when no changes needed", async () => {
@@ -168,7 +175,9 @@ describe("autoSetupCommand - Unit Tests", () => {
 
       await autoSetupCommand({ yes: true });
 
-      expect(consoleLogs.some((log) => log.includes("Auto-approving"))).toBe(true);
+      expect(consoleLogs.some((log) => log.includes("Auto-approving"))).toBe(
+        true,
+      );
     });
   });
 
@@ -291,14 +300,18 @@ describe("autoSetupCommand - Unit Tests", () => {
       );
 
       await expect(autoSetupCommand({})).rejects.toThrow("process.exit(1)");
-      expect(consoleErrors.some((err) => err.includes("Analysis failed"))).toBe(true);
+      expect(consoleErrors.some((err) => err.includes("Analysis failed"))).toBe(
+        true,
+      );
     });
 
     it("shows generic error for non-Error objects", async () => {
       vi.mocked(generateAuditReport).mockRejectedValueOnce("string error");
 
       await expect(autoSetupCommand({})).rejects.toThrow("process.exit(1)");
-      expect(consoleErrors.some((err) => err.includes("string error"))).toBe(true);
+      expect(consoleErrors.some((err) => err.includes("string error"))).toBe(
+        true,
+      );
     });
   });
 });

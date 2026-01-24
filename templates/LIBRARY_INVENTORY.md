@@ -21,14 +21,15 @@
 
 ### Framework/Runtime
 
-| Property      | Value                          |
-| ------------- | ------------------------------ |
-| Package       | `[package-name]`               |
-| Version       | `[version]`                    |
-| Purpose       | Core application runtime       |
-| Documentation | [Link to docs]                 |
+| Property      | Value                    |
+| ------------- | ------------------------ |
+| Package       | `[package-name]`         |
+| Version       | `[version]`              |
+| Purpose       | Core application runtime |
+| Documentation | [Link to docs]           |
 
 **Usage Patterns:**
+
 <!-- Document your project-specific patterns here -->
 
 ### Language
@@ -40,6 +41,7 @@
 | Config   | `tsconfig.json` / equivalent    |
 
 **Standards:**
+
 - Strict type checking enabled
 - Consistent code style via linter
 - Path aliases configured (e.g., `@/` for src)
@@ -52,35 +54,36 @@
 
 ### Database/ORM
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `[package-name]`         |
-| Version       | `[version]`              |
-| Purpose       | Data persistence, queries|
-| Documentation | [Link to docs]           |
+| Property      | Value                     |
+| ------------- | ------------------------- |
+| Package       | `[package-name]`          |
+| Version       | `[version]`               |
+| Purpose       | Data persistence, queries |
+| Documentation | [Link to docs]            |
 
 **Usage:**
+
 - All database access through centralized client
 - Migrations managed via [migration tool]
 - Type-safe queries where possible
 
 ### State Management (if applicable)
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `[package-name]`         |
-| Version       | `[version]`              |
-| Purpose       | Application state        |
-| Documentation | [Link to docs]           |
+| Property      | Value             |
+| ------------- | ----------------- |
+| Package       | `[package-name]`  |
+| Version       | `[version]`       |
+| Purpose       | Application state |
+| Documentation | [Link to docs]    |
 
 ### API Client (if applicable)
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `[package-name]`         |
-| Version       | `[version]`              |
-| Purpose       | HTTP requests, caching   |
-| Documentation | [Link to docs]           |
+| Property      | Value                  |
+| ------------- | ---------------------- |
+| Package       | `[package-name]`       |
+| Version       | `[version]`            |
+| Purpose       | HTTP requests, caching |
+| Documentation | [Link to docs]         |
 
 ---
 
@@ -90,30 +93,30 @@
 
 ### UI Framework/Library
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `[package-name]`         |
-| Version       | `[version]`              |
-| Purpose       | UI components            |
-| Documentation | [Link to docs]           |
+| Property      | Value            |
+| ------------- | ---------------- |
+| Package       | `[package-name]` |
+| Version       | `[version]`      |
+| Purpose       | UI components    |
+| Documentation | [Link to docs]   |
 
 ### Styling
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `[package-name]`         |
-| Version       | `[version]`              |
-| Purpose       | CSS/styling solution     |
-| Documentation | [Link to docs]           |
+| Property      | Value                |
+| ------------- | -------------------- |
+| Package       | `[package-name]`     |
+| Version       | `[version]`          |
+| Purpose       | CSS/styling solution |
+| Documentation | [Link to docs]       |
 
 ### Form Handling (if applicable)
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `[package-name]`         |
-| Version       | `[version]`              |
-| Purpose       | Form state, validation   |
-| Documentation | [Link to docs]           |
+| Property      | Value                  |
+| ------------- | ---------------------- |
+| Package       | `[package-name]`       |
+| Version       | `[version]`            |
+| Purpose       | Form state, validation |
+| Documentation | [Link to docs]         |
 
 ---
 
@@ -130,21 +133,21 @@
 
 ### E2E Testing (if applicable)
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `[package-name]`         |
-| Version       | `[version]`              |
-| Purpose       | End-to-end tests         |
-| Documentation | [Link to docs]           |
+| Property      | Value            |
+| ------------- | ---------------- |
+| Package       | `[package-name]` |
+| Version       | `[version]`      |
+| Purpose       | End-to-end tests |
+| Documentation | [Link to docs]   |
 
 ### Mocking
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `[package-name]`         |
-| Version       | `[version]`              |
-| Purpose       | Test mocking             |
-| Documentation | [Link to docs]           |
+| Property      | Value            |
+| ------------- | ---------------- |
+| Package       | `[package-name]` |
+| Version       | `[version]`      |
+| Purpose       | Test mocking     |
+| Documentation | [Link to docs]   |
 
 ---
 
@@ -152,30 +155,30 @@
 
 ### Validation
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `zod` / `joi` / other    |
-| Version       | `[version]`              |
-| Purpose       | Schema validation        |
-| Documentation | [Link to docs]           |
+| Property      | Value                 |
+| ------------- | --------------------- |
+| Package       | `zod` / `joi` / other |
+| Version       | `[version]`           |
+| Purpose       | Schema validation     |
+| Documentation | [Link to docs]        |
 
 ### Date/Time (if applicable)
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `[package-name]`         |
-| Version       | `[version]`              |
-| Purpose       | Date manipulation        |
-| Documentation | [Link to docs]           |
+| Property      | Value             |
+| ------------- | ----------------- |
+| Package       | `[package-name]`  |
+| Version       | `[version]`       |
+| Purpose       | Date manipulation |
+| Documentation | [Link to docs]    |
 
 ### Logging
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `[package-name]`         |
-| Version       | `[version]`              |
-| Purpose       | Application logging      |
-| Documentation | [Link to docs]           |
+| Property      | Value               |
+| ------------- | ------------------- |
+| Package       | `[package-name]`    |
+| Version       | `[version]`         |
+| Purpose       | Application logging |
+| Documentation | [Link to docs]      |
 
 ---
 
@@ -206,14 +209,15 @@ When adding a new library, use this format:
 ```markdown
 ### [Library Name]
 
-| Property      | Value                    |
-| ------------- | ------------------------ |
-| Package       | `package-name`           |
-| Version       | `x.y.z`                  |
-| Purpose       | What it's used for       |
-| Documentation | [Link to docs]           |
+| Property      | Value              |
+| ------------- | ------------------ |
+| Package       | `package-name`     |
+| Version       | `x.y.z`            |
+| Purpose       | What it's used for |
+| Documentation | [Link to docs]     |
 
 **Usage:**
+
 - When to use this library
 - Key patterns/conventions
 - Any gotchas or limitations

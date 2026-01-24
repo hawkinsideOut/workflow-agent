@@ -27,7 +27,11 @@ vi.mock("../db/queries", () => ({
   markWebhookProcessed: vi.fn(),
   getRecentWebhookEvents: vi.fn(() => []),
   getActiveAttempts: vi.fn(() => []),
-  checkRateLimit: vi.fn(() => ({ allowed: true, remaining: 100, resetAt: null })),
+  checkRateLimit: vi.fn(() => ({
+    allowed: true,
+    remaining: 100,
+    resetAt: null,
+  })),
   incrementRateLimit: vi.fn(),
   batchCreatePatterns: vi.fn(() => ({ inserted: 2, skipped: 0, errors: [] })),
   getPatterns: vi.fn(() => ({
@@ -57,7 +61,7 @@ vi.mock("../db/queries", () => ({
           created_at: "2026-01-20T00:00:00.000Z",
           updated_at: "2026-01-20T00:00:00.000Z",
         }
-      : null
+      : null,
   ),
   getPatternsNewerThan: vi.fn(() => []),
 }));

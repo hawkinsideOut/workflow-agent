@@ -17,7 +17,12 @@ import { verifyCommand } from "./commands/verify.js";
 import { preCommitCommand } from "./commands/pre-commit.js";
 import { autoSetupCommand } from "./commands/auto-setup-command.js";
 // Command groups
-import { createDocsCommand, docsValidateCommand, docsGenerateCommand, docsUpdateCommand } from "./commands/docs/index.js";
+import {
+  createDocsCommand,
+  docsValidateCommand,
+  docsGenerateCommand,
+  docsUpdateCommand,
+} from "./commands/docs/index.js";
 import { hooksCommand, createHooksCommand } from "./commands/hooks/index.js";
 import {
   createSolutionCommand,
@@ -35,14 +40,16 @@ import { advisoryCommand } from "./commands/advisory.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const packageJson = JSON.parse(
-  readFileSync(join(__dirname, "../../package.json"), "utf-8")
+  readFileSync(join(__dirname, "../../package.json"), "utf-8"),
 );
 
 /**
  * Show deprecation warning for old command syntax
  */
 function deprecationWarning(oldCmd: string, newCmd: string): void {
-  console.warn(chalk.yellow(`⚠️  "${oldCmd}" is deprecated and will be removed in v2.0.`));
+  console.warn(
+    chalk.yellow(`⚠️  "${oldCmd}" is deprecated and will be removed in v2.0.`),
+  );
   console.warn(chalk.yellow(`   Use: ${newCmd}\n`));
 }
 import {
@@ -91,7 +98,11 @@ program
   .command("migrate <subcommand>")
   .description("Migrate patterns and configurations")
   .option("--dry-run", "Preview without making changes")
-  .option("--type <type>", "Pattern type to migrate (fix, blueprint, solution, or all)", "all")
+  .option(
+    "--type <type>",
+    "Pattern type to migrate (fix, blueprint, solution, or all)",
+    "all",
+  )
   .addHelpText(
     "after",
     `
@@ -210,7 +221,9 @@ program
       process.exit(0);
     } else {
       if (result.configPath) {
-        console.log(chalk.red(`✗ Failed to fix configuration: ${result.error}`));
+        console.log(
+          chalk.red(`✗ Failed to fix configuration: ${result.error}`),
+        );
       } else {
         console.log(chalk.red("✗ No workflow configuration file found"));
         console.log(chalk.yellow("  Run: workflow init"));
@@ -304,6 +317,10 @@ program
   .option("--commit", "Commit changes if all checks pass")
   .option("--dry-run", "Preview fixes without applying them")
   .option("--learn", "Record successful fixes as learning patterns")
+  .option(
+    "--no-platform-checks",
+    "Skip platform-specific checks (Shopify, WordPress, etc.)",
+  )
   .action(verifyCommand);
 
 program
@@ -350,7 +367,10 @@ program
   .description("[DEPRECATED] Use: workflow docs generate")
   .option("--force", "Regenerate without confirmation")
   .action(async (options) => {
-    deprecationWarning("workflow generate-instructions", "workflow docs generate");
+    deprecationWarning(
+      "workflow generate-instructions",
+      "workflow docs generate",
+    );
     return docsGenerateCommand(options);
   });
 
@@ -522,7 +542,10 @@ program
   .option("--anonymize", "Anonymize sensitive data")
   .option("--private", "Keep solution private")
   .action(async (options) => {
-    deprecationWarning("workflow solution:capture", "workflow solution capture");
+    deprecationWarning(
+      "workflow solution:capture",
+      "workflow solution capture",
+    );
     return solutionCaptureCommand(options);
   });
 
@@ -564,7 +587,10 @@ program
   .command("solution:deprecate <solutionId> <reason>", { hidden: true })
   .description("[DEPRECATED] Use: workflow solution deprecate")
   .action(async (solutionId, reason) => {
-    deprecationWarning("workflow solution:deprecate", "workflow solution deprecate");
+    deprecationWarning(
+      "workflow solution:deprecate",
+      "workflow solution deprecate",
+    );
     return solutionDeprecateCommand(solutionId, reason);
   });
 

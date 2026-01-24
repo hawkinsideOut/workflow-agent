@@ -28,11 +28,19 @@ export async function doctorCommand(options?: {
     for (const issue of result.issues) {
       console.log(chalk.red(`  ✗ ${issue.path}: ${issue.message}`));
       if (issue.currentValue !== undefined) {
-        console.log(chalk.dim(`    Current value: ${JSON.stringify(issue.currentValue)}`));
+        console.log(
+          chalk.dim(`    Current value: ${JSON.stringify(issue.currentValue)}`),
+        );
       }
       if (issue.suggestedFix) {
-        console.log(chalk.green(`    Suggested fix: ${issue.suggestedFix.description}`));
-        console.log(chalk.dim(`    New value: ${JSON.stringify(issue.suggestedFix.newValue)}`));
+        console.log(
+          chalk.green(`    Suggested fix: ${issue.suggestedFix.description}`),
+        );
+        console.log(
+          chalk.dim(
+            `    New value: ${JSON.stringify(issue.suggestedFix.newValue)}`,
+          ),
+        );
       }
     }
 
@@ -50,7 +58,9 @@ export async function doctorCommand(options?: {
           for (const change of fixResult.changes) {
             console.log(chalk.dim(`  • ${change}`));
           }
-          console.log(chalk.cyan("\n  Run 'workflow doctor' again to verify.\n"));
+          console.log(
+            chalk.cyan("\n  Run 'workflow doctor' again to verify.\n"),
+          );
           process.exit(0);
         } else {
           console.log(chalk.red(`✗ Auto-fix failed: ${fixResult.error}`));
@@ -93,13 +103,13 @@ export async function doctorCommand(options?: {
 
   if (missingFiles.length === 0) {
     console.log(
-      chalk.green(`\n✓ All ${mandatoryFiles.length} mandatory guidelines present`),
+      chalk.green(
+        `\n✓ All ${mandatoryFiles.length} mandatory guidelines present`,
+      ),
     );
   } else {
     console.log(
-      chalk.red(
-        `\n✗ Missing ${missingFiles.length} mandatory guideline(s)`,
-      ),
+      chalk.red(`\n✗ Missing ${missingFiles.length} mandatory guideline(s)`),
     );
   }
 
@@ -117,7 +127,7 @@ export async function doctorCommand(options?: {
   } else {
     try {
       const hooksStatus = await getAllHooksStatus(cwd);
-      
+
       for (const status of hooksStatus) {
         if (status.installed) {
           console.log(chalk.green(`✓ ${status.hookType}: installed`));
@@ -132,7 +142,11 @@ export async function doctorCommand(options?: {
       }
     } catch (error) {
       console.log(chalk.yellow("⚠ Could not check hooks status"));
-      console.log(chalk.dim(`  ${error instanceof Error ? error.message : "Unknown error"}`));
+      console.log(
+        chalk.dim(
+          `  ${error instanceof Error ? error.message : "Unknown error"}`,
+        ),
+      );
     }
   }
 

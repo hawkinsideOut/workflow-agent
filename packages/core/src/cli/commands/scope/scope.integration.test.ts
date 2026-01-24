@@ -26,15 +26,21 @@ describe("scope commands - Integration Tests", () => {
     // Create some commits for analyze testing
     await writeFile(join(tempDir, "test.txt"), "test");
     await execa("git", ["add", "."], { cwd: tempDir });
-    await execa("git", ["commit", "-m", "feat(auth): initial auth"], { cwd: tempDir });
+    await execa("git", ["commit", "-m", "feat(auth): initial auth"], {
+      cwd: tempDir,
+    });
 
     await writeFile(join(tempDir, "test2.txt"), "test2");
     await execa("git", ["add", "."], { cwd: tempDir });
-    await execa("git", ["commit", "-m", "fix(auth): fix login"], { cwd: tempDir });
+    await execa("git", ["commit", "-m", "fix(auth): fix login"], {
+      cwd: tempDir,
+    });
 
     await writeFile(join(tempDir, "test3.txt"), "test3");
     await execa("git", ["add", "."], { cwd: tempDir });
-    await execa("git", ["commit", "-m", "feat: unscoped change"], { cwd: tempDir });
+    await execa("git", ["commit", "-m", "feat: unscoped change"], {
+      cwd: tempDir,
+    });
   });
 
   afterAll(async () => {
@@ -63,7 +69,9 @@ describe("scope commands - Integration Tests", () => {
 
       // Verify
       const updated = JSON.parse(await readFile(configPath, "utf-8"));
-      expect(updated.scopes.some((s: { name: string }) => s.name === "test-scope")).toBe(true);
+      expect(
+        updated.scopes.some((s: { name: string }) => s.name === "test-scope"),
+      ).toBe(true);
     });
 
     it("removes scope from config file", async () => {
@@ -79,7 +87,9 @@ describe("scope commands - Integration Tests", () => {
       await writeFile(configPath, JSON.stringify(config, null, 2));
 
       // Now remove it
-      const index = config.scopes.findIndex((s: { name: string }) => s.name === "remove-me");
+      const index = config.scopes.findIndex(
+        (s: { name: string }) => s.name === "remove-me",
+      );
       if (index >= 0) {
         config.scopes.splice(index, 1);
       }
@@ -87,7 +97,9 @@ describe("scope commands - Integration Tests", () => {
 
       // Verify
       const updated = JSON.parse(await readFile(configPath, "utf-8"));
-      expect(updated.scopes.some((s: { name: string }) => s.name === "remove-me")).toBe(false);
+      expect(
+        updated.scopes.some((s: { name: string }) => s.name === "remove-me"),
+      ).toBe(false);
     });
 
     it("preserves other config properties when modifying scopes", async () => {
@@ -112,18 +124,26 @@ describe("scope commands - Integration Tests", () => {
 
   describe("git history analysis", () => {
     it("reads git log history", async () => {
-      const { stdout } = await execa("git", ["log", "--oneline", "-50", "--format=%s"], {
-        cwd: tempDir,
-      });
+      const { stdout } = await execa(
+        "git",
+        ["log", "--oneline", "-50", "--format=%s"],
+        {
+          cwd: tempDir,
+        },
+      );
 
       expect(stdout).toContain("feat(auth)");
       expect(stdout).toContain("fix(auth)");
     });
 
     it("parses scope from conventional commits", async () => {
-      const { stdout } = await execa("git", ["log", "--oneline", "-50", "--format=%s"], {
-        cwd: tempDir,
-      });
+      const { stdout } = await execa(
+        "git",
+        ["log", "--oneline", "-50", "--format=%s"],
+        {
+          cwd: tempDir,
+        },
+      );
 
       const commits = stdout.split("\n").filter(Boolean);
       const scopePattern = /^\w+\(([^)]+)\):/;
@@ -140,9 +160,13 @@ describe("scope commands - Integration Tests", () => {
     });
 
     it("counts scope usage correctly", async () => {
-      const { stdout } = await execa("git", ["log", "--oneline", "-50", "--format=%s"], {
-        cwd: tempDir,
-      });
+      const { stdout } = await execa(
+        "git",
+        ["log", "--oneline", "-50", "--format=%s"],
+        {
+          cwd: tempDir,
+        },
+      );
 
       const commits = stdout.split("\n").filter(Boolean);
       const usage: Record<string, number> = {};
@@ -158,9 +182,13 @@ describe("scope commands - Integration Tests", () => {
     });
 
     it("identifies unscoped commits", async () => {
-      const { stdout } = await execa("git", ["log", "--oneline", "-50", "--format=%s"], {
-        cwd: tempDir,
-      });
+      const { stdout } = await execa(
+        "git",
+        ["log", "--oneline", "-50", "--format=%s"],
+        {
+          cwd: tempDir,
+        },
+      );
 
       const commits = stdout.split("\n").filter(Boolean);
       let unscoped = 0;
@@ -234,9 +262,9 @@ describe("scope commands - Integration Tests", () => {
       const config = JSON.parse(content);
 
       const scopeName = config.scopes[0]?.name || "feat";
-      const isDuplicate = config.scopes.filter(
-        (s: { name: string }) => s.name === scopeName,
-      ).length > 0;
+      const isDuplicate =
+        config.scopes.filter((s: { name: string }) => s.name === scopeName)
+          .length > 0;
 
       expect(isDuplicate).toBe(true);
     });
@@ -300,7 +328,9 @@ describe("scope commands - Integration Tests", () => {
 
       // Read back and verify JSON is still valid
       const updated = JSON.parse(await readFile(configPath, "utf-8"));
-      const special = updated.scopes.find((s: { name: string }) => s.name === "special");
+      const special = updated.scopes.find(
+        (s: { name: string }) => s.name === "special",
+      );
       expect(special).toBeDefined();
     });
   });

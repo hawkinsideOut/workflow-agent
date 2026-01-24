@@ -138,10 +138,7 @@ app.post("/patterns/push", async (c) => {
   const contributorId = c.req.header("x-contributor-id");
 
   if (!contributorId) {
-    return c.json(
-      { error: "Missing x-contributor-id header" },
-      400,
-    );
+    return c.json({ error: "Missing x-contributor-id header" }, 400);
   }
 
   // Check rate limit
@@ -234,7 +231,11 @@ app.post("/patterns/push", async (c) => {
 // GET /patterns/pull - Fetch patterns from the registry
 app.get("/patterns/pull", (c) => {
   try {
-    const type = c.req.query("type") as "fix" | "blueprint" | "solution" | undefined;
+    const type = c.req.query("type") as
+      | "fix"
+      | "blueprint"
+      | "solution"
+      | undefined;
     const limit = Math.min(parseInt(c.req.query("limit") || "50"), 100);
     const offset = parseInt(c.req.query("offset") || "0");
     const since = c.req.query("since"); // ISO date for incremental pull

@@ -7,11 +7,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import {
-  createRedisClient,
-  PatternStore,
-  RateLimiter,
-} from "../../src/redis";
+import { createRedisClient, PatternStore, RateLimiter } from "../../src/redis";
 import {
   validatePushRequest,
   validateContributorId,
@@ -20,7 +16,7 @@ import type { RegistryPattern, PushResponse } from "../../src/types";
 
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ): Promise<void> {
   // Only allow POST
   if (req.method !== "POST") {
@@ -117,7 +113,7 @@ export default async function handler(
     // Increment rate limit counter for pushed patterns only
     const rateLimit = await rateLimiter.increment(
       contributorValidation.data!,
-      pushed
+      pushed,
     );
 
     const response: PushResponse = {

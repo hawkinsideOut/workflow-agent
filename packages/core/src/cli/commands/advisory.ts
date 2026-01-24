@@ -132,7 +132,7 @@ export async function advisoryCommand(options: AdvisoryOptions) {
   const analyzer = new AdvisoryAnalyzer({
     depth,
     cwd,
-    config,
+    config: config ?? undefined,
     includeHealth,
     excludePatterns: advisoryConfig?.excludePatterns,
   });

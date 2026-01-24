@@ -25,7 +25,7 @@ export function createRedisClient(): Redis {
 
   if (!url || !token) {
     throw new Error(
-      "Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN environment variables"
+      "Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN environment variables",
     );
   }
 
@@ -42,7 +42,7 @@ export class PatternStore {
    * Save a pattern to the store
    */
   async savePattern(
-    pattern: RegistryPattern
+    pattern: RegistryPattern,
   ): Promise<{ success: boolean; isNew: boolean }> {
     const key = KEYS.pattern(pattern.id);
     const existing = await this.redis.get<RegistryPattern>(key);
@@ -124,7 +124,7 @@ export class PatternStore {
 
     // Filter out nulls and return
     const validPatterns = patterns.filter(
-      (p): p is RegistryPattern => p !== null
+      (p): p is RegistryPattern => p !== null,
     );
 
     return { patterns: validPatterns, total };
@@ -135,7 +135,7 @@ export class PatternStore {
    */
   async getStats(): Promise<Record<string, number>> {
     const stats = await this.redis.hgetall<Record<string, number>>(
-      KEYS.stats()
+      KEYS.stats(),
     );
     return stats ?? {};
   }
@@ -150,7 +150,7 @@ export class RateLimiter {
 
   constructor(
     private readonly redis: Redis,
-    options: { maxRequests?: number; windowMs?: number } = {}
+    options: { maxRequests?: number; windowMs?: number } = {},
   ) {
     this.maxRequests = options.maxRequests ?? 100; // 100 patterns per window
     this.windowMs = options.windowMs ?? 60 * 60 * 1000; // 1 hour window
@@ -160,7 +160,7 @@ export class RateLimiter {
    * Check if a contributor is rate limited
    */
   async check(
-    contributorId: string
+    contributorId: string,
   ): Promise<{ allowed: boolean; remaining: number; resetAt: string | null }> {
     const key = KEYS.rateLimit(contributorId);
     const now = Date.now();
@@ -192,7 +192,7 @@ export class RateLimiter {
    */
   async increment(
     contributorId: string,
-    amount: number = 1
+    amount: number = 1,
   ): Promise<{ remaining: number; resetAt: string | null }> {
     const key = KEYS.rateLimit(contributorId);
     const now = Date.now();

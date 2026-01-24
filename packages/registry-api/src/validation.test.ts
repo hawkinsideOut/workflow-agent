@@ -154,7 +154,9 @@ describe("validatePushRequest", () => {
       ],
     });
     expect(result.success).toBe(false);
-    expect(result.errors?.some((e) => e.path.includes("description"))).toBe(true);
+    expect(result.errors?.some((e) => e.path.includes("description"))).toBe(
+      true,
+    );
   });
 });
 

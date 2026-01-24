@@ -66,7 +66,7 @@ Also see [another link](../parent/file.md).
       const refs = await extractReferences(filePath, testDir);
 
       // Images are matched by the image pattern
-      const imageRefs = refs.filter(r => r.type === "image");
+      const imageRefs = refs.filter((r) => r.type === "image");
       expect(imageRefs).toHaveLength(2);
       expect(imageRefs[0]).toMatchObject({
         file: filePath,
@@ -148,14 +148,8 @@ Check [this link][1] and [that link][2].
 
   describe("scanDocumentReferences", () => {
     test("should scan multiple markdown files", async () => {
-      await writeFile(
-        join(testDir, "file1.md"),
-        "[Link](./target.md)",
-      );
-      await writeFile(
-        join(testDir, "file2.md"),
-        "![Image](./image.png)",
-      );
+      await writeFile(join(testDir, "file1.md"), "[Link](./target.md)");
+      await writeFile(join(testDir, "file2.md"), "![Image](./image.png)");
 
       const refs = await scanDocumentReferences(testDir);
 
@@ -171,10 +165,7 @@ Check [this link][1] and [that link][2].
         join(testDir, "node_modules", "file.md"),
         "[Link](./target.md)",
       );
-      await writeFile(
-        join(testDir, "valid.md"),
-        "[Link](./other.md)",
-      );
+      await writeFile(join(testDir, "valid.md"), "[Link](./other.md)");
 
       const refs = await scanDocumentReferences(testDir);
 
@@ -184,14 +175,8 @@ Check [this link][1] and [that link][2].
 
     test("should support custom patterns", async () => {
       await mkdir(join(testDir, "docs"), { recursive: true });
-      await writeFile(
-        join(testDir, "docs", "guide.md"),
-        "[Link](./api.md)",
-      );
-      await writeFile(
-        join(testDir, "README.md"),
-        "[Link](./docs.md)",
-      );
+      await writeFile(join(testDir, "docs", "guide.md"), "[Link](./api.md)");
+      await writeFile(join(testDir, "README.md"), "[Link](./docs.md)");
 
       const refs = await scanDocumentReferences(testDir, {
         patterns: ["docs/**/*.md"],
@@ -204,10 +189,7 @@ Check [this link][1] and [that link][2].
 
   describe("validateDocumentReferences", () => {
     test("should detect broken references", async () => {
-      await writeFile(
-        join(testDir, "source.md"),
-        "[Link](./missing-file.md)",
-      );
+      await writeFile(join(testDir, "source.md"), "[Link](./missing-file.md)");
 
       const result = await validateDocumentReferences(testDir);
 
@@ -217,10 +199,7 @@ Check [this link][1] and [that link][2].
     });
 
     test("should validate existing references", async () => {
-      await writeFile(
-        join(testDir, "source.md"),
-        "[Link](./target.md)",
-      );
+      await writeFile(join(testDir, "source.md"), "[Link](./target.md)");
       await writeFile(join(testDir, "target.md"), "# Target");
 
       const result = await validateDocumentReferences(testDir);
@@ -246,10 +225,7 @@ Check [this link][1] and [that link][2].
 
     test("should handle absolute paths from project root", async () => {
       await mkdir(join(testDir, "docs"), { recursive: true });
-      await writeFile(
-        join(testDir, "docs", "guide.md"),
-        "[Link](/README.md)",
-      );
+      await writeFile(join(testDir, "docs", "guide.md"), "[Link](/README.md)");
       await writeFile(join(testDir, "README.md"), "# README");
 
       const result = await validateDocumentReferences(testDir);
@@ -263,10 +239,7 @@ Check [this link][1] and [that link][2].
         join(testDir, "file1.md"),
         "[Link1](./target1.md)\n[Link2](./target2.md)",
       );
-      await writeFile(
-        join(testDir, "file2.md"),
-        "![Image](./image.png)",
-      );
+      await writeFile(join(testDir, "file2.md"), "![Image](./image.png)");
 
       const result = await validateDocumentReferences(testDir);
 
@@ -283,15 +256,10 @@ Check [this link][1] and [that link][2].
       await writeFile(join(testDir, "docs", "getting-started-guide.md"), "");
       await writeFile(join(testDir, "setup.md"), "");
 
-      const similar = await findSimilarFiles(
-        "./getting-started.md",
-        testDir,
-      );
+      const similar = await findSimilarFiles("./getting-started.md", testDir);
 
       expect(similar.length).toBeGreaterThan(0);
-      expect(
-        similar.some((f) => f.includes("getting-started")),
-      ).toBe(true);
+      expect(similar.some((f) => f.includes("getting-started"))).toBe(true);
     });
 
     test("should limit suggestions", async () => {

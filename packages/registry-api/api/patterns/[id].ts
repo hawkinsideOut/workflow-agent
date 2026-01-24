@@ -11,7 +11,7 @@ import { isValidUUID } from "../../src/validation";
 
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ): Promise<void> {
   // Only allow GET
   if (req.method !== "GET") {
@@ -48,7 +48,10 @@ export default async function handler(
     }
 
     // Set cache headers
-    res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+    res.setHeader(
+      "Cache-Control",
+      "public, s-maxage=300, stale-while-revalidate=600",
+    );
 
     res.status(200).json({
       id: pattern.id,

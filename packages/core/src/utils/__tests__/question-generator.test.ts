@@ -190,7 +190,10 @@ describe("QuestionGenerator", () => {
       const result = generator.generate();
 
       const packageQuestions = result.questions.filter(
-        (q) => q.category === "Package Utilization" || q.question.toLowerCase().includes("package") || q.question.toLowerCase().includes("dependenc"),
+        (q) =>
+          q.category === "Package Utilization" ||
+          q.question.toLowerCase().includes("package") ||
+          q.question.toLowerCase().includes("dependenc"),
       );
 
       expect(packageQuestions.length).toBeGreaterThanOrEqual(0);

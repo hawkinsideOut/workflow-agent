@@ -315,4 +315,5 @@ export {
   solutionDeprecateCommand,
   solutionStatsCommand,
   solutionMigrateCommand,
-  solutionEditCommand,} from "../solution.js";
+  solutionEditCommand,
+} from "../solution.js";

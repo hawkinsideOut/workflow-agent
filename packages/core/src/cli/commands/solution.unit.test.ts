@@ -96,7 +96,9 @@ describe("solution commands - Unit Tests", () => {
 
   describe("solutionShowCommand", () => {
     it("displays solution details when found", async () => {
-      const solution = createTestSolutionPattern({ name: "Show Test Solution" });
+      const solution = createTestSolutionPattern({
+        name: "Show Test Solution",
+      });
       mockGetSolution.mockResolvedValue({ success: true, data: solution });
 
       await solutionShowCommand(solution.id);
@@ -132,13 +134,13 @@ describe("solution commands - Unit Tests", () => {
     it("exits with error when solution not found", async () => {
       mockGetSolution.mockResolvedValue({ success: false });
 
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => {
-          throw new Error("process.exit called");
-        });
+      const mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("process.exit called");
+      });
 
-      await expect(solutionShowCommand("nonexistent-id")).rejects.toThrow("process.exit called");
+      await expect(solutionShowCommand("nonexistent-id")).rejects.toThrow(
+        "process.exit called",
+      );
 
       expect(mockExit).toHaveBeenCalledWith(1);
       mockExit.mockRestore();
@@ -159,9 +161,17 @@ describe("solution commands - Unit Tests", () => {
               lineCount: 1,
             },
           ],
-          dependencies: [{ name: "jsonwebtoken", version: "^9.0.0", compatibleRange: ">=9.0.0" }],
+          dependencies: [
+            {
+              name: "jsonwebtoken",
+              version: "^9.0.0",
+              compatibleRange: ">=9.0.0",
+            },
+          ],
           devDependencies: [],
-          envVars: [{ name: "JWT_SECRET", required: true, description: "JWT secret" }],
+          envVars: [
+            { name: "JWT_SECRET", required: true, description: "JWT secret" },
+          ],
         },
       });
       mockGetSolution.mockResolvedValue({ success: true, data: solution });
@@ -310,13 +320,13 @@ describe("solution commands - Unit Tests", () => {
     it("exits with error when file not found", async () => {
       vi.mocked(nodeFs.existsSync).mockReturnValue(false);
 
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => {
-          throw new Error("process.exit called");
-        });
+      const mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("process.exit called");
+      });
 
-      await expect(solutionImportCommand("nonexistent.json", {})).rejects.toThrow("process.exit called");
+      await expect(
+        solutionImportCommand("nonexistent.json", {}),
+      ).rejects.toThrow("process.exit called");
 
       expect(mockExit).toHaveBeenCalledWith(1);
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -330,13 +340,13 @@ describe("solution commands - Unit Tests", () => {
       vi.mocked(nodeFs.existsSync).mockReturnValue(true);
       vi.mocked(nodeFs.promises.readFile).mockResolvedValue("invalid json{");
 
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => {
-          throw new Error("process.exit called");
-        });
+      const mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("process.exit called");
+      });
 
-      await expect(solutionImportCommand("bad.json", {})).rejects.toThrow("process.exit called");
+      await expect(solutionImportCommand("bad.json", {})).rejects.toThrow(
+        "process.exit called",
+      );
 
       expect(mockExit).toHaveBeenCalledWith(1);
       expect(consoleSpy).toHaveBeenCalledWith(

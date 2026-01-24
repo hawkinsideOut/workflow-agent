@@ -24,20 +24,23 @@ const mockRedis = {
     return keys.map((key) => (mockStorage.get(key) as T) ?? null);
   }),
   zadd: vi.fn(
-    async (key: string, item: { score: number; member: string }): Promise<number> => {
+    async (
+      key: string,
+      item: { score: number; member: string },
+    ): Promise<number> => {
       if (!mockSortedSets.has(key)) {
         mockSortedSets.set(key, new Map());
       }
       mockSortedSets.get(key)!.set(item.member, item.score);
       return 1;
-    }
+    },
   ),
   zrange: vi.fn(
     async (
       key: string,
       _min: string,
       _max: string,
-      options?: { byScore?: boolean; offset?: number; count?: number }
+      options?: { byScore?: boolean; offset?: number; count?: number },
     ): Promise<string[]> => {
       const set = mockSortedSets.get(key);
       if (!set) return [];
@@ -47,7 +50,7 @@ const mockRedis = {
       const offset = options?.offset ?? 0;
       const count = options?.count ?? entries.length;
       return entries.slice(offset, offset + count);
-    }
+    },
   ),
   zcard: vi.fn(async (key: string): Promise<number> => {
     return mockSortedSets.get(key)?.size ?? 0;
@@ -62,14 +65,16 @@ const mockRedis = {
       const newValue = current + increment;
       hash.set(field, newValue);
       return newValue;
-    }
+    },
   ),
   hgetall: vi.fn(
-    async <T extends Record<string, unknown>>(key: string): Promise<T | null> => {
+    async <T extends Record<string, unknown>>(
+      key: string,
+    ): Promise<T | null> => {
       const hash = mockHashes.get(key);
       if (!hash) return null;
       return Object.fromEntries(hash) as T;
-    }
+    },
   ),
   incrby: vi.fn(async (key: string, increment: number): Promise<number> => {
     const current = (mockStorage.get(key) as number) ?? 0;
@@ -102,7 +107,12 @@ function createMockRequest(options: {
   headers?: Record<string, string>;
   body?: unknown;
   query?: Record<string, string | string[]>;
-}): { method: string; headers: Record<string, string>; body: unknown; query: Record<string, string | string[]> } {
+}): {
+  method: string;
+  headers: Record<string, string>;
+  body: unknown;
+  query: Record<string, string | string[]>;
+} {
   return {
     method: options.method ?? "GET",
     headers: options.headers ?? {},
@@ -399,7 +409,10 @@ describe("Pull Endpoint", () => {
     await handler(req as never, res as never);
 
     expect(res._status).toBe(200);
-    const body = res._body as { patterns: unknown[]; pagination: { hasMore: boolean } };
+    const body = res._body as {
+      patterns: unknown[];
+      pagination: { hasMore: boolean };
+    };
     expect(body.patterns).toHaveLength(1);
     expect(body.pagination.hasMore).toBe(true);
   });
@@ -414,7 +427,7 @@ describe("Pull Endpoint", () => {
 
     expect(res.setHeader).toHaveBeenCalledWith(
       "Cache-Control",
-      expect.stringContaining("s-maxage")
+      expect.stringContaining("s-maxage"),
     );
   });
 
@@ -508,7 +521,7 @@ describe("Get Pattern by ID Endpoint", () => {
 
     expect(res.setHeader).toHaveBeenCalledWith(
       "Cache-Control",
-      expect.stringContaining("s-maxage")
+      expect.stringContaining("s-maxage"),
     );
   });
 

@@ -7,7 +7,12 @@ import { describe, it, expect, beforeAll, beforeEach, afterEach } from "vitest";
 import { writeFile, mkdir, readFile } from "fs/promises";
 import { join } from "path";
 import { execa } from "execa";
-import { setupTempDir, cleanupTempDir, createWorkflowConfig, initGitRepo } from "./test-utils.js";
+import {
+  setupTempDir,
+  cleanupTempDir,
+  createWorkflowConfig,
+  initGitRepo,
+} from "./test-utils.js";
 
 describe("pre-commit CLI command - E2E", () => {
   let tempDir: string;
@@ -33,10 +38,14 @@ describe("pre-commit CLI command - E2E", () => {
 
   describe("basic invocation", () => {
     it("runs pre-commit command", async () => {
-      const { stdout, exitCode } = await execa("node", [cliPath, "pre-commit"], {
-        cwd: tempDir,
-        reject: false,
-      });
+      const { stdout, exitCode } = await execa(
+        "node",
+        [cliPath, "pre-commit"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
 
       // Should run (may have no staged files or no linter configured)
       expect(stdout).toContain("Pre-Commit Quality Check");
@@ -59,10 +68,14 @@ describe("pre-commit CLI command - E2E", () => {
 
   describe("--dry-run option", () => {
     it("runs with dry-run flag", async () => {
-      const { stdout } = await execa("node", [cliPath, "pre-commit", "--dry-run"], {
-        cwd: tempDir,
-        reject: false,
-      });
+      const { stdout } = await execa(
+        "node",
+        [cliPath, "pre-commit", "--dry-run"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
 
       expect(stdout).toContain("DRY-RUN");
     });
@@ -190,10 +203,14 @@ describe("pre-commit CLI command - E2E", () => {
 
   describe("help and documentation", () => {
     it("shows help for pre-commit", async () => {
-      const { stdout } = await execa("node", [cliPath, "pre-commit", "--help"], {
-        cwd: tempDir,
-        reject: false,
-      });
+      const { stdout } = await execa(
+        "node",
+        [cliPath, "pre-commit", "--help"],
+        {
+          cwd: tempDir,
+          reject: false,
+        },
+      );
 
       expect(stdout).toContain("pre-commit");
       expect(stdout).toContain("Options");

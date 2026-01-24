@@ -41,12 +41,12 @@
 
 <!-- PROJECT-SPECIFIC: Update this table with your actual stack -->
 
-| Component      | Platform/Service | Purpose                          |
-| -------------- | ---------------- | -------------------------------- |
-| Application    | [HOSTING]        | Application runtime              |
-| Database       | [DATABASE]       | Data persistence                 |
-| Auth           | [AUTH_PROVIDER]  | Authentication & session mgmt    |
-| CDN/Assets     | [CDN]            | Static assets, caching           |
+| Component   | Platform/Service | Purpose                       |
+| ----------- | ---------------- | ----------------------------- |
+| Application | [HOSTING]        | Application runtime           |
+| Database    | [DATABASE]       | Data persistence              |
+| Auth        | [AUTH_PROVIDER]  | Authentication & session mgmt |
+| CDN/Assets  | [CDN]            | Static assets, caching        |
 
 ---
 
@@ -54,12 +54,12 @@
 
 ### Environment Types
 
-| Environment | Branch           | Purpose              | URL Pattern                    |
-| ----------- | ---------------- | -------------------- | ------------------------------ |
-| Production  | `main`           | Live application     | `[PROD_URL]`                   |
-| Staging     | `develop`        | Pre-prod testing     | `[STAGING_URL]`                |
-| Preview     | Feature branches | PR previews, testing | `[PREVIEW_URL_PATTERN]`        |
-| Local       | N/A              | Development          | `localhost:[PORT]`             |
+| Environment | Branch           | Purpose              | URL Pattern             |
+| ----------- | ---------------- | -------------------- | ----------------------- |
+| Production  | `main`           | Live application     | `[PROD_URL]`            |
+| Staging     | `develop`        | Pre-prod testing     | `[STAGING_URL]`         |
+| Preview     | Feature branches | PR previews, testing | `[PREVIEW_URL_PATTERN]` |
+| Local       | N/A              | Development          | `localhost:[PORT]`      |
 
 ### Database Environments
 
@@ -79,17 +79,17 @@
 
 <!-- PROJECT-SPECIFIC: List your required environment variables -->
 
-| Variable                  | Description              | Source                     |
-| ------------------------- | ------------------------ | -------------------------- |
-| `DATABASE_URL`            | Database connection      | Database provider dashboard |
-| `API_KEY`                 | API authentication       | Secret manager             |
+| Variable       | Description         | Source                      |
+| -------------- | ------------------- | --------------------------- |
+| `DATABASE_URL` | Database connection | Database provider dashboard |
+| `API_KEY`      | API authentication  | Secret manager              |
 
 ### Optional Variables
 
-| Variable              | Description                    | Default                   |
-| --------------------- | ------------------------------ | ------------------------- |
-| `APP_URL`             | Application URL                | Auto-detected             |
-| `LOG_LEVEL`           | Logging verbosity              | `info`                    |
+| Variable    | Description       | Default       |
+| ----------- | ----------------- | ------------- |
+| `APP_URL`   | Application URL   | Auto-detected |
+| `LOG_LEVEL` | Logging verbosity | `info`        |
 
 ### Secret Management
 
@@ -226,6 +226,7 @@ Before deploying a migration:
 ### Purpose
 
 Preview deployments allow testing changes before production:
+
 - Automatic deployments for each PR
 - Isolated environment for testing
 - Shareable URLs for review
@@ -307,12 +308,12 @@ DROP TABLE IF EXISTS features;
 
 ### Application Monitoring
 
-| Metric            | Action Threshold |
-| ----------------- | ---------------- |
-| Build Time        | > 5 minutes      |
-| Response Time     | > 500ms          |
-| Error Rate        | > 1%             |
-| Uptime            | < 99.9%          |
+| Metric        | Action Threshold |
+| ------------- | ---------------- |
+| Build Time    | > 5 minutes      |
+| Response Time | > 500ms          |
+| Error Rate    | > 1%             |
+| Uptime        | < 99.9%          |
 
 ### Database Monitoring
 
