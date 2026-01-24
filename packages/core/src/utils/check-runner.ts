@@ -36,6 +36,10 @@ export interface CheckResult {
   output: string;
   error?: string;
   duration: number;
+  /** Whether the check was skipped (e.g., no files found) */
+  skipped?: boolean;
+  /** Reason the check was skipped */
+  skipReason?: string;
 }
 
 export interface AppliedFix {
@@ -495,6 +499,45 @@ export async function getPlatformChecks(
 }
 
 /**
+ * Patterns that indicate a check should be skipped rather than failed.
+ * These are non-error conditions where the tool exits non-zero but nothing is wrong.
+ */
+export const SKIPPABLE_ERROR_PATTERNS: Array<{
+  pattern: RegExp;
+  reason: string;
+}> = [
+  {
+    pattern: /No files matching the pattern .* were found/i,
+    reason: "No files found matching the lint pattern",
+  },
+  {
+    pattern: /No files matching .* were found/i,
+    reason: "No files found matching the pattern",
+  },
+  {
+    pattern: /No inputs were found in config file/i,
+    reason: "No TypeScript files found",
+  },
+  {
+    pattern: /No files matching the pattern .* are present/i,
+    reason: "No files present matching the pattern",
+  },
+];
+
+/**
+ * Check if an error output matches a skippable error pattern.
+ * @returns The skip reason if matched, undefined otherwise.
+ */
+export function isSkippableError(output: string): string | undefined {
+  for (const { pattern, reason } of SKIPPABLE_ERROR_PATTERNS) {
+    if (pattern.test(output)) {
+      return reason;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Run a single check
  */
 export async function runCheck(
@@ -520,6 +563,21 @@ export async function runCheck(
         duration,
       };
     } else {
+      // Check if this is a skippable error (e.g., "no files found")
+      const combinedOutput = result.all || result.stderr || "";
+      const skipReason = isSkippableError(combinedOutput);
+
+      if (skipReason) {
+        return {
+          check,
+          success: true, // Treat as success since it's not a real failure
+          output: result.all || "",
+          duration,
+          skipped: true,
+          skipReason,
+        };
+      }
+
       return {
         check,
         success: false,
@@ -774,7 +832,17 @@ export async function runAllChecks(
       results.push(result);
 
       if (result.success) {
-        log(`✅ ${check.displayName} passed (${result.duration}ms)`, "success");
+        if (result.skipped) {
+          log(
+            `⏭️  ${check.displayName} skipped: ${result.skipReason} (${result.duration}ms)`,
+            "warning",
+          );
+        } else {
+          log(
+            `✅ ${check.displayName} passed (${result.duration}ms)`,
+            "success",
+          );
+        }
       } else {
         allPassed = false;
         log(`❌ ${check.displayName} failed`, "error");

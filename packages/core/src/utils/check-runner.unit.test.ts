@@ -6,6 +6,8 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import {
   PLATFORM_CLI_INSTALL,
   PLATFORM_CHECKS,
+  SKIPPABLE_ERROR_PATTERNS,
+  isSkippableError,
   type PlatformType,
   type PlatformCheckDefinition,
 } from "./check-runner.js";
@@ -190,6 +192,103 @@ describe("Platform type mapping", () => {
     // Every platform with CLI config should have checks
     for (const platform of cliPlatforms) {
       expect(checkPlatforms).toContain(platform);
+    }
+  });
+});
+
+describe("SKIPPABLE_ERROR_PATTERNS", () => {
+  it("should have patterns for common no-files-found errors", () => {
+    expect(SKIPPABLE_ERROR_PATTERNS.length).toBeGreaterThan(0);
+
+    // Each pattern should have both a regex and a reason
+    for (const entry of SKIPPABLE_ERROR_PATTERNS) {
+      expect(entry.pattern).toBeInstanceOf(RegExp);
+      expect(typeof entry.reason).toBe("string");
+      expect(entry.reason.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("should include ESLint no-files pattern", () => {
+    const hasEslintPattern = SKIPPABLE_ERROR_PATTERNS.some((entry) =>
+      entry.pattern.test('No files matching the pattern "src" were found.'),
+    );
+    expect(hasEslintPattern).toBe(true);
+  });
+
+  it("should include TypeScript no-inputs pattern", () => {
+    const hasTsPattern = SKIPPABLE_ERROR_PATTERNS.some((entry) =>
+      entry.pattern.test("No inputs were found in config file"),
+    );
+    expect(hasTsPattern).toBe(true);
+  });
+});
+
+describe("isSkippableError", () => {
+  it("should return undefined for regular errors", () => {
+    expect(isSkippableError("Cannot find module 'foo'")).toBeUndefined();
+    expect(isSkippableError("SyntaxError: Unexpected token")).toBeUndefined();
+    expect(
+      isSkippableError("TypeError: undefined is not a function"),
+    ).toBeUndefined();
+  });
+
+  it("should detect ESLint no-files-found errors", () => {
+    const output = `
+Oops! Something went wrong! :(
+
+ESLint: 9.39.2
+
+No files matching the pattern "src" were found.
+Please check for typing mistakes in the pattern.
+`;
+    const result = isSkippableError(output);
+    expect(result).toBeDefined();
+    expect(result).toContain("No files");
+  });
+
+  it("should detect ESLint no-files-found with different patterns", () => {
+    const patterns = [
+      'No files matching the pattern "lib/**/*.ts" were found.',
+      'No files matching the pattern "./src" were found.',
+      "No files matching the pattern 'test' were found.",
+    ];
+
+    for (const pattern of patterns) {
+      const result = isSkippableError(pattern);
+      expect(result).toBeDefined();
+    }
+  });
+
+  it("should detect TypeScript no-inputs-found errors", () => {
+    const output = "error TS18003: No inputs were found in config file";
+    const result = isSkippableError(output);
+    expect(result).toBeDefined();
+    expect(result).toContain("TypeScript");
+  });
+
+  it("should be case-insensitive", () => {
+    const upperCase = 'NO FILES MATCHING THE PATTERN "SRC" WERE FOUND.';
+    const lowerCase = 'no files matching the pattern "src" were found.';
+    const mixedCase = 'No Files Matching The Pattern "src" Were Found.';
+
+    expect(isSkippableError(upperCase)).toBeDefined();
+    expect(isSkippableError(lowerCase)).toBeDefined();
+    expect(isSkippableError(mixedCase)).toBeDefined();
+  });
+
+  it("should return undefined for empty strings", () => {
+    expect(isSkippableError("")).toBeUndefined();
+  });
+
+  it("should return undefined for unrelated error messages", () => {
+    const unrelatedErrors = [
+      "Error: ENOENT: no such file or directory",
+      "Module not found: Error: Can't resolve 'foo'",
+      "Unexpected token < in JSON at position 0",
+    ];
+
+    for (const error of unrelatedErrors) {
+      expect(isSkippableError(error)).toBeUndefined();
     }
   });
 });
