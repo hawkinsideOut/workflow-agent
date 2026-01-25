@@ -1,6 +1,6 @@
 {
   "name": "workflow-agent-cli",
-  "version": "2.23.3",
+  "version": "2.23.4",
   "description": "A self-evolving workflow management system for AI agent development",
   "keywords": [
     "workflow",
@@ -92,7 +92,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
-    "@hawkinside_out/workflow-improvement-tracker": "workspace:^",
+    "@hawkinside_out/workflow-improvement-tracker": "^1.4.1",
     "chalk": "^5.3.0",
     "commander": "^11.1.0",
     "cosmiconfig": "^9.0.0",
