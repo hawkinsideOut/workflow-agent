@@ -221,6 +221,20 @@ describe("SKIPPABLE_ERROR_PATTERNS", () => {
     );
     expect(hasTsPattern).toBe(true);
   });
+
+  it("should include Prettier no-parser pattern", () => {
+    const hasPrettierPattern = SKIPPABLE_ERROR_PATTERNS.some((entry) =>
+      entry.pattern.test('No parser could be inferred for file "theme.liquid"'),
+    );
+    expect(hasPrettierPattern).toBe(true);
+  });
+
+  it("should include Prettier UndefinedParserError pattern", () => {
+    const hasUndefinedParserPattern = SKIPPABLE_ERROR_PATTERNS.some((entry) =>
+      entry.pattern.test("UndefinedParserError"),
+    );
+    expect(hasUndefinedParserPattern).toBe(true);
+  });
 });
 
 describe("isSkippableError", () => {
@@ -264,6 +278,30 @@ Please check for typing mistakes in the pattern.
     const result = isSkippableError(output);
     expect(result).toBeDefined();
     expect(result).toContain("TypeScript");
+  });
+
+  it("should detect Prettier no-parser-inferred errors", () => {
+    const output = `[error] No parser could be inferred for file "/home/user/project/theme/layout/theme.liquid".`;
+    const result = isSkippableError(output);
+    expect(result).toBeDefined();
+    expect(result).toContain("Prettier");
+  });
+
+  it("should detect Prettier UndefinedParserError", () => {
+    const output = "UndefinedParserError: No parser found for file type";
+    const result = isSkippableError(output);
+    expect(result).toBeDefined();
+    expect(result).toContain("Prettier");
+  });
+
+  it("should detect Prettier errors with various file extensions", () => {
+    const liquidError = `[error] No parser could be inferred for file "sections/header.liquid".`;
+    const ejsError = `[error] No parser could be inferred for file "views/index.ejs".`;
+    const twigError = `[error] No parser could be inferred for file "templates/base.twig".`;
+
+    expect(isSkippableError(liquidError)).toBeDefined();
+    expect(isSkippableError(ejsError)).toBeDefined();
+    expect(isSkippableError(twigError)).toBeDefined();
   });
 
   it("should be case-insensitive", () => {

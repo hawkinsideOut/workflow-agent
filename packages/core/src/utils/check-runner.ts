@@ -506,6 +506,7 @@ export const SKIPPABLE_ERROR_PATTERNS: Array<{
   pattern: RegExp;
   reason: string;
 }> = [
+  // ESLint no-files patterns
   {
     pattern: /No files matching the pattern .* were found/i,
     reason: "No files found matching the lint pattern",
@@ -514,6 +515,7 @@ export const SKIPPABLE_ERROR_PATTERNS: Array<{
     pattern: /No files matching .* were found/i,
     reason: "No files found matching the pattern",
   },
+  // TypeScript no-files pattern
   {
     pattern: /No inputs were found in config file/i,
     reason: "No TypeScript files found",
@@ -521,6 +523,15 @@ export const SKIPPABLE_ERROR_PATTERNS: Array<{
   {
     pattern: /No files matching the pattern .* are present/i,
     reason: "No files present matching the pattern",
+  },
+  // Prettier unsupported file type patterns
+  {
+    pattern: /No parser could be inferred for file/i,
+    reason: "File type not supported by Prettier (add to .prettierignore)",
+  },
+  {
+    pattern: /UndefinedParserError/i,
+    reason: "Prettier cannot parse this file type",
   },
 ];
 

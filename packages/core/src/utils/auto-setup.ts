@@ -1402,15 +1402,42 @@ async function applyPrettierSetup(
   // Create .prettierignore if it doesn't exist
   const ignorePath = join(projectPath, ".prettierignore");
   if (!existsSync(ignorePath)) {
-    const ignoreContent = `dist/
-node_modules/
-coverage/
-.next/
+    const ignoreContent = `# Build outputs
+dist/
 build/
-*.min.js
+.next/
+coverage/
+
+# Dependencies
+node_modules/
+
+# Lock files
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
+
+# Minified files
+*.min.js
+*.min.css
+
+# Template files (Prettier doesn't support these natively)
+*.liquid
+*.ejs
+*.hbs
+*.handlebars
+*.pug
+*.jade
+*.twig
+*.njk
+*.blade.php
+
+# Shopify theme files
+theme/
+sections/
+snippets/
+layout/
+templates/
+assets/*.liquid
 `;
     await writeFile(ignorePath, ignoreContent);
     filesCreated.push(".prettierignore");
