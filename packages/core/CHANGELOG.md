@@ -1,5 +1,14 @@
 # workflow-agent-cli
 
+## 2.23.2
+
+### Patch Changes
+
+- fix(cli): handle ESLint "no files found" gracefully in verify command
+  - Handle skippable errors (like "no files matching pattern") in runCheck and applyFix
+  - Display skipped checks with ⏭️ indicator instead of failing
+  - Prevent false failures when lint runs on empty directories
+
 ## 2.23.1
 
 ### Patch Changes
