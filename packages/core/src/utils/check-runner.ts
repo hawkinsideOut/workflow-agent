@@ -606,7 +606,12 @@ export async function runCheck(
 export async function applyFix(
   check: CheckDefinition,
   cwd: string,
-): Promise<{ success: boolean; output: string }> {
+): Promise<{
+  success: boolean;
+  output: string;
+  skipped?: boolean;
+  skipReason?: string;
+}> {
   if (!check.canAutoFix || !check.fixCommand) {
     return { success: false, output: "Check does not support auto-fix" };
   }
@@ -618,8 +623,28 @@ export async function applyFix(
       all: true,
     });
 
+    if (result.exitCode === 0) {
+      return {
+        success: true,
+        output: result.all || "",
+      };
+    }
+
+    // Check if this is a skippable error (e.g., "no files found")
+    const combinedOutput = result.all || result.stderr || "";
+    const skipReason = isSkippableError(combinedOutput);
+
+    if (skipReason) {
+      return {
+        success: true, // Treat as success since it's not a real failure
+        output: result.all || "",
+        skipped: true,
+        skipReason,
+      };
+    }
+
     return {
-      success: result.exitCode === 0,
+      success: false,
       output: result.all || "",
     };
   } catch (error) {
@@ -866,6 +891,23 @@ export async function runAllChecks(
           const fixResult = await applyFix(check, cwd);
 
           if (fixResult.success) {
+            if (fixResult.skipped) {
+              // The fix command also returned "no files found" - treat as skip
+              log(
+                `⏭️  ${check.displayName} skipped: ${fixResult.skipReason}`,
+                "warning",
+              );
+              // Update the result to reflect it was skipped, not failed
+              results[results.length - 1] = {
+                ...results[results.length - 1],
+                success: true,
+                skipped: true,
+                skipReason: fixResult.skipReason,
+              };
+              allPassed = true;
+              // Continue to next check
+              continue;
+            }
             log(`✨ Auto-fix applied for ${check.displayName}`, "success");
             fixesApplied++;
             appliedFixes.push({
