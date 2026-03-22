@@ -504,7 +504,7 @@ Ready for Phase 2: Extensions, Documentation, and Publishing
 1. Rate limiting: 5 suggestions per day
 2. Trust score threshold: < 20 requires review
 3. Spam filter: banned words list
-4. Length validation: 10-1000 characters
+4. Length validation: minimum 10 characters (no upper limit)
 
 **Storage:**
 

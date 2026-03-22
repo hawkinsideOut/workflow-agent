@@ -226,6 +226,50 @@ describe("Moderator", () => {
     expect(result.allowed).toBe(true);
   });
 
+  it("should accept feedback longer than 1000 characters", async () => {
+    const longFeedback = "a".repeat(5000);
+    const result = await moderator.moderate({
+      feedback: longFeedback,
+      upvotes: 0,
+      downvotes: 0,
+    });
+
+    expect(result.allowed).toBe(true);
+  });
+
+  it("should accept a comprehensive implementation plan", async () => {
+    const implementationPlan = `
+## Problem
+The current suggestion form rejects feedback over 1000 characters, making it impossible to submit detailed implementation plans.
+
+## Proposed Solution
+Remove the upper character limit so users can submit comprehensive plans.
+
+## Implementation Steps
+1. Update SuggestionSchema in schema.ts to remove .max(1000) from the feedback field.
+2. Remove the maxLength condition from the Length Validation moderation rule in defaultModerationRules.
+3. Remove the > 1000 character guard in the VS Code extension's commands.ts input validator.
+4. Update README.md and PROGRESS.md to reflect the new policy.
+
+## Acceptance Criteria
+- Users can submit feedback of any length (minimum 10 characters).
+- The moderator no longer rejects feedback for being too long.
+- Existing short-feedback rejection (< 10 chars) still works.
+- All tests pass.
+
+## Notes
+The moderator.ts maxLength check is already guarded by \`if (condition.maxLength && ...)\` so it safely becomes a no-op once maxLength is removed from the rule.
+    `.trim();
+
+    const result = await moderator.moderate({
+      feedback: implementationPlan,
+      upvotes: 0,
+      downvotes: 0,
+    });
+
+    expect(result.allowed).toBe(true);
+  });
+
   it("should submit and store suggestion", async () => {
     const result = await moderator.submitSuggestion(
       "Add dark mode support with custom themes",

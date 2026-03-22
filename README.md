@@ -289,7 +289,7 @@ workflow-agent scope:create \
 **Moderation Rules:**
 
 - 5 suggestions per day per user
-- 10-1000 characters
+- Minimum 10 characters (no upper limit)
 - Spam filtered
 - Trust score affects approval speed
 
@@ -543,7 +543,7 @@ Contributors earn trust through quality contributions:
 ### Moderation Rules
 
 1. **Rate limiting**: 5 suggestions per day
-2. **Length**: 10-1000 characters
+2. **Length**: Minimum 10 characters (no upper limit)
 3. **Spam filter**: Banned word list
 4. **Trust threshold**: Low scores require review
 

@@ -80,9 +80,6 @@ export class CommandRegistry {
         if (value.length < 10) {
           return "Suggestion must be at least 10 characters";
         }
-        if (value.length > 1000) {
-          return "Suggestion must be less than 1000 characters";
-        }
         return null;
       },
     });

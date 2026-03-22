@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const SuggestionSchema = z.object({
   id: z.string(),
-  feedback: z.string().min(10).max(1000),
+  feedback: z.string().min(10),
   author: z.string().optional(),
   email: z.string().email().optional(),
   createdAt: z.string().datetime(),
@@ -75,11 +75,10 @@ export const defaultModerationRules: ModerationRule[] = [
   },
   {
     name: "Length Validation",
-    description: "Require suggestions between 10-1000 characters",
+    description: "Require suggestions of at least 10 characters",
     action: "auto-reject",
     condition: {
       minLength: 10,
-      maxLength: 1000,
     },
   },
 ];
