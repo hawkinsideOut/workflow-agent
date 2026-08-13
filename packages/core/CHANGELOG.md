@@ -1,5 +1,14 @@
 # workflow-agent-cli
 
+## 2.23.6
+
+### Patch Changes
+
+- fix(config): make reserved scope names configurable again
+  - Restore `reservedScopeNames` on `workflow.config.json`, `DEFAULT_RESERVED_SCOPE_NAMES`, and `validateScopeName()`, which were silently dropped in 2.23.4's schema rewrite
+  - Projects that use words like `test`, `docs`, or `deps` as legitimate scopes (e.g. `chore(deps): bump lodash`) can now override the reserved list, including with `reservedScopeNames: []`, instead of having to rename established conventions
+  - `workflow init` now scaffolds new projects with `reservedScopeNames: []` since the bundled scope presets themselves use words like `docs` and `build`
+
 ## 2.23.2
 
 ### Patch Changes

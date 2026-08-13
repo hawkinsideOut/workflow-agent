@@ -78,7 +78,7 @@ export function analyzeValidationError(
       };
     } else if (
       err.path.includes("name") &&
-      err.message.includes("reserved word")
+      err.message.includes("is reserved")
     ) {
       const currentValue = issue.currentValue as string;
       const replacement =

@@ -136,11 +136,15 @@ export async function initCommand(options: {
   }
 
   // Generate config
+  // Scope presets commonly use words like "docs", "build", or "test" as scope
+  // names (e.g. `docs(readme)`, `chore(deps)`), so new projects opt out of the
+  // reserved-word list by default rather than being blocked on their own presets.
   const config = {
     projectName: projectName as string,
     scopes: scopes,
     enforcement: "strict" as const,
     language: "en",
+    reservedScopeNames: [] as string[],
   };
 
   // Write config file

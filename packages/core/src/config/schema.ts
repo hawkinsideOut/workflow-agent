@@ -1,7 +1,8 @@
 import { z } from "zod";
 
-// Reserved scope names that cannot be used
-const RESERVED_SCOPE_NAMES = [
+// Default reserved scope names that cannot be used unless a project
+// overrides them via `reservedScopeNames` in its workflow config.
+export const DEFAULT_RESERVED_SCOPE_NAMES = [
   "init",
   "create",
   "build",
@@ -12,6 +13,53 @@ const RESERVED_SCOPE_NAMES = [
   "deps",
 ];
 
+/**
+ * Validates a scope name against a project's reserved words and naming rules.
+ */
+export function validateScopeName(
+  name: string,
+  reservedNames: string[] = DEFAULT_RESERVED_SCOPE_NAMES,
+): {
+  valid: boolean;
+  error?: string;
+  suggestion?: string;
+} {
+  if (reservedNames.includes(name)) {
+    const suggestions: Record<string, string> = {
+      init: "setup",
+      create: "add",
+      build: "compile",
+      test: "testing",
+      config: "settings",
+      docs: "documentation",
+      ci: "pipeline",
+      deps: "dependencies",
+    };
+
+    return {
+      valid: false,
+      error: `Scope name "${name}" is reserved`,
+      suggestion: suggestions[name] || `${name}-scope`,
+    };
+  }
+
+  if (!/^[a-z0-9-]+$/.test(name)) {
+    return {
+      valid: false,
+      error: "Scope name must be lowercase alphanumeric with hyphens",
+    };
+  }
+
+  if (name.length === 0 || name.length > 32) {
+    return {
+      valid: false,
+      error: "Scope name must be 1-32 characters",
+    };
+  }
+
+  return { valid: true };
+}
+
 export const ScopeSchema = z.object({
   name: z
     .string()
@@ -20,10 +68,7 @@ export const ScopeSchema = z.object({
     .regex(
       /^[a-z0-9-]+$/,
       "Scope name must be lowercase alphanumeric with hyphens",
-    )
-    .refine((name) => !RESERVED_SCOPE_NAMES.includes(name), {
-      message: `Scope name cannot be a reserved word: ${RESERVED_SCOPE_NAMES.join(", ")}`,
-    }),
+    ),
   description: z
     .string()
     .min(10, "Scope description must be at least 10 characters"),
@@ -154,6 +199,31 @@ export const WorkflowConfigSchema = z.object({
   hooks: HooksConfigSchema.optional(),
   guidelines: GuidelinesConfigSchema.optional(),
   advisory: AdvisoryConfigSchema.optional(),
+  // Reserved scope names for this project. Defaults to DEFAULT_RESERVED_SCOPE_NAMES;
+  // projects that use words like "test", "docs", or "deps" as legitimate scopes
+  // (e.g. `chore(deps): bump lodash`) can override this list, including with [].
+  reservedScopeNames: z
+    .array(z.string())
+    .optional()
+    .default(DEFAULT_RESERVED_SCOPE_NAMES),
+}).superRefine((config, ctx) => {
+  const reservedNames = config.reservedScopeNames ?? DEFAULT_RESERVED_SCOPE_NAMES;
+
+  config.scopes.forEach((scope, index) => {
+    const validation = validateScopeName(scope.name, reservedNames);
+    if (!validation.valid) {
+      let message = validation.error || "Invalid scope name";
+      if (validation.suggestion) {
+        message += `. Try renaming to "${validation.suggestion}"`;
+      }
+
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["scopes", index, "name"],
+        message,
+      });
+    }
+  });
 });
 
 export type Scope = z.infer<typeof ScopeSchema>;

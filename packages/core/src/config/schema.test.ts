@@ -5,8 +5,6 @@
 import { describe, it, expect } from "vitest";
 import { WorkflowConfigSchema } from "./schema.js";
 
-// Note: validateScopeName was removed as scope name validation is now done via Zod's built-in refinement
-
 describe("WorkflowConfigSchema", () => {
   it("should validate config with valid scope names", () => {
     const config = {
@@ -60,6 +58,21 @@ describe("WorkflowConfigSchema", () => {
     if (!result.success) {
       expect(result.error.errors[0].message).toContain("reserved");
     }
+  });
+
+  it("should allow reserved scope names when overridden via reservedScopeNames", () => {
+    const config = {
+      projectName: "test-project",
+      reservedScopeNames: [],
+      scopes: [
+        { name: "test", description: "Test suite changes" },
+        { name: "docs", description: "Documentation changes" },
+        { name: "deps", description: "Dependency bumps" },
+      ],
+    };
+
+    const result = WorkflowConfigSchema.safeParse(config);
+    expect(result.success).toBe(true);
   });
 
   it("should validate scope with mandatory guidelines", () => {
