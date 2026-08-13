@@ -1,5 +1,15 @@
 # workflow-agent-cli
 
+## 2.23.7
+
+### Patch Changes
+
+- fix(config): stop reserving common conventional-commit scope names by default
+  - `DEFAULT_RESERVED_SCOPE_NAMES` no longer includes `test`, `docs`, `deps`, `build`, `ci`, or `create` — none of those collide with an actual `workflow` CLI command, and all are extremely common, legitimate scope names in real projects
+  - The default reserved list is now just `["init", "config"]`, the only words that actually collide with top-level CLI commands
+  - Projects with scopes named `test`/`docs`/`deps`/etc. no longer need to set `reservedScopeNames` at all to unblock validation after upgrading from 2.23.4/2.23.5
+  - `workflow init` no longer needs to opt out via `reservedScopeNames: []`, since the new defaults don't collide with the bundled scope presets
+
 ## 2.23.6
 
 ### Patch Changes

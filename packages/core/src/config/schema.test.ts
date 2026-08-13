@@ -27,8 +27,8 @@ describe("WorkflowConfigSchema", () => {
       projectName: "test-project",
       scopes: [
         {
-          name: "test",
-          description: "Test changes",
+          name: "init",
+          description: "Init changes",
           allowedTypes: ["feat", "fix"],
         },
       ],
@@ -46,9 +46,9 @@ describe("WorkflowConfigSchema", () => {
       projectName: "test-project",
       scopes: [
         {
-          name: "docs",
-          description: "Documentation",
-          allowedTypes: ["docs"],
+          name: "config",
+          description: "Configuration",
+          allowedTypes: ["chore"],
         },
       ],
     };
@@ -60,14 +60,29 @@ describe("WorkflowConfigSchema", () => {
     }
   });
 
+  it("should allow common conventional-commit scope names by default", () => {
+    const config = {
+      projectName: "test-project",
+      scopes: [
+        { name: "test", description: "Test suite changes" },
+        { name: "docs", description: "Documentation changes" },
+        { name: "deps", description: "Dependency bumps" },
+        { name: "build", description: "Build system changes" },
+        { name: "ci", description: "CI pipeline changes" },
+      ],
+    };
+
+    const result = WorkflowConfigSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
   it("should allow reserved scope names when overridden via reservedScopeNames", () => {
     const config = {
       projectName: "test-project",
       reservedScopeNames: [],
       scopes: [
-        { name: "test", description: "Test suite changes" },
-        { name: "docs", description: "Documentation changes" },
-        { name: "deps", description: "Dependency bumps" },
+        { name: "init", description: "Init scope changes" },
+        { name: "config", description: "Config scope changes" },
       ],
     };
 

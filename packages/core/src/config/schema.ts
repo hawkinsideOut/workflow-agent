@@ -2,16 +2,13 @@ import { z } from "zod";
 
 // Default reserved scope names that cannot be used unless a project
 // overrides them via `reservedScopeNames` in its workflow config.
-export const DEFAULT_RESERVED_SCOPE_NAMES = [
-  "init",
-  "create",
-  "build",
-  "test",
-  "config",
-  "docs",
-  "ci",
-  "deps",
-];
+// Only words that actually collide with real top-level CLI commands
+// (`workflow init`, `workflow config`) are reserved by default. Words like
+// "test", "docs", "deps", "build", "ci", and "create" don't collide with any
+// command, and are extremely common, legitimate scope names in the wild
+// (e.g. `docs(readme): ...`, `chore(deps): bump lodash`), so they are not
+// reserved unless a project opts into a stricter list itself.
+export const DEFAULT_RESERVED_SCOPE_NAMES = ["init", "config"];
 
 /**
  * Validates a scope name against a project's reserved words and naming rules.
