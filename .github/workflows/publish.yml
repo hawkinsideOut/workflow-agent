@@ -95,7 +95,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build core
-        run: pnpm --filter workflow-agent-cli build
+        run: pnpm --filter workflow-agent-cli... build
 
       - name: Test core
         run: pnpm --filter workflow-agent-cli test
