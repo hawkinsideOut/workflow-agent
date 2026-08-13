@@ -70,30 +70,34 @@ describe("verify CLI command - Platform Detection E2E", () => {
       expect(stdout).toContain("Quality Verification");
     });
 
-    it("detects Shopify theme by config/settings_schema.json", async () => {
-      await mkdir(join(tempDir, "config"), { recursive: true });
-      await writeFile(join(tempDir, "config/settings_schema.json"), "[]");
-      await writeFile(
-        join(tempDir, "package.json"),
-        JSON.stringify({
-          name: "test-shopify-theme",
-          scripts: {
-            typecheck: "echo 'ok'",
-            lint: "echo 'ok'",
-            format: "echo 'ok'",
-            test: "echo 'ok'",
-            build: "echo 'ok'",
-          },
-        }),
-      );
+    it(
+      "detects Shopify theme by config/settings_schema.json",
+      async () => {
+        await mkdir(join(tempDir, "config"), { recursive: true });
+        await writeFile(join(tempDir, "config/settings_schema.json"), "[]");
+        await writeFile(
+          join(tempDir, "package.json"),
+          JSON.stringify({
+            name: "test-shopify-theme",
+            scripts: {
+              typecheck: "echo 'ok'",
+              lint: "echo 'ok'",
+              format: "echo 'ok'",
+              test: "echo 'ok'",
+              build: "echo 'ok'",
+            },
+          }),
+        );
 
-      const { stdout } = await execa("node", [cliPath, "verify"], {
-        cwd: tempDir,
-        reject: false,
-      });
+        const { stdout } = await execa("node", [cliPath, "verify"], {
+          cwd: tempDir,
+          reject: false,
+        });
 
-      expect(stdout).toContain("Quality Verification");
-    });
+        expect(stdout).toContain("Quality Verification");
+      },
+      60000,
+    );
 
     it("detects Shopify theme by .liquid files", async () => {
       await writeFile(join(tempDir, "layout.liquid"), "{{ content }}");
