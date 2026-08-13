@@ -1,5 +1,14 @@
 # workflow-agent-cli
 
+## 2.23.8
+
+### Patch Changes
+
+- fix(hooks): generated hooks referenced a binary that doesn't exist
+  - `workflow hooks install` generated `.git/hooks/pre-commit` and `.git/hooks/commit-msg` scripts that invoked a command literally named `workflow` — but the package only ever published a bin named `workflow-agent` (see `package.json`'s `bin` field). Every installed hook silently failed with `workflow: not found` and validate-branch/validate-commit/doctor/config-validate never actually ran, even though `workflow hooks status` reported them "installed"
+  - Even after fixing the command name, git invokes hooks with a minimal `PATH` that excludes `node_modules/.bin`, so a locally-installed `workflow-agent-cli` still wouldn't resolve (this is why husky's own runner explicitly prepends `node_modules/.bin` to `PATH`). Generated hooks now do the same
+  - `validate-branch`, `validate-commit`, and `config validate` checks now actually fail the commit (`|| exit 1`) instead of silently continuing past a failed check to whatever hook they chain to next — previously a failing check didn't block the commit unless it happened to be the last command executed
+
 ## 2.23.7
 
 ### Patch Changes

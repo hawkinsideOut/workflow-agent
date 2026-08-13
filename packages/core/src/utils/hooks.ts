@@ -62,13 +62,13 @@ function generatePreCommitHook(config?: HooksConfig): string {
     .map((check: string) => {
       switch (check) {
         case "validate-branch":
-          return "  workflow validate branch";
+          return "  workflow-agent validate branch || exit 1";
         case "validate-commit":
-          return "  workflow validate commit";
+          return "  workflow-agent validate commit || exit 1";
         case "check-guidelines":
-          return "  workflow doctor --check-guidelines-only 2>/dev/null || true";
+          return "  workflow-agent doctor --check-guidelines-only 2>/dev/null || true";
         case "validate-scopes":
-          return "  workflow config validate";
+          return "  workflow-agent config validate || exit 1";
         default:
           return "";
       }
@@ -79,13 +79,18 @@ function generatePreCommitHook(config?: HooksConfig): string {
   return `#!/bin/sh
 # Workflow Agent pre-commit hook
 # Auto-generated - do not edit manually
-# To reinstall: workflow hooks install
-# To uninstall: workflow hooks uninstall
+# To reinstall: workflow-agent hooks install
+# To uninstall: workflow-agent hooks uninstall
 
 # Skip in CI environment
 if [ -n "\${CI:-}" ] || [ -n "\${GITHUB_ACTIONS:-}" ] || [ -n "\${GITLAB_CI:-}" ]; then
   exit 0
 fi
+
+# Make the locally-installed workflow-agent-cli binary resolvable. Git runs
+# hooks with a minimal PATH that does not include node_modules/.bin, so a
+# bare \`workflow-agent\` call would otherwise fail with "not found".
+export PATH="./node_modules/.bin:\$PATH"
 
 # Run workflow checks
 ${checkCommands}
@@ -107,7 +112,7 @@ function generateCommitMsgHook(config?: HooksConfig): string {
     .map((check: string) => {
       switch (check) {
         case "validate-commit":
-          return '  workflow validate commit "$(cat "$1")"';
+          return '  workflow-agent validate commit "$(cat "$1")" || exit 1';
         default:
           return "";
       }
@@ -118,13 +123,18 @@ function generateCommitMsgHook(config?: HooksConfig): string {
   return `#!/bin/sh
 # Workflow Agent commit-msg hook
 # Auto-generated - do not edit manually
-# To reinstall: workflow hooks install
-# To uninstall: workflow hooks uninstall
+# To reinstall: workflow-agent hooks install
+# To uninstall: workflow-agent hooks uninstall
 
 # Skip in CI environment
 if [ -n "\${CI:-}" ] || [ -n "\${GITHUB_ACTIONS:-}" ] || [ -n "\${GITLAB_CI:-}" ]; then
   exit 0
 fi
+
+# Make the locally-installed workflow-agent-cli binary resolvable. Git runs
+# hooks with a minimal PATH that does not include node_modules/.bin, so a
+# bare \`workflow-agent\` call would otherwise fail with "not found".
+export PATH="./node_modules/.bin:\$PATH"
 
 # Run workflow checks
 ${checkCommands}
