@@ -7,10 +7,21 @@ on:
         description: 'NPM OTP Code'
         required: true
         type: string
+      package:
+        description: 'Which package(s) to publish'
+        required: true
+        type: choice
+        options:
+          - core
+          - improvement-tracker
+          - scopes
+          - all
+        default: core
 
 jobs:
   publish-improvement-tracker:
     name: Publish improvement-tracker
+    if: ${{ inputs.package == 'improvement-tracker' || inputs.package == 'all' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,31 +33,36 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Build improvement-tracker
         run: pnpm --filter @hawkinside_out/workflow-improvement-tracker build
-      
+
       - name: Test improvement-tracker
         run: pnpm --filter @hawkinside_out/workflow-improvement-tracker test
-      
+
       - name: Publish improvement-tracker
         run: |
           cd packages/improvement-tracker
-          npm publish --access public --otp=${{ github.event.inputs.otp }}
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view @hawkinside_out/workflow-improvement-tracker@$VERSION version >/dev/null 2>&1; then
+            echo "⏭️  @hawkinside_out/workflow-improvement-tracker@$VERSION is already published, skipping"
+            exit 0
+          fi
+          npm publish --access public --otp=${{ inputs.otp }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
+
       - name: Wait for registry sync
         run: |
           echo "⏳ Waiting 2 minutes for npm registry to sync..."
           sleep 120
-          
+
           VERSION=$(node -p "require('./packages/improvement-tracker/package.json').version")
           echo "🔍 Checking if @hawkinside_out/workflow-improvement-tracker@$VERSION is available..."
-          
+
           for i in {1..10}; do
             if npm view @hawkinside_out/workflow-improvement-tracker@$VERSION version; then
               echo "✅ Package is available on npm registry"
@@ -55,12 +71,13 @@ jobs:
             echo "⏳ Attempt $i/10 - waiting 30s..."
             sleep 30
           done
-          
+
           echo "❌ Package not available after 7 minutes"
           exit 1
 
   publish-core:
     name: Publish core
+    if: ${{ always() && (inputs.package == 'core' || inputs.package == 'all') && needs.publish-improvement-tracker.result != 'failure' }}
     needs: publish-improvement-tracker
     runs-on: ubuntu-latest
     steps:
@@ -73,23 +90,28 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Build core
         run: pnpm --filter workflow-agent-cli build
-      
+
       - name: Test core
         run: pnpm --filter workflow-agent-cli test
-      
+
       - name: Publish core
         run: |
           cd packages/core
-          npm publish --access public --otp=${{ github.event.inputs.otp }}
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view workflow-agent-cli@$VERSION version >/dev/null 2>&1; then
+            echo "⏭️  workflow-agent-cli@$VERSION is already published, skipping"
+            exit 0
+          fi
+          npm publish --access public --otp=${{ inputs.otp }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
+
       - name: Wait for registry sync
         run: |
           echo "⏳ Waiting 2 minutes for npm registry to sync..."
@@ -97,6 +119,7 @@ jobs:
 
   publish-scopes:
     name: Publish scope packages
+    if: ${{ always() && (inputs.package == 'scopes' || inputs.package == 'all') && needs.publish-core.result != 'failure' }}
     needs: publish-core
     runs-on: ubuntu-latest
     strategy:
@@ -112,16 +135,21 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Build ${{ matrix.scope }}
         run: pnpm --filter @hawkinside_out/${{ matrix.scope }} build
-      
+
       - name: Publish ${{ matrix.scope }}
         run: |
           cd packages/${{ matrix.scope }}
-          npm publish --access public --otp=${{ github.event.inputs.otp }}
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view @hawkinside_out/${{ matrix.scope }}@$VERSION version >/dev/null 2>&1; then
+            echo "⏭️  @hawkinside_out/${{ matrix.scope }}@$VERSION is already published, skipping"
+            exit 0
+          fi
+          npm publish --access public --otp=${{ inputs.otp }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
